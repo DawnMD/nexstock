@@ -2,7 +2,10 @@ import { clerkMiddleware } from "@clerk/nextjs/server";
 
 // This Middleware does not protect any routes by default.
 // See https://clerk.com/docs/references/nextjs/clerk-middleware for more information about configuring your Middleware
-export default clerkMiddleware();
+export default clerkMiddleware(async (auth, req) => {
+  // Protect all routes
+  await auth.protect();
+});
 
 export const config = {
   matcher: [
