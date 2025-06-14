@@ -10,12 +10,43 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    userId    String
+enum OrderStatus {
+    NEW
+    IN_PROGRESS
+    COMPLETED
+    CANCELLED
+}
+
+model Vendor {
+    id        BigInt   @id @default(autoincrement())
+    name      String   @db.VarChar(100)
+    reference String   @unique @db.VarChar(50)
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+    orders    Order[] // This establishes the one-to-many relationship
+}
 
-    @@index([userId])
+model Order {
+    id                  BigInt      @id @default(autoincrement())
+    orderNumber         String      @unique @db.VarChar(50)
+    businessUnit        String      @db.VarChar(50)
+    purchaseOrderType   Int
+    purchaseOrderDate   DateTime?
+    expectedReceiptDate DateTime?
+    status              OrderStatus @default(NEW)
+    notes               String?     @db.Text
+    vendorReference     String      @unique @db.VarChar(50) // Ensure this is unique for one-to-one
+    vendorName          String      @db.VarChar(100)
+    buyerName           String?     @db.VarChar(100)
+    buyerCity           String?     @db.VarChar(100)
+    createdAt           DateTime    @default(now())
+    createdBy           String      @db.VarChar(50)
+    updatedAt           DateTime    @updatedAt
+    updatedBy           String      @db.VarChar(50)
+    paymentStatus       String?     @db.VarChar(50)
+    vendor              Vendor      @relation(fields: [vendorReference], references: [reference]) // Link to Vendor
+
+    @@index([vendorReference])
+    @@index([orderNumber])
+    @@index([status])
 }
