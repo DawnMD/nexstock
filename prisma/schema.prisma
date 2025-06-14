@@ -36,7 +36,6 @@ model Order {
     status              OrderStatus @default(NEW)
     notes               String?
     vendorReference     String
-    vendorName          String
     buyerName           String?
     buyerCity           String?
     createdAt           DateTime    @default(now())

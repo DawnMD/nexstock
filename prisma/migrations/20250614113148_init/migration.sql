@@ -23,7 +23,6 @@ CREATE TABLE "Order" (
     "status" "OrderStatus" NOT NULL DEFAULT 'NEW',
     "notes" TEXT,
     "vendorReference" TEXT NOT NULL,
-    "vendorName" TEXT NOT NULL,
     "buyerName" TEXT,
     "buyerCity" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
