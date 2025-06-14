@@ -10,12 +10,40 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model Post {
+enum OrderStatus {
+    NEW
+    IN_PROGRESS
+    COMPLETED
+    CANCELLED
+}
+
+model Vendor {
     id        Int      @id @default(autoincrement())
     name      String
-    userId    String
+    reference String   @unique
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+    orders    Order[] // This establishes the one-to-many relationship
+}
 
-    @@index([userId])
+model Order {
+    id                  Int         @id @default(autoincrement())
+    orderNumber         String      @unique
+    businessUnit        String
+    purchaseOrderType   Int
+    purchaseOrderDate   DateTime?
+    expectedReceiptDate DateTime?
+    status              OrderStatus @default(NEW)
+    notes               String?
+    vendorReference     String
+    buyerName           String?
+    buyerCity           String?
+    createdAt           DateTime    @default(now())
+    createdBy           String
+    updatedAt           DateTime    @updatedAt
+    updatedBy           String
+    paymentStatus       String?
+    vendor              Vendor      @relation(fields: [vendorReference], references: [reference]) // Link to Vendor
+
+    @@index([vendorReference, orderNumber, status])
 }
