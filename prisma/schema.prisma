@@ -35,7 +35,7 @@ model Order {
     expectedReceiptDate DateTime?
     status              OrderStatus @default(NEW)
     notes               String?     @db.Text
-    vendorReference     String      @unique @db.VarChar(50) // Ensure this is unique for one-to-one
+    vendorReference     String      @db.VarChar(50)
     vendorName          String      @db.VarChar(100)
     buyerName           String?     @db.VarChar(100)
     buyerCity           String?     @db.VarChar(100)
