@@ -12,13 +12,9 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import {
-  IconChartBar,
   IconDashboard,
-  IconFolder,
   IconInnerShadowTop,
-  IconListDetails,
   IconPackage,
-  IconUsers,
 } from "@tabler/icons-react";
 import Link from "next/link";
 
@@ -34,26 +30,6 @@ const data = {
       url: "/orders",
       icon: IconPackage,
     },
-    // {
-    //   title: "Lifecycle",
-    //   url: "#",
-    //   icon: IconListDetails,
-    // },
-    // {
-    //   title: "Analytics",
-    //   url: "#",
-    //   icon: IconChartBar,
-    // },
-    // {
-    //   title: "Projects",
-    //   url: "#",
-    //   icon: IconFolder,
-    // },
-    // {
-    //   title: "Team",
-    //   url: "#",
-    //   icon: IconUsers,
-    // },
   ],
 };
 
