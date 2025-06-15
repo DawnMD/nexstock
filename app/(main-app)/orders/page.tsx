@@ -13,7 +13,6 @@ import { Card } from "@/components/ui/card";
 
 export default function Page() {
   const { data: orders, isLoading } = api.order.getAllOrders.useQuery();
-  console.log(orders);
 
   if (isLoading) {
     return (
