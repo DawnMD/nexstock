@@ -1,6 +1,7 @@
 "use client";
 
 import { type Icon } from "@tabler/icons-react";
+import Link from "next/link";
 
 import {
   SidebarGroup,
@@ -29,11 +30,14 @@ export function NavMain({
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
+                asChild
                 tooltip={item.title}
                 isActive={pathname === item.url}
               >
-                {item.icon && <item.icon />}
-                <span>{item.title}</span>
+                <Link href={item.url}>
+                  {item.icon && <item.icon className="size-4" />}
+                  <span>{item.title}</span>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
