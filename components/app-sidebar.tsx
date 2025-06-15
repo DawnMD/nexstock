@@ -17,6 +17,7 @@ import {
   IconFolder,
   IconInnerShadowTop,
   IconListDetails,
+  IconPackage,
   IconUsers,
 } from "@tabler/icons-react";
 
@@ -26,6 +27,11 @@ const data = {
       title: "Dashboard",
       url: "/dashboard",
       icon: IconDashboard,
+    },
+    {
+      title: "Orders",
+      url: "/orders",
+      icon: IconPackage,
     },
     {
       title: "Lifecycle",
