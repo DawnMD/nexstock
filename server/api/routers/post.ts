@@ -18,11 +18,6 @@ export const postRouter = createTRPCRouter({
   create: privateProcedure
     .input(z.object({ name: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.post.create({
-        data: {
-          name: input.name,
-          userId: ctx.userId,
-        },
-      });
+      return null;
     }),
 });
