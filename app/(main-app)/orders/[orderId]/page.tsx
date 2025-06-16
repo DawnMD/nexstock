@@ -10,6 +10,7 @@ import {
   IconCurrencyDollar,
   IconCalendar,
 } from "@tabler/icons-react";
+import { Loader2 } from "lucide-react";
 
 export default function OrderDetailsPage() {
   const params = useParams();
@@ -21,10 +22,15 @@ export default function OrderDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="animate-pulse text-xl font-medium text-gray-600">
-          Loading order details...
-        </div>
+      <div className="container mx-auto py-10">
+        <Card className="p-6">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-xl font-medium text-gray-600">
+              Loading order details...
+            </span>
+          </div>
+        </Card>
       </div>
     );
   }
@@ -85,7 +91,7 @@ export default function OrderDetailsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="rounded-lg border border-gray-300 p-4">
               <h3 className="mb-3 flex items-center text-sm font-medium tracking-wider text-gray-500 uppercase">
                 <IconTruckDelivery className="mr-2 h-5 w-5" />
@@ -102,6 +108,7 @@ export default function OrderDetailsPage() {
                 </p>
               </div>
             </div>
+
             <div className="rounded-lg border border-gray-300 p-4">
               <h3 className="mb-3 flex items-center text-sm font-medium tracking-wider text-gray-500 uppercase">
                 <IconCalendar className="mr-2 h-5 w-5" />
@@ -125,6 +132,69 @@ export default function OrderDetailsPage() {
                     : "N/A"}
                 </p>
               </div>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-gray-300 p-4">
+            <h3 className="mb-3 flex items-center text-sm font-medium tracking-wider text-gray-500 uppercase">
+              <IconBox className="mr-2 h-5 w-5" />
+              Line Items
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">
+                      SKU
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">
+                      Description
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">
+                      Status
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">
+                      Received Quantity
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">
+                      Rejected Quantity
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">
+                      Department
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {orderDetails.items.map((item) => (
+                    <tr key={item.id}>
+                      <td className="px-4 py-2">{item.sku}</td>
+                      <td className="px-4 py-2">{item.description}</td>
+                      <td className="px-4 py-2">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                            item.status === "NOT_RECEIVED"
+                              ? "bg-red-100 text-red-800"
+                              : item.status === "RECEIVING"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : item.status === "RECEIVED"
+                                  ? "bg-green-100 text-green-800"
+                                  : item.status === "REJECTED"
+                                    ? "bg-gray-100 text-gray-800"
+                                    : ""
+                          }`}
+                        >
+                          {item.status === "NOT_RECEIVED"
+                            ? "Not Received"
+                            : item.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2">{item.receivedQuantity}</td>
+                      <td className="px-4 py-2">{item.rejectedQuantity}</td>
+                      <td className="px-4 py-2">{item.department}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

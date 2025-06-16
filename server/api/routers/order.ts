@@ -38,6 +38,18 @@ export const orderRouter = createTRPCRouter({
               name: true,
             },
           },
+          items: {
+            select: {
+              id: true,
+              description: true,
+              status: true,
+              receivedQuantity: true,
+              rejectedQuantity: true,
+              sku: true,
+              department: true,
+              qualityCheck: true,
+            },
+          },
         },
       });
       return orderDetails;
