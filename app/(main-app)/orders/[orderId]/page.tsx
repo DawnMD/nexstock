@@ -11,6 +11,14 @@ import {
   IconCalendar,
 } from "@tabler/icons-react";
 import { Loader2 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function OrderDetailsPage() {
   const params = useParams();
@@ -141,35 +149,23 @@ export default function OrderDetailsPage() {
               Line Items
             </h3>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">
-                      SKU
-                    </th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">
-                      Description
-                    </th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">
-                      Status
-                    </th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">
-                      Received Quantity
-                    </th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">
-                      Rejected Quantity
-                    </th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">
-                      Department
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
+              <Table className="min-w-full divide-y divide-gray-200">
+                <TableHeader className="h-16 bg-gray-100">
+                  <TableRow>
+                    <TableHead>SKU</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Received Quantity</TableHead>
+                    <TableHead>Rejected Quantity</TableHead>
+                    <TableHead>Department</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {orderDetails.items.map((item) => (
-                    <tr key={item.id}>
-                      <td className="px-4 py-2">{item.sku}</td>
-                      <td className="px-4 py-2">{item.description}</td>
-                      <td className="px-4 py-2">
+                    <TableRow key={item.id}>
+                      <TableCell>{item.sku}</TableCell>
+                      <TableCell>{item.description}</TableCell>
+                      <TableCell>
                         <span
                           className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
                             item.status === "NOT_RECEIVED"
@@ -187,14 +183,14 @@ export default function OrderDetailsPage() {
                             ? "Not Received"
                             : item.status}
                         </span>
-                      </td>
-                      <td className="px-4 py-2">{item.receivedQuantity}</td>
-                      <td className="px-4 py-2">{item.rejectedQuantity}</td>
-                      <td className="px-4 py-2">{item.department}</td>
-                    </tr>
+                      </TableCell>
+                      <TableCell>{item.receivedQuantity}</TableCell>
+                      <TableCell>{item.rejectedQuantity}</TableCell>
+                      <TableCell>{item.department}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           </div>
         </div>
