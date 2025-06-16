@@ -17,6 +17,13 @@ enum OrderStatus {
     CANCELLED
 }
 
+enum OrderItemStatus {
+    NOT_RECEIVED
+    RECEIVING
+    RECEIVED
+    REJECTED
+}
+
 model Vendor {
     id        Int      @id @default(autoincrement())
     name      String
@@ -44,6 +51,24 @@ model Order {
     updatedBy           String
     paymentStatus       String?
     vendor              Vendor      @relation(fields: [vendorReference], references: [reference]) // Link to Vendor
+    items               OrderItem[]
 
     @@index([vendorReference, orderNumber, status])
+}
+
+model OrderItem {
+    id               Int             @id @default(autoincrement())
+    description      String
+    status           OrderItemStatus @default(NOT_RECEIVED)
+    receivedQuantity Int             @default(0)
+    rejectedQuantity Int             @default(0)
+    sku              String
+    department       String
+    qualityCheck     Boolean         @default(false)
+    createdAt        DateTime        @default(now())
+    updatedAt        DateTime        @updatedAt
+    Order            Order?          @relation(fields: [orderId], references: [id])
+    orderId          Int?
+
+    @@index([status, sku])
 }
