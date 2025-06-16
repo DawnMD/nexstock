@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
 export default function Page() {

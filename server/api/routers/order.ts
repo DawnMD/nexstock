@@ -19,11 +19,13 @@ export const orderRouter = createTRPCRouter({
   getOrderDetails: privateProcedure
     .input(
       z.object({
-        id: z
-          .string()
-          .transform((val) => parseInt(val, 10))
+        // Define a Zod schema for the input
+        id: z // Define a field named 'id'
+          .string() // Specify that 'id' should be a string
+          .transform((val) => parseInt(val, 10)) // Transform the string to an integer using base 10
           .refine((val) => !isNaN(val), {
-            message: "ID must be a valid number",
+            // Validate that the transformed value is a valid number
+            message: "ID must be a valid number", // Custom error message if validation fails
           }),
       }),
     )
@@ -38,11 +40,6 @@ export const orderRouter = createTRPCRouter({
           },
         },
       });
-
-      if (!orderDetails) {
-        throw new Error("Order not found");
-      }
-
       return orderDetails;
     }),
 });
