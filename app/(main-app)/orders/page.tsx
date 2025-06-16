@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
+import Link from "next/link";
 
 export default function Page() {
   const { data: orders, isLoading } = api.order.getAllOrders.useQuery();
@@ -43,7 +44,9 @@ export default function Page() {
             <TableBody>
               {orders?.map((order) => (
                 <TableRow key={order.id}>
-                  <TableCell>{order.orderNumber}</TableCell>
+                  <Link href={`/orders/${order.id}`} key={order.id}>
+                    <TableCell>{order.orderNumber}</TableCell>
+                  </Link>
                   <TableCell>{order.businessUnit}</TableCell>
                   <TableCell>
                     <span
