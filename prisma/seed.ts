@@ -1,4 +1,4 @@
-import { OrderStatus, PrismaClient } from "@prisma/client";
+import { OrderItemStatus, OrderStatus, PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -41,130 +41,140 @@ async function main() {
   const orders = await Promise.all([
     prisma.order.create({
       data: {
-        orderNumber: "ORDER1",
-        businessUnit: "Unit A",
+        orderNumber: "1000000001",
+        businessUnit: "Unit1",
         purchaseOrderType: 1,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
         vendorReference: "1234567890",
+        paymentStatus: "Paid",
         createdBy: "User A",
         updatedBy: "User A",
       },
     }),
     prisma.order.create({
       data: {
-        orderNumber: "ORDER2",
-        businessUnit: "Unit B",
+        orderNumber: "1000000002",
+        businessUnit: "Unit2",
         purchaseOrderType: 1,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
         vendorReference: "1234567890",
+        paymentStatus: "Pending",
         createdBy: "User A",
         updatedBy: "User A",
       },
     }),
     prisma.order.create({
       data: {
-        orderNumber: "ORDER3",
-        businessUnit: "Unit C",
+        orderNumber: "1000000003",
+        businessUnit: "Unit3",
         purchaseOrderType: 2,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
         vendorReference: "1234567891",
+        paymentStatus: "Pending",
         createdBy: "User B",
         updatedBy: "User B",
       },
     }),
     prisma.order.create({
       data: {
-        orderNumber: "ORDER4",
-        businessUnit: "Unit D",
+        orderNumber: "1000000004",
+        businessUnit: "Unit4",
         purchaseOrderType: 2,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
         vendorReference: "1234567891",
+        paymentStatus: "Pending",
         createdBy: "User B",
         updatedBy: "User B",
       },
     }),
     prisma.order.create({
       data: {
-        orderNumber: "ORDER5",
-        businessUnit: "Unit E",
+        orderNumber: "1000000005",
+        businessUnit: "Unit5",
         purchaseOrderType: 1,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
         vendorReference: "1234567892",
+        paymentStatus: "Paid",
         createdBy: "User C",
         updatedBy: "User C",
       },
     }),
     prisma.order.create({
       data: {
-        orderNumber: "ORDER6",
-        businessUnit: "Unit F",
+        orderNumber: "1000000006",
+        businessUnit: "Unit6",
         purchaseOrderType: 1,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
         vendorReference: "1234567892",
+        paymentStatus: "Paid",
         createdBy: "User C",
         updatedBy: "User C",
       },
     }),
     prisma.order.create({
       data: {
-        orderNumber: "ORDER7",
-        businessUnit: "Unit G",
+        orderNumber: "1000000007",
+        businessUnit: "Unit7",
         purchaseOrderType: 2,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
         vendorReference: "1234567893",
+        paymentStatus: "Paid",
         createdBy: "User D",
         updatedBy: "User D",
       },
     }),
     prisma.order.create({
       data: {
-        orderNumber: "ORDER8",
-        businessUnit: "Unit H",
+        orderNumber: "1000000008",
+        businessUnit: "Unit8",
         purchaseOrderType: 2,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
         vendorReference: "1234567893",
+        paymentStatus: "Pending",
         createdBy: "User D",
         updatedBy: "User D",
       },
     }),
     prisma.order.create({
       data: {
-        orderNumber: "ORDER9",
-        businessUnit: "Unit I",
+        orderNumber: "1000000009",
+        businessUnit: "Unit9",
         purchaseOrderType: 1,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
         vendorReference: "1234567894",
+        paymentStatus: "Paid",
         createdBy: "User E",
         updatedBy: "User E",
       },
     }),
     prisma.order.create({
       data: {
-        orderNumber: "ORDER10",
-        businessUnit: "Unit J",
+        orderNumber: "1000000010",
+        businessUnit: "Unit10",
         purchaseOrderType: 1,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
         vendorReference: "1234567894",
+        paymentStatus: "Paid",
         createdBy: "User E",
         updatedBy: "User E",
       },
@@ -180,6 +190,7 @@ async function main() {
         sku: "TS-COT-PRE-001",
         department: "Apparel",
         orderId: orders[0].id,
+        status: OrderItemStatus.RECEIVED,
       },
     }),
     prisma.orderItem.create({
@@ -188,6 +199,7 @@ async function main() {
         sku: "JN-DNM-001",
         department: "Apparel",
         orderId: orders[0].id,
+        status: OrderItemStatus.RECEIVING,
       },
     }),
     // Items for ORDER2
@@ -197,6 +209,7 @@ async function main() {
         sku: "EL-HP-WL-001",
         department: "Electronics",
         orderId: orders[1].id,
+        status: OrderItemStatus.RECEIVING,
       },
     }),
     prisma.orderItem.create({
@@ -205,6 +218,7 @@ async function main() {
         sku: "EL-SP-BT-001",
         department: "Electronics",
         orderId: orders[1].id,
+        status: OrderItemStatus.RECEIVING,
       },
     }),
     // Items for ORDER3
@@ -214,6 +228,7 @@ async function main() {
         sku: "FN-CHR-OFF-001",
         department: "Furniture",
         orderId: orders[2].id,
+        status: OrderItemStatus.REJECTED,
       },
     }),
     // Items for ORDER4
@@ -223,6 +238,7 @@ async function main() {
         sku: "FN-LMP-DSK-001",
         department: "Furniture",
         orderId: orders[3].id,
+        status: OrderItemStatus.RECEIVED,
       },
     }),
     prisma.orderItem.create({
@@ -231,6 +247,7 @@ async function main() {
         sku: "FN-CAB-STR-001",
         department: "Furniture",
         orderId: orders[3].id,
+        status: OrderItemStatus.RECEIVED,
       },
     }),
     // Items for ORDER5
@@ -240,6 +257,7 @@ async function main() {
         sku: "EL-WT-SM-001",
         department: "Electronics",
         orderId: orders[4].id,
+        status: OrderItemStatus.NOT_RECEIVED,
       },
     }),
     // Items for ORDER6
@@ -249,6 +267,7 @@ async function main() {
         sku: "SH-RUN-001",
         department: "Footwear",
         orderId: orders[5].id,
+        status: OrderItemStatus.RECEIVING,
       },
     }),
     prisma.orderItem.create({
@@ -257,6 +276,7 @@ async function main() {
         sku: "SH-SOC-SPT-001",
         department: "Footwear",
         orderId: orders[5].id,
+        status: OrderItemStatus.RECEIVED,
       },
     }),
     // Items for ORDER7
@@ -266,6 +286,7 @@ async function main() {
         sku: "KT-KNV-SET-001",
         department: "Kitchenware",
         orderId: orders[6].id,
+        status: OrderItemStatus.RECEIVED,
       },
     }),
     // Items for ORDER8
@@ -275,6 +296,7 @@ async function main() {
         sku: "KT-CFM-001",
         department: "Kitchenware",
         orderId: orders[7].id,
+        status: OrderItemStatus.RECEIVED,
       },
     }),
     prisma.orderItem.create({
@@ -283,6 +305,7 @@ async function main() {
         sku: "KT-TST-001",
         department: "Kitchenware",
         orderId: orders[7].id,
+        status: OrderItemStatus.RECEIVED,
       },
     }),
     // Items for ORDER9
@@ -292,6 +315,7 @@ async function main() {
         sku: "SP-YOG-MAT-001",
         department: "Sports",
         orderId: orders[8].id,
+        status: OrderItemStatus.REJECTED,
       },
     }),
     // Items for ORDER10
@@ -301,6 +325,7 @@ async function main() {
         sku: "SP-DMB-SET-001",
         department: "Sports",
         orderId: orders[9].id,
+        status: OrderItemStatus.RECEIVED,
       },
     }),
     prisma.orderItem.create({
@@ -309,6 +334,7 @@ async function main() {
         sku: "SP-RES-BND-001",
         department: "Sports",
         orderId: orders[9].id,
+        status: OrderItemStatus.RECEIVED,
       },
     }),
   ]);
