@@ -65,6 +65,7 @@ model OrderItem {
     id               Int             @id @default(autoincrement())
     description      String
     status           OrderItemStatus @default(NOT_RECEIVED)
+    orderedQuantity  Int             @default(0)
     receivedQuantity Int             @default(0)
     rejectedQuantity Int             @default(0)
     sku              String
