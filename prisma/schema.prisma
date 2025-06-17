@@ -24,6 +24,11 @@ enum OrderItemStatus {
     REJECTED
 }
 
+enum DockStatus {
+    OPEN
+    CLOSED
+}
+
 model Vendor {
     id        Int      @id @default(autoincrement())
     name      String
@@ -71,4 +76,12 @@ model OrderItem {
     orderId          Int?
 
     @@index([status, sku])
+}
+
+model Dock {
+    id        Int        @id @default(autoincrement())
+    name      String
+    status    DockStatus @default(OPEN)
+    createdAt DateTime   @default(now())
+    updatedAt DateTime   @updatedAt
 }

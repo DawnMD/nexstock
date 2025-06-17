@@ -1,8 +1,47 @@
-import { OrderItemStatus, OrderStatus, PrismaClient } from "@prisma/client";
+import {
+  OrderItemStatus,
+  OrderStatus,
+  PrismaClient,
+  DockStatus,
+} from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 async function main() {
+  // Create 5 docks
+  const docks = await Promise.all([
+    prisma.dock.create({
+      data: {
+        name: "Dock 1",
+        status: DockStatus.OPEN,
+      },
+    }),
+    prisma.dock.create({
+      data: {
+        name: "Dock 2",
+        status: DockStatus.OPEN,
+      },
+    }),
+    prisma.dock.create({
+      data: {
+        name: "Dock 3",
+        status: DockStatus.OPEN,
+      },
+    }),
+    prisma.dock.create({
+      data: {
+        name: "Dock 4",
+        status: DockStatus.OPEN,
+      },
+    }),
+    prisma.dock.create({
+      data: {
+        name: "Dock 5",
+        status: DockStatus.OPEN,
+      },
+    }),
+  ]);
+
   // Create 5 vendors
   const vendors = await Promise.all([
     prisma.vendor.create({
@@ -339,7 +378,7 @@ async function main() {
     }),
   ]);
 
-  console.log({ vendors, orders, orderItems });
+  console.log({ vendors, orders, orderItems, docks });
 }
 
 main()
