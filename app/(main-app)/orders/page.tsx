@@ -12,6 +12,8 @@ import {
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export default function Page() {
   const { data: orders, isLoading } = api.order.getAllOrders.useQuery();
@@ -70,19 +72,22 @@ export default function Page() {
                   <TableCell>{order.businessUnit}</TableCell>
                   <TableCell>{order.purchaseOrderType}</TableCell>
                   <TableCell>
-                    <span
-                      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
-                        order.status === "NEW"
-                          ? "bg-blue-100 text-blue-800"
-                          : order.status === "IN_PROGRESS"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : order.status === "COMPLETED"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
-                      }`}
+                    <Badge
+                      className={cn({
+                        "bg-blue-100 text-blue-800": order.status === "NEW",
+                        "bg-yellow-100 text-yellow-800":
+                          order.status === "IN_PROGRESS",
+                        "bg-green-100 text-green-800":
+                          order.status === "COMPLETED",
+                        "bg-gray-100 text-gray-800": ![
+                          "NEW",
+                          "IN_PROGRESS",
+                          "COMPLETED",
+                        ].includes(order.status),
+                      })}
                     >
                       {order.status.replace("_", " ")}
-                    </span>
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     {order.purchaseOrderDate

@@ -19,6 +19,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export default function OrderDetailsPage() {
   const params = useParams();
@@ -166,23 +168,22 @@ export default function OrderDetailsPage() {
                       <TableCell>{item.sku}</TableCell>
                       <TableCell>{item.description}</TableCell>
                       <TableCell>
-                        <span
-                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                            item.status === "NOT_RECEIVED"
-                              ? "bg-red-100 text-red-800"
-                              : item.status === "RECEIVING"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : item.status === "RECEIVED"
-                                  ? "bg-green-100 text-green-800"
-                                  : item.status === "REJECTED"
-                                    ? "bg-gray-100 text-gray-800"
-                                    : ""
-                          }`}
+                        <Badge
+                          className={cn({
+                            "bg-gray-100 text-gray-800":
+                              item.status === "NOT_RECEIVED",
+                            "bg-yellow-100 text-yellow-800":
+                              item.status === "RECEIVING",
+                            "bg-green-100 text-green-800":
+                              item.status === "RECEIVED",
+                            "bg-red-100 text-red-800":
+                              item.status === "REJECTED",
+                          })}
                         >
                           {item.status === "NOT_RECEIVED"
                             ? "Not Received"
                             : item.status}
-                        </span>
+                        </Badge>
                       </TableCell>
                       <TableCell>{item.receivedQuantity}</TableCell>
                       <TableCell>{item.rejectedQuantity}</TableCell>
