@@ -8,7 +8,7 @@ async function main() {
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
   await prisma.vendor.deleteMany();
-  await prisma.vehicle.deleteMany();
+  await prisma.vehicleType.deleteMany();
   await prisma.dock.deleteMany();
   console.log("Existing data deleted successfully");
 
@@ -46,32 +46,27 @@ async function main() {
     }),
   ]);
 
-  // Create 5 vehicles
-  const vehicles = await Promise.all([
-    prisma.vehicle.create({
+  // Create 3 vehicle types
+  const vehicleTypes = await Promise.all([
+    prisma.vehicleType.create({
       data: {
-        vehicleType: "Truck",
-        vehicleNumber: "1234567890",
-        queue: 1,
-        cbm: 1000,
-        weight: 5000,
-        driverName: "John Doe",
-        driverPhone: "1234567890",
-        eta: new Date(),
-        dockId: docks[0].id,
+        type: "Truck",
+        description: "Truck",
+        unloadTime: "60",
       },
     }),
-    prisma.vehicle.create({
+    prisma.vehicleType.create({
       data: {
-        vehicleType: "Truck",
-        vehicleNumber: "1234567891",
-        queue: 2,
-        cbm: 1000,
-        weight: 4500,
-        driverName: "John Smith",
-        driverPhone: "1234567891",
-        eta: new Date(),
-        dockId: docks[1].id,
+        type: "Container",
+        description: "Container",
+        unloadTime: "09",
+      },
+    }),
+    prisma.vehicleType.create({
+      data: {
+        type: "Trailer",
+        description: "Trailer",
+        unloadTime: "120",
       },
     }),
   ]);
@@ -506,7 +501,7 @@ async function main() {
     }),
   ]);
 
-  console.log({ vendors, orders, orderItems, docks, vehicles });
+  console.log({ vendors, orders, orderItems, docks, vehicleTypes });
 }
 
 main()
