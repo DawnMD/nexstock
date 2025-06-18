@@ -3,6 +3,13 @@ import { OrderItemStatus, OrderStatus, PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
+  // Delete all existing data to start fresh
+  console.log("Deleting existing data...");
+  await prisma.orderItem.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.vendor.deleteMany();
+  console.log("Existing data deleted successfully");
+
   // Create 5 vendors
   const vendors = await Promise.all([
     prisma.vendor.create({
@@ -191,6 +198,9 @@ async function main() {
         department: "Apparel",
         orderId: orders[0].id,
         status: OrderItemStatus.RECEIVED,
+        totalQuantity: 50,
+        receivedQuantity: 50,
+        rejectedQuantity: 0,
       },
     }),
     prisma.orderItem.create({
@@ -200,6 +210,9 @@ async function main() {
         department: "Apparel",
         orderId: orders[0].id,
         status: OrderItemStatus.RECEIVING,
+        totalQuantity: 30,
+        receivedQuantity: 20,
+        rejectedQuantity: 0,
       },
     }),
     // Items for ORDER2
@@ -210,6 +223,9 @@ async function main() {
         department: "Electronics",
         orderId: orders[1].id,
         status: OrderItemStatus.RECEIVING,
+        totalQuantity: 25,
+        receivedQuantity: 15,
+        rejectedQuantity: 0,
       },
     }),
     prisma.orderItem.create({
@@ -219,6 +235,9 @@ async function main() {
         department: "Electronics",
         orderId: orders[1].id,
         status: OrderItemStatus.RECEIVING,
+        totalQuantity: 20,
+        receivedQuantity: 12,
+        rejectedQuantity: 0,
       },
     }),
     // Items for ORDER3
@@ -229,6 +248,9 @@ async function main() {
         department: "Furniture",
         orderId: orders[2].id,
         status: OrderItemStatus.REJECTED,
+        totalQuantity: 10,
+        receivedQuantity: 0,
+        rejectedQuantity: 10,
       },
     }),
     // Items for ORDER4
@@ -239,6 +261,9 @@ async function main() {
         department: "Furniture",
         orderId: orders[3].id,
         status: OrderItemStatus.RECEIVED,
+        totalQuantity: 15,
+        receivedQuantity: 15,
+        rejectedQuantity: 0,
       },
     }),
     prisma.orderItem.create({
@@ -248,6 +273,9 @@ async function main() {
         department: "Furniture",
         orderId: orders[3].id,
         status: OrderItemStatus.RECEIVED,
+        totalQuantity: 8,
+        receivedQuantity: 8,
+        rejectedQuantity: 0,
       },
     }),
     // Items for ORDER5
@@ -258,6 +286,9 @@ async function main() {
         department: "Electronics",
         orderId: orders[4].id,
         status: OrderItemStatus.NOT_RECEIVED,
+        totalQuantity: 40,
+        receivedQuantity: 0,
+        rejectedQuantity: 0,
       },
     }),
     // Items for ORDER6
@@ -268,6 +299,9 @@ async function main() {
         department: "Footwear",
         orderId: orders[5].id,
         status: OrderItemStatus.RECEIVING,
+        totalQuantity: 60,
+        receivedQuantity: 35,
+        rejectedQuantity: 0,
       },
     }),
     prisma.orderItem.create({
@@ -277,6 +311,9 @@ async function main() {
         department: "Footwear",
         orderId: orders[5].id,
         status: OrderItemStatus.RECEIVED,
+        totalQuantity: 100,
+        receivedQuantity: 100,
+        rejectedQuantity: 0,
       },
     }),
     // Items for ORDER7
@@ -287,6 +324,9 @@ async function main() {
         department: "Kitchenware",
         orderId: orders[6].id,
         status: OrderItemStatus.RECEIVED,
+        totalQuantity: 20,
+        receivedQuantity: 20,
+        rejectedQuantity: 0,
       },
     }),
     // Items for ORDER8
@@ -297,6 +337,9 @@ async function main() {
         department: "Kitchenware",
         orderId: orders[7].id,
         status: OrderItemStatus.RECEIVED,
+        totalQuantity: 12,
+        receivedQuantity: 12,
+        rejectedQuantity: 0,
       },
     }),
     prisma.orderItem.create({
@@ -306,6 +349,9 @@ async function main() {
         department: "Kitchenware",
         orderId: orders[7].id,
         status: OrderItemStatus.RECEIVED,
+        totalQuantity: 18,
+        receivedQuantity: 18,
+        rejectedQuantity: 0,
       },
     }),
     // Items for ORDER9
@@ -316,6 +362,9 @@ async function main() {
         department: "Sports",
         orderId: orders[8].id,
         status: OrderItemStatus.REJECTED,
+        totalQuantity: 30,
+        receivedQuantity: 0,
+        rejectedQuantity: 30,
       },
     }),
     // Items for ORDER10
@@ -326,6 +375,9 @@ async function main() {
         department: "Sports",
         orderId: orders[9].id,
         status: OrderItemStatus.RECEIVED,
+        totalQuantity: 25,
+        receivedQuantity: 25,
+        rejectedQuantity: 0,
       },
     }),
     prisma.orderItem.create({
@@ -335,6 +387,9 @@ async function main() {
         department: "Sports",
         orderId: orders[9].id,
         status: OrderItemStatus.RECEIVED,
+        totalQuantity: 50,
+        receivedQuantity: 50,
+        rejectedQuantity: 0,
       },
     }),
   ]);

@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
     provider = "postgresql"
-    url      = env("DATABASE_URL")
+    url      = "postgresql://shelfDB_owner:npg_3WL8UyKpGcVu@ep-sweet-night-a10ou838-pooler.ap-southeast-1.aws.neon.tech/shelfDB?sslmode=require"
 }
 
 enum OrderStatus {
@@ -60,6 +60,7 @@ model OrderItem {
     id               Int             @id @default(autoincrement())
     description      String
     status           OrderItemStatus @default(NOT_RECEIVED)
+    totalQuantity    Int             @default(0)
     receivedQuantity Int             @default(0)
     rejectedQuantity Int             @default(0)
     sku              String
