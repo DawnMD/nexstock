@@ -17,6 +17,12 @@ enum OrderStatus {
     CANCELLED
 }
 
+enum OrderType {
+    Standard
+    Import
+    Return
+}
+
 enum OrderItemStatus {
     NOT_RECEIVED
     RECEIVING
@@ -37,7 +43,7 @@ model Order {
     id                  Int           @id @default(autoincrement())
     orderNumber         String        @unique
     businessUnit        String
-    purchaseOrderType   Int
+    orderType           OrderType     @default(Standard)
     purchaseOrderDate   DateTime?
     expectedReceiptDate DateTime?
     status              OrderStatus   @default(NEW)

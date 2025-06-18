@@ -1,4 +1,9 @@
-import { OrderItemStatus, OrderStatus, PrismaClient } from "@prisma/client";
+import {
+  OrderItemStatus,
+  OrderStatus,
+  PrismaClient,
+  OrderType,
+} from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -105,13 +110,13 @@ async function main() {
     }),
   ]);
 
-  // Create 10 orders
+  // Create 12 orders
   const orders = await Promise.all([
     prisma.order.create({
       data: {
         orderNumber: "1000000001",
         businessUnit: "Unit1",
-        purchaseOrderType: 1,
+        orderType: OrderType.Standard,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -128,7 +133,7 @@ async function main() {
       data: {
         orderNumber: "1000000002",
         businessUnit: "Unit2",
-        purchaseOrderType: 1,
+        orderType: OrderType.Standard,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -145,7 +150,7 @@ async function main() {
       data: {
         orderNumber: "1000000003",
         businessUnit: "Unit3",
-        purchaseOrderType: 2,
+        orderType: OrderType.Standard,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -162,7 +167,7 @@ async function main() {
       data: {
         orderNumber: "1000000004",
         businessUnit: "Unit4",
-        purchaseOrderType: 2,
+        orderType: OrderType.Standard,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -179,7 +184,7 @@ async function main() {
       data: {
         orderNumber: "1000000005",
         businessUnit: "Unit5",
-        purchaseOrderType: 1,
+        orderType: OrderType.Import,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -196,7 +201,7 @@ async function main() {
       data: {
         orderNumber: "1000000006",
         businessUnit: "Unit6",
-        purchaseOrderType: 1,
+        orderType: OrderType.Import,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -213,7 +218,7 @@ async function main() {
       data: {
         orderNumber: "1000000007",
         businessUnit: "Unit7",
-        purchaseOrderType: 2,
+        orderType: OrderType.Import,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -230,7 +235,7 @@ async function main() {
       data: {
         orderNumber: "1000000008",
         businessUnit: "Unit8",
-        purchaseOrderType: 2,
+        orderType: OrderType.Import,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -247,7 +252,7 @@ async function main() {
       data: {
         orderNumber: "1000000009",
         businessUnit: "Unit9",
-        purchaseOrderType: 1,
+        orderType: OrderType.Return,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -264,7 +269,41 @@ async function main() {
       data: {
         orderNumber: "1000000010",
         businessUnit: "Unit10",
-        purchaseOrderType: 1,
+        orderType: OrderType.Return,
+        purchaseOrderDate: new Date(),
+        expectedReceiptDate: new Date(),
+        status: OrderStatus.NEW,
+        vendorReference: "1234567894",
+        paymentStatus: "Paid",
+        createdBy: "User E",
+        updatedBy: "User E",
+        notes: "Sports accessories and equipment",
+        buyerName: "Jack Anderson",
+        buyerCity: "San Jose",
+      },
+    }),
+    prisma.order.create({
+      data: {
+        orderNumber: "1000000011",
+        businessUnit: "Unit11",
+        orderType: OrderType.Return,
+        purchaseOrderDate: new Date(),
+        expectedReceiptDate: new Date(),
+        status: OrderStatus.NEW,
+        vendorReference: "1234567894",
+        paymentStatus: "Paid",
+        createdBy: "User E",
+        updatedBy: "User E",
+        notes: "Sports accessories and equipment",
+        buyerName: "Jack Anderson",
+        buyerCity: "San Jose",
+      },
+    }),
+    prisma.order.create({
+      data: {
+        orderNumber: "1000000012",
+        businessUnit: "Unit12",
+        orderType: OrderType.Return,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
