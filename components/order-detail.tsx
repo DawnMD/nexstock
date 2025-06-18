@@ -74,7 +74,7 @@ export function OrderDetail({ orderNumber }: { orderNumber: string }) {
           sku: item.sku,
           description: item.description,
           status: item.status,
-          orderedQuantity: item.totalQuantity,
+          orderedQuantity: item.orderedQuantity,
           receivedQuantity: item.receivedQuantity,
           rejectedQuantity: item.rejectedQuantity,
           department: item.department,

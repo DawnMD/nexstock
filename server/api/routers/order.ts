@@ -43,7 +43,7 @@ export const orderRouter = createTRPCRouter({
               sku: true,
               department: true,
               qualityCheck: true,
-              totalQuantity: true,
+              orderedQuantity: true,
             },
           },
         },
