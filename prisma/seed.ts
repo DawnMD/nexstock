@@ -3,6 +3,15 @@ import { OrderItemStatus, OrderStatus, PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
+  // Delete all existing data to start fresh
+  console.log("Deleting existing data...");
+  await prisma.orderItem.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.vendor.deleteMany();
+  await prisma.vehicle.deleteMany();
+  await prisma.dock.deleteMany();
+  console.log("Existing data deleted successfully");
+
   // Create 5 docks
   const docks = await Promise.all([
     prisma.dock.create({
@@ -45,7 +54,7 @@ async function main() {
         vehicleNumber: "1234567890",
         queue: 1,
         cbm: 1000,
-        weight: 1000,
+        weight: 5000,
         driverName: "John Doe",
         driverPhone: "1234567890",
         eta: new Date(),
@@ -58,7 +67,7 @@ async function main() {
         vehicleNumber: "1234567891",
         queue: 2,
         cbm: 1000,
-        weight: 1000,
+        weight: 4500,
         driverName: "John Smith",
         driverPhone: "1234567891",
         eta: new Date(),
@@ -115,6 +124,9 @@ async function main() {
         paymentStatus: "Paid",
         createdBy: "User A",
         updatedBy: "User A",
+        notes: "Priority order for summer collection",
+        buyerName: "Alice Johnson",
+        buyerCity: "New York",
       },
     }),
     prisma.order.create({
@@ -129,6 +141,9 @@ async function main() {
         paymentStatus: "Pending",
         createdBy: "User A",
         updatedBy: "User A",
+        notes: "Electronics inventory restock",
+        buyerName: "Bob Smith",
+        buyerCity: "Los Angeles",
       },
     }),
     prisma.order.create({
@@ -143,6 +158,9 @@ async function main() {
         paymentStatus: "Pending",
         createdBy: "User B",
         updatedBy: "User B",
+        notes: "Office furniture for new branch",
+        buyerName: "Carol Davis",
+        buyerCity: "Chicago",
       },
     }),
     prisma.order.create({
@@ -157,6 +175,9 @@ async function main() {
         paymentStatus: "Pending",
         createdBy: "User B",
         updatedBy: "User B",
+        notes: "Additional furniture items",
+        buyerName: "David Wilson",
+        buyerCity: "Houston",
       },
     }),
     prisma.order.create({
@@ -171,6 +192,9 @@ async function main() {
         paymentStatus: "Paid",
         createdBy: "User C",
         updatedBy: "User C",
+        notes: "Smart devices for tech department",
+        buyerName: "Eva Brown",
+        buyerCity: "Phoenix",
       },
     }),
     prisma.order.create({
@@ -185,6 +209,9 @@ async function main() {
         paymentStatus: "Paid",
         createdBy: "User C",
         updatedBy: "User C",
+        notes: "Athletic footwear collection",
+        buyerName: "Frank Miller",
+        buyerCity: "Philadelphia",
       },
     }),
     prisma.order.create({
@@ -199,6 +226,9 @@ async function main() {
         paymentStatus: "Paid",
         createdBy: "User D",
         updatedBy: "User D",
+        notes: "Kitchen equipment for restaurant",
+        buyerName: "Grace Lee",
+        buyerCity: "San Antonio",
       },
     }),
     prisma.order.create({
@@ -213,6 +243,9 @@ async function main() {
         paymentStatus: "Pending",
         createdBy: "User D",
         updatedBy: "User D",
+        notes: "Additional kitchen appliances",
+        buyerName: "Henry Taylor",
+        buyerCity: "San Diego",
       },
     }),
     prisma.order.create({
@@ -227,6 +260,9 @@ async function main() {
         paymentStatus: "Paid",
         createdBy: "User E",
         updatedBy: "User E",
+        notes: "Fitness equipment for gym",
+        buyerName: "Ivy Chen",
+        buyerCity: "Dallas",
       },
     }),
     prisma.order.create({
@@ -241,6 +277,9 @@ async function main() {
         paymentStatus: "Paid",
         createdBy: "User E",
         updatedBy: "User E",
+        notes: "Sports accessories and equipment",
+        buyerName: "Jack Anderson",
+        buyerCity: "San Jose",
       },
     }),
   ]);
@@ -256,6 +295,9 @@ async function main() {
         orderId: orders[0].id,
         orderedQuantity: 10,
         status: OrderItemStatus.RECEIVED,
+        receivedQuantity: 50,
+        rejectedQuantity: 0,
+        qualityCheck: true,
       },
     }),
     prisma.orderItem.create({
@@ -266,6 +308,9 @@ async function main() {
         orderId: orders[0].id,
         orderedQuantity: 10,
         status: OrderItemStatus.RECEIVING,
+        receivedQuantity: 20,
+        rejectedQuantity: 0,
+        qualityCheck: false,
       },
     }),
     // Items for ORDER2
@@ -277,6 +322,9 @@ async function main() {
         orderId: orders[1].id,
         orderedQuantity: 20,
         status: OrderItemStatus.RECEIVING,
+        receivedQuantity: 15,
+        rejectedQuantity: 0,
+        qualityCheck: false,
       },
     }),
     prisma.orderItem.create({
@@ -287,6 +335,9 @@ async function main() {
         orderId: orders[1].id,
         orderedQuantity: 20,
         status: OrderItemStatus.RECEIVING,
+        receivedQuantity: 12,
+        rejectedQuantity: 0,
+        qualityCheck: false,
       },
     }),
     // Items for ORDER3
@@ -298,6 +349,9 @@ async function main() {
         orderId: orders[2].id,
         orderedQuantity: 30,
         status: OrderItemStatus.REJECTED,
+        receivedQuantity: 0,
+        rejectedQuantity: 10,
+        qualityCheck: true,
       },
     }),
     // Items for ORDER4
@@ -309,6 +363,9 @@ async function main() {
         orderId: orders[3].id,
         orderedQuantity: 30,
         status: OrderItemStatus.RECEIVED,
+        receivedQuantity: 15,
+        rejectedQuantity: 0,
+        qualityCheck: true,
       },
     }),
     prisma.orderItem.create({
@@ -319,6 +376,9 @@ async function main() {
         orderId: orders[3].id,
         orderedQuantity: 10,
         status: OrderItemStatus.RECEIVED,
+        receivedQuantity: 8,
+        rejectedQuantity: 0,
+        qualityCheck: true,
       },
     }),
     // Items for ORDER5
@@ -330,6 +390,9 @@ async function main() {
         orderId: orders[4].id,
         orderedQuantity: 10,
         status: OrderItemStatus.NOT_RECEIVED,
+        receivedQuantity: 0,
+        rejectedQuantity: 0,
+        qualityCheck: false,
       },
     }),
     // Items for ORDER6
@@ -341,6 +404,9 @@ async function main() {
         orderId: orders[5].id,
         orderedQuantity: 10,
         status: OrderItemStatus.RECEIVING,
+        receivedQuantity: 35,
+        rejectedQuantity: 0,
+        qualityCheck: false,
       },
     }),
     prisma.orderItem.create({
@@ -351,6 +417,9 @@ async function main() {
         orderId: orders[5].id,
         orderedQuantity: 10,
         status: OrderItemStatus.RECEIVED,
+        receivedQuantity: 100,
+        rejectedQuantity: 0,
+        qualityCheck: true,
       },
     }),
     // Items for ORDER7
@@ -362,6 +431,9 @@ async function main() {
         orderId: orders[6].id,
         orderedQuantity: 10,
         status: OrderItemStatus.RECEIVED,
+        receivedQuantity: 20,
+        rejectedQuantity: 0,
+        qualityCheck: true,
       },
     }),
     // Items for ORDER8
@@ -373,6 +445,9 @@ async function main() {
         orderId: orders[7].id,
         orderedQuantity: 20,
         status: OrderItemStatus.RECEIVED,
+        receivedQuantity: 12,
+        rejectedQuantity: 0,
+        qualityCheck: true,
       },
     }),
     prisma.orderItem.create({
@@ -383,6 +458,9 @@ async function main() {
         orderId: orders[7].id,
         orderedQuantity: 20,
         status: OrderItemStatus.RECEIVED,
+        receivedQuantity: 18,
+        rejectedQuantity: 0,
+        qualityCheck: true,
       },
     }),
     // Items for ORDER9
@@ -394,6 +472,9 @@ async function main() {
         orderId: orders[8].id,
         orderedQuantity: 30,
         status: OrderItemStatus.REJECTED,
+        receivedQuantity: 0,
+        rejectedQuantity: 30,
+        qualityCheck: true,
       },
     }),
     // Items for ORDER10
@@ -405,6 +486,9 @@ async function main() {
         orderId: orders[9].id,
         orderedQuantity: 10,
         status: OrderItemStatus.RECEIVED,
+        receivedQuantity: 25,
+        rejectedQuantity: 0,
+        qualityCheck: true,
       },
     }),
     prisma.orderItem.create({
@@ -415,6 +499,9 @@ async function main() {
         orderId: orders[9].id,
         orderedQuantity: 10,
         status: OrderItemStatus.RECEIVED,
+        receivedQuantity: 50,
+        rejectedQuantity: 0,
+        qualityCheck: true,
       },
     }),
   ]);
