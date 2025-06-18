@@ -1,9 +1,4 @@
-import {
-  OrderItemStatus,
-  OrderStatus,
-  PrismaClient,
-  DockStatus,
-} from "@prisma/client";
+import { OrderItemStatus, OrderStatus, PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -13,31 +8,61 @@ async function main() {
     prisma.dock.create({
       data: {
         name: "Dock 1",
-        status: DockStatus.OPEN,
+        status: true,
       },
     }),
     prisma.dock.create({
       data: {
         name: "Dock 2",
-        status: DockStatus.OPEN,
+        status: true,
       },
     }),
     prisma.dock.create({
       data: {
         name: "Dock 3",
-        status: DockStatus.OPEN,
+        status: true,
       },
     }),
     prisma.dock.create({
       data: {
         name: "Dock 4",
-        status: DockStatus.OPEN,
+        status: true,
       },
     }),
     prisma.dock.create({
       data: {
         name: "Dock 5",
-        status: DockStatus.OPEN,
+        status: true,
+      },
+    }),
+  ]);
+
+  // Create 5 vehicles
+  const vehicles = await Promise.all([
+    prisma.vehicle.create({
+      data: {
+        vehicleType: "Truck",
+        vehicleNumber: "1234567890",
+        queue: 1,
+        cbm: 1000,
+        weight: 1000,
+        driverName: "John Doe",
+        driverPhone: "1234567890",
+        eta: new Date(),
+        dockId: docks[0].id,
+      },
+    }),
+    prisma.vehicle.create({
+      data: {
+        vehicleType: "Truck",
+        vehicleNumber: "1234567891",
+        queue: 2,
+        cbm: 1000,
+        weight: 1000,
+        driverName: "John Smith",
+        driverPhone: "1234567891",
+        eta: new Date(),
+        dockId: docks[1].id,
       },
     }),
   ]);
@@ -394,7 +419,7 @@ async function main() {
     }),
   ]);
 
-  console.log({ vendors, orders, orderItems, docks });
+  console.log({ vendors, orders, orderItems, docks, vehicles });
 }
 
 main()

@@ -24,11 +24,6 @@ enum OrderItemStatus {
     REJECTED
 }
 
-enum DockStatus {
-    OPEN
-    CLOSED
-}
-
 model Vendor {
     id        Int      @id @default(autoincrement())
     name      String
@@ -80,9 +75,28 @@ model OrderItem {
 }
 
 model Dock {
-    id        Int        @id @default(autoincrement())
+    id        Int       @id @default(autoincrement())
     name      String
-    status    DockStatus @default(OPEN)
-    createdAt DateTime   @default(now())
-    updatedAt DateTime   @updatedAt
+    status    Boolean   @default(true)
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    Vehicle   Vehicle[]
+}
+
+model Vehicle {
+    id            Int       @id @default(autoincrement())
+    vehicleType   String
+    vehicleNumber String
+    queue         Int
+    cbm           Int
+    weight        Int?
+    driverName    String
+    driverPhone   String
+    eta           DateTime?
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+    dock          Dock?     @relation(fields: [dockId], references: [id])
+    dockId        Int?
+
+    @@index([vehicleNumber, dockId])
 }
