@@ -18,9 +18,9 @@ enum OrderStatus {
 }
 
 enum OrderType {
-    Standard
-    Import
-    Return
+    STANDARD
+    IMPORT
+    RETURN
 }
 
 enum OrderItemStatus {
@@ -43,7 +43,7 @@ model Order {
     id                  Int           @id @default(autoincrement())
     orderNumber         String        @unique
     businessUnit        String
-    orderType           OrderType     @default(Standard)
+    orderType           OrderType     @default(STANDARD)
     purchaseOrderDate   DateTime?
     expectedReceiptDate DateTime?
     status              OrderStatus   @default(NEW)

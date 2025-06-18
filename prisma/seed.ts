@@ -116,7 +116,7 @@ async function main() {
       data: {
         orderNumber: "1000000001",
         businessUnit: "Unit1",
-        orderType: OrderType.Standard,
+        orderType: OrderType.STANDARD,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -133,7 +133,7 @@ async function main() {
       data: {
         orderNumber: "1000000002",
         businessUnit: "Unit2",
-        orderType: OrderType.Standard,
+        orderType: OrderType.STANDARD,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -150,7 +150,7 @@ async function main() {
       data: {
         orderNumber: "1000000003",
         businessUnit: "Unit3",
-        orderType: OrderType.Standard,
+        orderType: OrderType.STANDARD,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -167,7 +167,7 @@ async function main() {
       data: {
         orderNumber: "1000000004",
         businessUnit: "Unit4",
-        orderType: OrderType.Standard,
+        orderType: OrderType.STANDARD,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -184,7 +184,7 @@ async function main() {
       data: {
         orderNumber: "1000000005",
         businessUnit: "Unit5",
-        orderType: OrderType.Import,
+        orderType: OrderType.IMPORT,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -201,7 +201,7 @@ async function main() {
       data: {
         orderNumber: "1000000006",
         businessUnit: "Unit6",
-        orderType: OrderType.Import,
+        orderType: OrderType.IMPORT,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -218,7 +218,7 @@ async function main() {
       data: {
         orderNumber: "1000000007",
         businessUnit: "Unit7",
-        orderType: OrderType.Import,
+        orderType: OrderType.IMPORT,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -235,7 +235,7 @@ async function main() {
       data: {
         orderNumber: "1000000008",
         businessUnit: "Unit8",
-        orderType: OrderType.Import,
+        orderType: OrderType.IMPORT,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -252,7 +252,7 @@ async function main() {
       data: {
         orderNumber: "1000000009",
         businessUnit: "Unit9",
-        orderType: OrderType.Return,
+        orderType: OrderType.RETURN,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -269,7 +269,7 @@ async function main() {
       data: {
         orderNumber: "1000000010",
         businessUnit: "Unit10",
-        orderType: OrderType.Return,
+        orderType: OrderType.RETURN,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -286,7 +286,7 @@ async function main() {
       data: {
         orderNumber: "1000000011",
         businessUnit: "Unit11",
-        orderType: OrderType.Return,
+        orderType: OrderType.RETURN,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -303,7 +303,7 @@ async function main() {
       data: {
         orderNumber: "1000000012",
         businessUnit: "Unit12",
-        orderType: OrderType.Return,
+        orderType: OrderType.RETURN,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
