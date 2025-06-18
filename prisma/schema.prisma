@@ -17,6 +17,12 @@ enum OrderStatus {
     CANCELLED
 }
 
+enum OrderType {
+    STANDARD
+    IMPORT
+    RETURN
+}
+
 enum OrderItemStatus {
     NOT_RECEIVED
     RECEIVING
@@ -34,24 +40,25 @@ model Vendor {
 }
 
 model Order {
-    id                  Int         @id @default(autoincrement())
-    orderNumber         String      @unique
+    id                  Int           @id @default(autoincrement())
+    orderNumber         String        @unique
     businessUnit        String
-    purchaseOrderType   Int
+    orderType           OrderType     @default(STANDARD)
     purchaseOrderDate   DateTime?
     expectedReceiptDate DateTime?
-    status              OrderStatus @default(NEW)
+    status              OrderStatus   @default(NEW)
     notes               String?
     vendorReference     String
     buyerName           String?
     buyerCity           String?
-    createdAt           DateTime    @default(now())
+    createdAt           DateTime      @default(now())
     createdBy           String
-    updatedAt           DateTime    @updatedAt
+    updatedAt           DateTime      @updatedAt
     updatedBy           String
     paymentStatus       String?
-    vendor              Vendor      @relation(fields: [vendorReference], references: [reference]) // Link to Vendor
+    vendor              Vendor        @relation(fields: [vendorReference], references: [reference]) // Link to Vendor
     items               OrderItem[]
+    dockBookings        DockBooking[] // Establishes the one-to-many relationship with DockBooking
 
     @@index([vendorReference, orderNumber, status])
 }
@@ -75,28 +82,41 @@ model OrderItem {
 }
 
 model Dock {
-    id        Int       @id @default(autoincrement())
-    name      String
-    status    Boolean   @default(true)
-    createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
-    Vehicle   Vehicle[]
+    id          Int           @id @default(autoincrement())
+    name        String
+    status      Boolean       @default(true)
+    createdAt   DateTime      @default(now())
+    updatedAt   DateTime      @updatedAt
+    DockBooking DockBooking[]
 }
 
-model Vehicle {
-    id            Int       @id @default(autoincrement())
-    vehicleType   String
+model VehicleType {
+    id          Int           @id @default(autoincrement())
+    type        String
+    description String
+    unloadTime  String
+    createdAt   DateTime      @default(now())
+    updatedAt   DateTime      @updatedAt
+    DockBooking DockBooking[]
+}
+
+model DockBooking {
+    id            Int         @id @default(autoincrement())
+    dock          Dock        @relation(fields: [dockId], references: [id])
+    dockId        Int
+    vehicleType   VehicleType @relation(fields: [vehicleTypeId], references: [id])
+    vehicleTypeId Int
     vehicleNumber String
+    weight        Int
     queue         Int
     cbm           Int
-    weight        Int?
     driverName    String
-    driverPhone   String
+    driverPhone   String?
     eta           DateTime?
-    createdAt     DateTime  @default(now())
-    updatedAt     DateTime  @updatedAt
-    dock          Dock?     @relation(fields: [dockId], references: [id])
-    dockId        Int?
+    createdAt     DateTime    @default(now())
+    updatedAt     DateTime    @updatedAt
+    order         Order?      @relation(fields: [orderId], references: [id])
+    orderId       Int?
 
-    @@index([vehicleNumber, dockId])
+    @@index([orderId])
 }

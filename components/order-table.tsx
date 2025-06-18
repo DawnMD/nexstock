@@ -148,7 +148,7 @@ const columns: ColumnDef<
     header: "Order Type",
     cell: ({ row }) => (
       <Badge variant="outline" className="px-2 py-1 text-xs">
-        {row.original.purchaseOrderType}
+        {row.original.orderType}
       </Badge>
     ),
   },
@@ -294,7 +294,7 @@ export function OrderTable() {
           <Table>
             <TableHeader className="bg-muted sticky top-0 z-10">
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
+                <TableRow className="h-12" key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
                     return (
                       <TableHead key={header.id} colSpan={header.colSpan}>
@@ -313,7 +313,7 @@ export function OrderTable() {
             <TableBody>
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
+                  <TableRow className="h-12" key={row.id}>
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
                         {flexRender(
@@ -351,7 +351,7 @@ export function OrderTable() {
             )}{" "}
             of {table.getFilteredRowModel().rows.length} row(s).
           </div>
-          <div className="flex w-full items-center gap-8 lg:w-fit">
+          <div className="flex w-full items-center gap-8 py-2 lg:w-fit">
             <div className="hidden items-center gap-2 lg:flex">
               <Label htmlFor="rows-per-page" className="text-sm font-medium">
                 Rows per page

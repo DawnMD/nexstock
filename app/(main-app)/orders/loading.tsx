@@ -21,7 +21,7 @@ export default function OrdersLoading() {
         <div className="overflow-hidden rounded-lg border">
           <Table>
             <TableHeader className="bg-muted sticky top-0 z-10">
-              <TableRow>
+              <TableRow className="h-12">
                 <TableHead>
                   <Skeleton className="h-4 w-24" />
                 </TableHead>
@@ -50,7 +50,7 @@ export default function OrdersLoading() {
             </TableHeader>
             <TableBody>
               {Array.from({ length: 10 }).map((_, index) => (
-                <TableRow key={index}>
+                <TableRow className="h-12" key={index}>
                   {/* Order Number with icon */}
                   <TableCell>
                     <div className="flex items-center gap-2">

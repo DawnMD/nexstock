@@ -1,4 +1,9 @@
-import { OrderItemStatus, OrderStatus, PrismaClient } from "@prisma/client";
+import {
+  OrderItemStatus,
+  OrderStatus,
+  PrismaClient,
+  OrderType,
+} from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -8,7 +13,7 @@ async function main() {
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
   await prisma.vendor.deleteMany();
-  await prisma.vehicle.deleteMany();
+  await prisma.vehicleType.deleteMany();
   await prisma.dock.deleteMany();
   console.log("Existing data deleted successfully");
 
@@ -46,32 +51,27 @@ async function main() {
     }),
   ]);
 
-  // Create 5 vehicles
-  const vehicles = await Promise.all([
-    prisma.vehicle.create({
+  // Create 3 vehicle types
+  const vehicleTypes = await Promise.all([
+    prisma.vehicleType.create({
       data: {
-        vehicleType: "Truck",
-        vehicleNumber: "1234567890",
-        queue: 1,
-        cbm: 1000,
-        weight: 5000,
-        driverName: "John Doe",
-        driverPhone: "1234567890",
-        eta: new Date(),
-        dockId: docks[0].id,
+        type: "Truck",
+        description: "Truck",
+        unloadTime: "60",
       },
     }),
-    prisma.vehicle.create({
+    prisma.vehicleType.create({
       data: {
-        vehicleType: "Truck",
-        vehicleNumber: "1234567891",
-        queue: 2,
-        cbm: 1000,
-        weight: 4500,
-        driverName: "John Smith",
-        driverPhone: "1234567891",
-        eta: new Date(),
-        dockId: docks[1].id,
+        type: "Container",
+        description: "Container",
+        unloadTime: "09",
+      },
+    }),
+    prisma.vehicleType.create({
+      data: {
+        type: "Trailer",
+        description: "Trailer",
+        unloadTime: "120",
       },
     }),
   ]);
@@ -110,13 +110,13 @@ async function main() {
     }),
   ]);
 
-  // Create 10 orders
+  // Create 12 orders
   const orders = await Promise.all([
     prisma.order.create({
       data: {
         orderNumber: "1000000001",
         businessUnit: "Unit1",
-        purchaseOrderType: 1,
+        orderType: OrderType.STANDARD,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -133,7 +133,7 @@ async function main() {
       data: {
         orderNumber: "1000000002",
         businessUnit: "Unit2",
-        purchaseOrderType: 1,
+        orderType: OrderType.STANDARD,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -150,7 +150,7 @@ async function main() {
       data: {
         orderNumber: "1000000003",
         businessUnit: "Unit3",
-        purchaseOrderType: 2,
+        orderType: OrderType.STANDARD,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -167,7 +167,7 @@ async function main() {
       data: {
         orderNumber: "1000000004",
         businessUnit: "Unit4",
-        purchaseOrderType: 2,
+        orderType: OrderType.STANDARD,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -184,7 +184,7 @@ async function main() {
       data: {
         orderNumber: "1000000005",
         businessUnit: "Unit5",
-        purchaseOrderType: 1,
+        orderType: OrderType.IMPORT,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -201,7 +201,7 @@ async function main() {
       data: {
         orderNumber: "1000000006",
         businessUnit: "Unit6",
-        purchaseOrderType: 1,
+        orderType: OrderType.IMPORT,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -218,7 +218,7 @@ async function main() {
       data: {
         orderNumber: "1000000007",
         businessUnit: "Unit7",
-        purchaseOrderType: 2,
+        orderType: OrderType.IMPORT,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -235,7 +235,7 @@ async function main() {
       data: {
         orderNumber: "1000000008",
         businessUnit: "Unit8",
-        purchaseOrderType: 2,
+        orderType: OrderType.IMPORT,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -252,7 +252,7 @@ async function main() {
       data: {
         orderNumber: "1000000009",
         businessUnit: "Unit9",
-        purchaseOrderType: 1,
+        orderType: OrderType.RETURN,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -269,7 +269,41 @@ async function main() {
       data: {
         orderNumber: "1000000010",
         businessUnit: "Unit10",
-        purchaseOrderType: 1,
+        orderType: OrderType.RETURN,
+        purchaseOrderDate: new Date(),
+        expectedReceiptDate: new Date(),
+        status: OrderStatus.NEW,
+        vendorReference: "1234567894",
+        paymentStatus: "Paid",
+        createdBy: "User E",
+        updatedBy: "User E",
+        notes: "Sports accessories and equipment",
+        buyerName: "Jack Anderson",
+        buyerCity: "San Jose",
+      },
+    }),
+    prisma.order.create({
+      data: {
+        orderNumber: "1000000011",
+        businessUnit: "Unit11",
+        orderType: OrderType.RETURN,
+        purchaseOrderDate: new Date(),
+        expectedReceiptDate: new Date(),
+        status: OrderStatus.NEW,
+        vendorReference: "1234567894",
+        paymentStatus: "Paid",
+        createdBy: "User E",
+        updatedBy: "User E",
+        notes: "Sports accessories and equipment",
+        buyerName: "Jack Anderson",
+        buyerCity: "San Jose",
+      },
+    }),
+    prisma.order.create({
+      data: {
+        orderNumber: "1000000012",
+        businessUnit: "Unit12",
+        orderType: OrderType.RETURN,
         purchaseOrderDate: new Date(),
         expectedReceiptDate: new Date(),
         status: OrderStatus.NEW,
@@ -293,7 +327,7 @@ async function main() {
         sku: "TS-COT-PRE-001",
         department: "Apparel",
         orderId: orders[0].id,
-        orderedQuantity: 10,
+        orderedQuantity: 50,
         status: OrderItemStatus.RECEIVED,
         receivedQuantity: 50,
         rejectedQuantity: 0,
@@ -306,7 +340,7 @@ async function main() {
         sku: "JN-DNM-001",
         department: "Apparel",
         orderId: orders[0].id,
-        orderedQuantity: 10,
+        orderedQuantity: 50,
         status: OrderItemStatus.RECEIVING,
         receivedQuantity: 20,
         rejectedQuantity: 0,
@@ -350,7 +384,7 @@ async function main() {
         orderedQuantity: 30,
         status: OrderItemStatus.REJECTED,
         receivedQuantity: 0,
-        rejectedQuantity: 10,
+        rejectedQuantity: 30,
         qualityCheck: true,
       },
     }),
@@ -363,7 +397,7 @@ async function main() {
         orderId: orders[3].id,
         orderedQuantity: 30,
         status: OrderItemStatus.RECEIVED,
-        receivedQuantity: 15,
+        receivedQuantity: 30,
         rejectedQuantity: 0,
         qualityCheck: true,
       },
@@ -376,7 +410,7 @@ async function main() {
         orderId: orders[3].id,
         orderedQuantity: 10,
         status: OrderItemStatus.RECEIVED,
-        receivedQuantity: 8,
+        receivedQuantity: 10,
         rejectedQuantity: 0,
         qualityCheck: true,
       },
@@ -402,7 +436,7 @@ async function main() {
         sku: "SH-RUN-001",
         department: "Footwear",
         orderId: orders[5].id,
-        orderedQuantity: 10,
+        orderedQuantity: 40,
         status: OrderItemStatus.RECEIVING,
         receivedQuantity: 35,
         rejectedQuantity: 0,
@@ -415,7 +449,7 @@ async function main() {
         sku: "SH-SOC-SPT-001",
         department: "Footwear",
         orderId: orders[5].id,
-        orderedQuantity: 10,
+        orderedQuantity: 100,
         status: OrderItemStatus.RECEIVED,
         receivedQuantity: 100,
         rejectedQuantity: 0,
@@ -429,7 +463,7 @@ async function main() {
         sku: "KT-KNV-SET-001",
         department: "Kitchenware",
         orderId: orders[6].id,
-        orderedQuantity: 10,
+        orderedQuantity: 20,
         status: OrderItemStatus.RECEIVED,
         receivedQuantity: 20,
         rejectedQuantity: 0,
@@ -445,7 +479,7 @@ async function main() {
         orderId: orders[7].id,
         orderedQuantity: 20,
         status: OrderItemStatus.RECEIVED,
-        receivedQuantity: 12,
+        receivedQuantity: 20,
         rejectedQuantity: 0,
         qualityCheck: true,
       },
@@ -458,7 +492,7 @@ async function main() {
         orderId: orders[7].id,
         orderedQuantity: 20,
         status: OrderItemStatus.RECEIVED,
-        receivedQuantity: 18,
+        receivedQuantity: 20,
         rejectedQuantity: 0,
         qualityCheck: true,
       },
@@ -484,7 +518,7 @@ async function main() {
         sku: "SP-DMB-SET-001",
         department: "Sports",
         orderId: orders[9].id,
-        orderedQuantity: 10,
+        orderedQuantity: 25,
         status: OrderItemStatus.RECEIVED,
         receivedQuantity: 25,
         rejectedQuantity: 0,
@@ -497,7 +531,7 @@ async function main() {
         sku: "SP-RES-BND-001",
         department: "Sports",
         orderId: orders[9].id,
-        orderedQuantity: 10,
+        orderedQuantity: 50,
         status: OrderItemStatus.RECEIVED,
         receivedQuantity: 50,
         rejectedQuantity: 0,
@@ -506,7 +540,7 @@ async function main() {
     }),
   ]);
 
-  console.log({ vendors, orders, orderItems, docks, vehicles });
+  console.log({ vendors, orders, orderItems, docks, vehicleTypes });
 }
 
 main()
