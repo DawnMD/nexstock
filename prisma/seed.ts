@@ -3,6 +3,70 @@ import { OrderItemStatus, OrderStatus, PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
+  // Create 5 docks
+  const docks = await Promise.all([
+    prisma.dock.create({
+      data: {
+        name: "Dock 1",
+        status: true,
+      },
+    }),
+    prisma.dock.create({
+      data: {
+        name: "Dock 2",
+        status: true,
+      },
+    }),
+    prisma.dock.create({
+      data: {
+        name: "Dock 3",
+        status: true,
+      },
+    }),
+    prisma.dock.create({
+      data: {
+        name: "Dock 4",
+        status: true,
+      },
+    }),
+    prisma.dock.create({
+      data: {
+        name: "Dock 5",
+        status: true,
+      },
+    }),
+  ]);
+
+  // Create 5 vehicles
+  const vehicles = await Promise.all([
+    prisma.vehicle.create({
+      data: {
+        vehicleType: "Truck",
+        vehicleNumber: "1234567890",
+        queue: 1,
+        cbm: 1000,
+        weight: 1000,
+        driverName: "John Doe",
+        driverPhone: "1234567890",
+        eta: new Date(),
+        dockId: docks[0].id,
+      },
+    }),
+    prisma.vehicle.create({
+      data: {
+        vehicleType: "Truck",
+        vehicleNumber: "1234567891",
+        queue: 2,
+        cbm: 1000,
+        weight: 1000,
+        driverName: "John Smith",
+        driverPhone: "1234567891",
+        eta: new Date(),
+        dockId: docks[1].id,
+      },
+    }),
+  ]);
+
   // Create 5 vendors
   const vendors = await Promise.all([
     prisma.vendor.create({
@@ -190,6 +254,7 @@ async function main() {
         sku: "TS-COT-PRE-001",
         department: "Apparel",
         orderId: orders[0].id,
+        orderedQuantity: 10,
         status: OrderItemStatus.RECEIVED,
       },
     }),
@@ -199,6 +264,7 @@ async function main() {
         sku: "JN-DNM-001",
         department: "Apparel",
         orderId: orders[0].id,
+        orderedQuantity: 10,
         status: OrderItemStatus.RECEIVING,
       },
     }),
@@ -209,6 +275,7 @@ async function main() {
         sku: "EL-HP-WL-001",
         department: "Electronics",
         orderId: orders[1].id,
+        orderedQuantity: 20,
         status: OrderItemStatus.RECEIVING,
       },
     }),
@@ -218,6 +285,7 @@ async function main() {
         sku: "EL-SP-BT-001",
         department: "Electronics",
         orderId: orders[1].id,
+        orderedQuantity: 20,
         status: OrderItemStatus.RECEIVING,
       },
     }),
@@ -228,6 +296,7 @@ async function main() {
         sku: "FN-CHR-OFF-001",
         department: "Furniture",
         orderId: orders[2].id,
+        orderedQuantity: 30,
         status: OrderItemStatus.REJECTED,
       },
     }),
@@ -238,6 +307,7 @@ async function main() {
         sku: "FN-LMP-DSK-001",
         department: "Furniture",
         orderId: orders[3].id,
+        orderedQuantity: 30,
         status: OrderItemStatus.RECEIVED,
       },
     }),
@@ -247,6 +317,7 @@ async function main() {
         sku: "FN-CAB-STR-001",
         department: "Furniture",
         orderId: orders[3].id,
+        orderedQuantity: 10,
         status: OrderItemStatus.RECEIVED,
       },
     }),
@@ -257,6 +328,7 @@ async function main() {
         sku: "EL-WT-SM-001",
         department: "Electronics",
         orderId: orders[4].id,
+        orderedQuantity: 10,
         status: OrderItemStatus.NOT_RECEIVED,
       },
     }),
@@ -267,6 +339,7 @@ async function main() {
         sku: "SH-RUN-001",
         department: "Footwear",
         orderId: orders[5].id,
+        orderedQuantity: 10,
         status: OrderItemStatus.RECEIVING,
       },
     }),
@@ -276,6 +349,7 @@ async function main() {
         sku: "SH-SOC-SPT-001",
         department: "Footwear",
         orderId: orders[5].id,
+        orderedQuantity: 10,
         status: OrderItemStatus.RECEIVED,
       },
     }),
@@ -286,6 +360,7 @@ async function main() {
         sku: "KT-KNV-SET-001",
         department: "Kitchenware",
         orderId: orders[6].id,
+        orderedQuantity: 10,
         status: OrderItemStatus.RECEIVED,
       },
     }),
@@ -296,6 +371,7 @@ async function main() {
         sku: "KT-CFM-001",
         department: "Kitchenware",
         orderId: orders[7].id,
+        orderedQuantity: 20,
         status: OrderItemStatus.RECEIVED,
       },
     }),
@@ -305,6 +381,7 @@ async function main() {
         sku: "KT-TST-001",
         department: "Kitchenware",
         orderId: orders[7].id,
+        orderedQuantity: 20,
         status: OrderItemStatus.RECEIVED,
       },
     }),
@@ -315,6 +392,7 @@ async function main() {
         sku: "SP-YOG-MAT-001",
         department: "Sports",
         orderId: orders[8].id,
+        orderedQuantity: 30,
         status: OrderItemStatus.REJECTED,
       },
     }),
@@ -325,6 +403,7 @@ async function main() {
         sku: "SP-DMB-SET-001",
         department: "Sports",
         orderId: orders[9].id,
+        orderedQuantity: 10,
         status: OrderItemStatus.RECEIVED,
       },
     }),
@@ -334,12 +413,13 @@ async function main() {
         sku: "SP-RES-BND-001",
         department: "Sports",
         orderId: orders[9].id,
+        orderedQuantity: 10,
         status: OrderItemStatus.RECEIVED,
       },
     }),
   ]);
 
-  console.log({ vendors, orders, orderItems });
+  console.log({ vendors, orders, orderItems, docks, vehicles });
 }
 
 main()

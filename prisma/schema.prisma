@@ -60,6 +60,7 @@ model OrderItem {
     id               Int             @id @default(autoincrement())
     description      String
     status           OrderItemStatus @default(NOT_RECEIVED)
+    orderedQuantity  Int             @default(0)
     receivedQuantity Int             @default(0)
     rejectedQuantity Int             @default(0)
     sku              String
@@ -71,4 +72,31 @@ model OrderItem {
     orderId          Int?
 
     @@index([status, sku])
+}
+
+model Dock {
+    id        Int       @id @default(autoincrement())
+    name      String
+    status    Boolean   @default(true)
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    Vehicle   Vehicle[]
+}
+
+model Vehicle {
+    id            Int       @id @default(autoincrement())
+    vehicleType   String
+    vehicleNumber String
+    queue         Int
+    cbm           Int
+    weight        Int?
+    driverName    String
+    driverPhone   String
+    eta           DateTime?
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+    dock          Dock?     @relation(fields: [dockId], references: [id])
+    dockId        Int?
+
+    @@index([vehicleNumber, dockId])
 }
