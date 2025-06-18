@@ -148,7 +148,7 @@ const columns: ColumnDef<
     header: "Order Type",
     cell: ({ row }) => (
       <Badge variant="outline" className="px-2 py-1 text-xs">
-        {row.original.purchaseOrderType}
+        {row.original.orderType}
       </Badge>
     ),
   },
