@@ -8,6 +8,7 @@ export const orderRouter = createTRPCRouter({
         vendor: {
           select: {
             name: true,
+            reference: true,
           },
         },
       },
@@ -16,26 +17,20 @@ export const orderRouter = createTRPCRouter({
     return orders;
   }),
 
-  getOrderDetails: privateProcedure
+  getOrderDetailsByOrderNumber: privateProcedure
     .input(
       z.object({
-        // Define a Zod schema for the input
-        id: z // Define a field named 'id'
-          .string() // Specify that 'id' should be a string
-          .transform((val) => parseInt(val, 10)) // Transform the string to an integer using base 10
-          .refine((val) => !isNaN(val), {
-            // Validate that the transformed value is a valid number
-            message: "ID must be a valid number", // Custom error message if validation fails
-          }),
+        orderNumber: z.string(),
       }),
     )
     .query(async ({ ctx, input }) => {
       const orderDetails = await ctx.db.order.findUnique({
-        where: { id: input.id },
+        where: { orderNumber: input.orderNumber },
         include: {
           vendor: {
             select: {
               name: true,
+              reference: true,
             },
           },
           items: {
@@ -48,6 +43,7 @@ export const orderRouter = createTRPCRouter({
               sku: true,
               department: true,
               qualityCheck: true,
+              totalQuantity: true,
             },
           },
         },
