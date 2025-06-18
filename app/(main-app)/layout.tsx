@@ -34,7 +34,7 @@ export default async function MainAppLayout({
       <AppSidebar variant="inset" user={userData} />
       <SidebarInset>
         <SiteHeader />
-        <main className="px-6">{children}</main>
+        <main className="px-6 py-4">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );
