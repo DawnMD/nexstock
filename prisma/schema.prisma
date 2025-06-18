@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
     provider = "postgresql"
-    url      = "postgresql://shelfDB_owner:npg_3WL8UyKpGcVu@ep-sweet-night-a10ou838-pooler.ap-southeast-1.aws.neon.tech/shelfDB?sslmode=require"
+    url      = env("DATABASE_URL")
 }
 
 enum OrderStatus {
