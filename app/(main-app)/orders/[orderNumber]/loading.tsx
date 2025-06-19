@@ -9,7 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeftIcon } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeftIcon, PackageIcon, TruckIcon } from "lucide-react";
 
 export default function OrderDetailLoading() {
   return (
@@ -56,7 +57,26 @@ export default function OrderDetailLoading() {
               </Card>
             ))}
           </div>
-
+          <Tabs defaultValue="order-details" className="flex-1">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger
+                value="order-details"
+                className="flex items-center gap-2"
+                disabled
+              >
+                <PackageIcon className="h-4 w-4" />
+                Order Details
+              </TabsTrigger>
+              <TabsTrigger
+                value="dock-bookings"
+                className="flex items-center gap-2"
+                disabled
+              >
+                <TruckIcon className="h-4 w-4" />
+                Dock Bookings
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
           {/* Shipping info and timeline skeleton */}
           <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
             {Array.from({ length: 2 }).map((_, index) => (
