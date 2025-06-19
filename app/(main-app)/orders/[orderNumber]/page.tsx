@@ -12,9 +12,16 @@ export default async function OrderDetailsPage({
     return <div>Order not found</div>;
   }
 
-  await api.order.getOrderDetailsByOrderNumber({
-    orderNumber,
-  });
+  await Promise.all([
+    api.order.getOrderDetailsByOrderNumber.prefetch({
+      orderNumber,
+    }),
+    api.order.getAvailableDocks.prefetch(),
+    api.order.getVehicleTypes.prefetch(),
+    api.order.getDockBookingsByOrderNumber.prefetch({
+      orderNumber,
+    }),
+  ]);
 
   return (
     <HydrateClient>
