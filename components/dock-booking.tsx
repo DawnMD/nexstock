@@ -150,11 +150,11 @@ export function DockBooking({ orderNumber }: DockBookingProps) {
                 Create Booking
               </Button>
             </SheetTrigger>
-            <SheetContent className="px-5 sm:max-w-[500px]">
+            <SheetContent className="overflow-y-auto px-5 sm:max-w-[500px]">
               <SheetHeader>
                 <SheetTitle>Create Dock Booking</SheetTitle>
               </SheetHeader>
-              <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+              <form onSubmit={handleSubmit} className="mt-6 space-y-6 pb-6">
                 <div className="space-y-6">
                   <div className="space-y-4">
                     <div className="space-y-2">
