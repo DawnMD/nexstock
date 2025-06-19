@@ -58,18 +58,7 @@ export function OrderDetail({ orderNumber }: { orderNumber: string }) {
       />
 
       {/* Tabs for order details and dock bookings */}
-      <Tabs defaultValue="dock-bookings" className="flex-1">
-        {/* Shipping info and timeline */}
-        <OrderDetailInfo
-          shippingInfo={{
-            vendorName: orderDetails.vendor.name,
-            vendorReference: orderDetails.vendor.reference,
-          }}
-          timeline={{
-            expectedReceiptDate: orderDetails.expectedReceiptDate,
-            orderDate: orderDetails.purchaseOrderDate,
-          }}
-        />
+      <Tabs defaultValue="order-details" className="flex-1">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger
             value="order-details"
@@ -88,6 +77,17 @@ export function OrderDetail({ orderNumber }: { orderNumber: string }) {
         </TabsList>
 
         <TabsContent value="order-details" className="space-y-6">
+          {/* Shipping info and timeline */}
+          <OrderDetailInfo
+            shippingInfo={{
+              vendorName: orderDetails.vendor.name,
+              vendorReference: orderDetails.vendor.reference,
+            }}
+            timeline={{
+              expectedReceiptDate: orderDetails.expectedReceiptDate,
+              orderDate: orderDetails.purchaseOrderDate,
+            }}
+          />
           {/* Line items */}
           <OrderLineItems
             lineItems={orderDetails.items.map((item) => ({
