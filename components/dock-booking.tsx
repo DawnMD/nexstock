@@ -1,16 +1,28 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar } from "@/components/ui/calendar";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -19,6 +31,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
   Table,
   TableBody,
   TableCell,
@@ -26,148 +45,161 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
-import { format } from "date-fns";
-import { PlusIcon, TruckIcon } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { format, subDays } from "date-fns";
+import {
+  CalendarIcon,
+  EditIcon,
+  MoreVerticalIcon,
+  PlusIcon,
+  TrashIcon,
+} from "lucide-react";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
+import { Badge } from "./ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
-interface DockBookingProps {
-  orderNumber: string;
-}
-
-export function DockBooking({ orderNumber }: DockBookingProps) {
+const formSchema = z.object({
+  dockId: z.string().min(1, { message: "Dock is required" }),
+  vehicleTypeId: z.string().min(1, { message: "Vehicle type is required" }),
+  vehicleNumber: z.string().min(1, { message: "Vehicle number is required" }),
+  weight: z
+    .string()
+    .min(1, { message: "Weight is required" })
+    .refine((val) => !isNaN(Number(val)), {
+      message: "Weight must be a number",
+    })
+    .refine((val) => Number(val) > 0, {
+      message: "Weight must be greater than 0",
+    }),
+  queue: z
+    .string()
+    .min(1, { message: "Queue is required" })
+    .refine((val) => !isNaN(Number(val)), {
+      message: "Queue must be a number",
+    })
+    .refine((val) => Number(val) > 0, {
+      message: "Queue must be greater than 0",
+    }),
+  cbm: z
+    .string()
+    .min(1, { message: "CBM is required" })
+    .refine((val) => !isNaN(Number(val)), { message: "CBM must be a number" })
+    .refine((val) => Number(val) > 0, {
+      message: "CBM must be greater than 0",
+    }),
+  driverName: z.string().min(1, { message: "Driver name is required" }),
+  driverPhone: z.string().optional(),
+  eta: z.date().optional(),
+});
+export function DockBooking({ orderNumber }: { orderNumber: string }) {
+  const utils = api.useUtils();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    dockId: "",
-    vehicleTypeId: "",
-    vehicleNumber: "",
-    weight: "",
-    queue: "",
-    cbm: "",
-    driverName: "",
-    driverPhone: "",
-    eta: "",
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      dockId: "",
+      vehicleTypeId: "",
+      vehicleNumber: "",
+      weight: "",
+      queue: "",
+      cbm: "",
+      driverName: "",
+      driverPhone: "",
+      eta: undefined,
+    },
   });
 
-  const { data: dockBookings = [], isLoading: isLoadingDockBookings } =
-    api.order.getDockBookingsByOrderNumber.useQuery({
+  const [dockBookings] =
+    api.order.getDockBookingsByOrderNumber.useSuspenseQuery({
       orderNumber,
     });
 
-  const { data: availableDocks = [], isLoading: isLoadingDocks } =
-    api.order.getAvailableDocks.useQuery();
-  const { data: vehicleTypes = [], isLoading: isLoadingVehicleTypes } =
-    api.order.getVehicleTypes.useQuery();
+  const [availableDocks] = api.order.getAvailableDocks.useSuspenseQuery();
+  const [vehicleTypes] = api.order.getVehicleTypes.useSuspenseQuery();
 
   const createDockBookingMutation = api.order.createDockBooking.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Dock booking created successfully");
-      setIsCreateDialogOpen(false);
-      setFormData({
-        dockId: "",
-        vehicleTypeId: "",
-        vehicleNumber: "",
-        weight: "",
-        queue: "",
-        cbm: "",
-        driverName: "",
-        driverPhone: "",
-        eta: "",
-      });
       // Invalidate the dock bookings query to refresh the list
-      void utils.order.getDockBookingsByOrderNumber.invalidate({ orderNumber });
+      await utils.order.getDockBookingsByOrderNumber.invalidate({
+        orderNumber,
+      });
+      setIsCreateDialogOpen(false);
+      form.reset();
     },
     onError: (error) => {
       toast.error(error.message);
     },
   });
 
-  const utils = api.useUtils();
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (
-      !formData.dockId ||
-      !formData.vehicleTypeId ||
-      !formData.vehicleNumber ||
-      !formData.weight ||
-      !formData.queue ||
-      !formData.cbm ||
-      !formData.driverName
-    ) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
     createDockBookingMutation.mutate({
       orderNumber,
-      dockId: parseInt(formData.dockId),
-      vehicleTypeId: parseInt(formData.vehicleTypeId),
-      vehicleNumber: formData.vehicleNumber,
-      weight: parseInt(formData.weight),
-      queue: parseInt(formData.queue),
-      cbm: parseInt(formData.cbm),
-      driverName: formData.driverName,
-      driverPhone: formData.driverPhone || undefined,
-      eta: formData.eta ? new Date(formData.eta) : undefined,
+      dockId: parseInt(values.dockId),
+      vehicleTypeId: parseInt(values.vehicleTypeId),
+      vehicleNumber: values.vehicleNumber,
+      weight: parseInt(values.weight),
+      queue: parseInt(values.queue),
+      cbm: parseInt(values.cbm),
+      driverName: values.driverName,
+      driverPhone: values.driverPhone,
+      eta: values.eta,
     });
-  };
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-
-    // Pre-fill CBM when vehicle type is selected
-    if (field === "vehicleTypeId") {
-      const selectedVehicleType = vehicleTypes.find(
-        (type) => type.id.toString() === value,
-      );
-      if (selectedVehicleType) {
-        setFormData((prev) => ({
-          ...prev,
-          cbm: selectedVehicleType.unloadTime,
-        }));
-      }
-    }
   };
 
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-muted-foreground flex items-center gap-2 text-sm font-medium tracking-wide uppercase">
-            <TruckIcon className="h-4 w-4" />
+      <CardHeader className="flex flex-col items-start justify-between gap-2 lg:flex-row lg:items-center">
+        <div>
+          <CardTitle className="flex items-center gap-2">
             Dock Bookings
+            <Badge variant="secondary" className="text-xs">
+              {dockBookings.length} total
+            </Badge>
           </CardTitle>
-          <Sheet open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <SheetTrigger asChild>
-              <Button
-                size="sm"
-                disabled={isLoadingDocks || isLoadingVehicleTypes}
+          <CardDescription>Manage dock bookings for this order</CardDescription>
+        </div>
+        <Sheet open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <SheetTrigger asChild>
+            <Button className="cursor-pointer bg-black text-white hover:bg-black/90">
+              <PlusIcon className="mr-2 h-4 w-4" />
+              Create Booking
+            </Button>
+          </SheetTrigger>
+          <SheetContent className="overflow-y-auto px-5 sm:max-w-[500px]">
+            <SheetHeader>
+              <SheetTitle>Create Dock Booking</SheetTitle>
+            </SheetHeader>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
               >
-                <PlusIcon className="mr-2 h-4 w-4" />
-                Create Booking
-              </Button>
-            </SheetTrigger>
-            <SheetContent className="overflow-y-auto px-5 sm:max-w-[500px]">
-              <SheetHeader>
-                <SheetTitle>Create Dock Booking</SheetTitle>
-              </SheetHeader>
-              <form onSubmit={handleSubmit} className="mt-6 space-y-6 pb-6">
-                <div className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="dock">Dock *</Label>
+                <FormField
+                  control={form.control}
+                  name="dockId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dock *</FormLabel>
                       <Select
-                        value={formData.dockId}
-                        onValueChange={(value) =>
-                          handleInputChange("dockId", value)
-                        }
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
                       >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select dock" />
-                        </SelectTrigger>
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select a dock" />
+                          </SelectTrigger>
+                        </FormControl>
                         <SelectContent>
                           {availableDocks.map((dock) => (
                             <SelectItem
@@ -179,218 +211,295 @@ export function DockBooking({ orderNumber }: DockBookingProps) {
                           ))}
                         </SelectContent>
                       </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="vehicleType">Vehicle Type *</Label>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="vehicleTypeId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Vehicle Type *</FormLabel>
                       <Select
-                        value={formData.vehicleTypeId}
-                        onValueChange={(value) =>
-                          handleInputChange("vehicleTypeId", value)
-                        }
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
                       >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select vehicle type" />
-                        </SelectTrigger>
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select a vehicle type" />
+                          </SelectTrigger>
+                        </FormControl>
                         <SelectContent>
-                          {vehicleTypes.map((type) => (
+                          {vehicleTypes.map((vehicleType) => (
                             <SelectItem
-                              key={type.id}
-                              value={type.id.toString()}
+                              key={vehicleType.id}
+                              value={vehicleType.id.toString()}
                             >
-                              {type.type}
+                              {vehicleType.type}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="vehicleNumber">Vehicle Number *</Label>
-                      <Input
-                        id="vehicleNumber"
-                        value={formData.vehicleNumber}
-                        onChange={(e) =>
-                          handleInputChange("vehicleNumber", e.target.value)
-                        }
-                        placeholder="Enter vehicle number"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="driverName">Driver Name *</Label>
-                      <Input
-                        id="driverName"
-                        value={formData.driverName}
-                        onChange={(e) =>
-                          handleInputChange("driverName", e.target.value)
-                        }
-                        placeholder="Enter driver name"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="weight">Weight (kg) *</Label>
-                      <Input
-                        id="weight"
-                        type="number"
-                        value={formData.weight}
-                        onChange={(e) =>
-                          handleInputChange("weight", e.target.value)
-                        }
-                        placeholder="Weight"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="queue">Queue *</Label>
-                      <Input
-                        id="queue"
-                        type="number"
-                        value={formData.queue}
-                        onChange={(e) =>
-                          handleInputChange("queue", e.target.value)
-                        }
-                        placeholder="Queue"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cbm">CBM *</Label>
-                      <Input
-                        id="cbm"
-                        type="number"
-                        value={formData.cbm}
-                        onChange={(e) =>
-                          handleInputChange("cbm", e.target.value)
-                        }
-                        placeholder="CBM"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="driverPhone">Driver Phone</Label>
-                      <Input
-                        id="driverPhone"
-                        value={formData.driverPhone}
-                        onChange={(e) =>
-                          handleInputChange("driverPhone", e.target.value)
-                        }
-                        placeholder="Enter phone number"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="eta">ETA</Label>
-                      <Input
-                        id="eta"
-                        type="date"
-                        value={formData.eta}
-                        onChange={(e) =>
-                          handleInputChange("eta", e.target.value)
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-3 pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsCreateDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={createDockBookingMutation.isPending}
-                    >
-                      {createDockBookingMutation.isPending
-                        ? "Creating..."
-                        : "Create Booking"}
-                    </Button>
-                  </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="vehicleNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Vehicle Number *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter vehicle number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="driverName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Driver Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter driver name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="weight"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Weight (kg) *</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter weight"
+                          type="number"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="queue"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Queue *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter queue" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="cbm"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>CBM *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter CBM" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="driverPhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Driver Phone</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter driver phone" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="eta"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>ETA</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground",
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a ETA</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="center">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => date < subDays(new Date(), 1)}
+                            captionLayout="dropdown"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setIsCreateDialogOpen(false);
+                      form.reset();
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={createDockBookingMutation.isPending}
+                  >
+                    {createDockBookingMutation.isPending
+                      ? "Creating..."
+                      : "Create Booking"}
+                  </Button>
                 </div>
               </form>
-            </SheetContent>
-          </Sheet>
-        </div>
+            </Form>
+          </SheetContent>
+        </Sheet>
       </CardHeader>
       <CardContent>
-        {isLoadingDockBookings ? (
-          <div className="text-muted-foreground py-8 text-center">
-            <TruckIcon className="mx-auto mb-4 h-12 w-12 animate-pulse opacity-50" />
-            <p>Loading dock bookings...</p>
-          </div>
-        ) : dockBookings.length === 0 ? (
-          <div className="text-muted-foreground text-center">
-            <TruckIcon className="mx-auto mb-4 h-12 w-12 opacity-50" />
-            <p>No dock bookings found for this order.</p>
-            <p className="text-sm">Create a new booking to get started.</p>
-          </div>
-        ) : (
-          <div className="overflow-hidden rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Dock</TableHead>
-                  <TableHead>Vehicle</TableHead>
-                  <TableHead>Driver</TableHead>
-                  <TableHead className="text-right">Weight</TableHead>
-                  <TableHead className="text-right">Queue</TableHead>
-                  <TableHead className="text-right">CBM</TableHead>
-                  <TableHead>ETA</TableHead>
-                  <TableHead>Created</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {dockBookings.map((booking) => (
-                  <TableRow key={booking.id}>
-                    <TableCell className="font-medium">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead>Dock</TableHead>
+                <TableHead>Vehicle</TableHead>
+                <TableHead>Driver</TableHead>
+                <TableHead>Weight (kg)</TableHead>
+                <TableHead>Queue</TableHead>
+                <TableHead>CBM</TableHead>
+                <TableHead>ETA</TableHead>
+                <TableHead>Created At</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {dockBookings.map((booking) => (
+                <TableRow key={booking.id} className="hover:bg-muted/50">
+                  <TableCell className="font-medium">
+                    <Badge variant="outline" className="font-mono">
                       {booking.dock.name}
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">
-                          {booking.vehicleNumber}
-                        </div>
-                        <div className="text-muted-foreground text-sm">
-                          {booking.vehicleType.type}
-                        </div>
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="font-mono text-sm font-medium">
+                        {booking.vehicleType.type}
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{booking.driverName}</div>
-                        {booking.driverPhone && (
-                          <div className="text-muted-foreground text-sm">
-                            {booking.driverPhone}
-                          </div>
-                        )}
+                      <div className="text-muted-foreground text-xs">
+                        No. {booking.vehicleNumber}
                       </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {booking.weight} kg
-                    </TableCell>
-                    <TableCell className="text-right">
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="text-sm font-medium">
+                        {booking.driverName}
+                      </div>
+                      {booking.driverPhone && (
+                        <div className="text-muted-foreground font-mono text-xs">
+                          Phone:{booking.driverPhone}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-medium">{booking.weight}</span>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Badge
+                      variant={booking.queue <= 2 ? "default" : "secondary"}
+                      className="flex h-8 w-8 items-center justify-center rounded-full p-0"
+                    >
                       {booking.queue}
-                    </TableCell>
-                    <TableCell className="text-right">{booking.cbm}</TableCell>
-                    <TableCell>
-                      {booking.eta
-                        ? format(new Date(booking.eta), "dd MMM yyyy HH:mm")
-                        : "-"}
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(booking.createdAt), "dd MMM yyyy")}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-mono text-sm">{booking.cbm}</span>
+                  </TableCell>
+                  <TableCell>
+                    {booking.eta ? (
+                      <div className="flex items-baseline gap-1">
+                        <div className="text-sm font-medium">
+                          {format(booking.eta, "dd")}
+                        </div>
+                        <div className="text-muted-foreground font-mono text-xs">
+                          {format(booking.eta, "MMM yyyy")}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-muted-foreground text-sm">
+                      {format(booking.createdAt, "dd MMM yyyy")}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 cursor-pointer"
+                        >
+                          <MoreVerticalIcon className="h-4 w-4" />
+                          <span className="sr-only">Open menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem className="cursor-pointer">
+                          <EditIcon className="mr-2 h-4 w-4 text-blue-500" />
+                          Edit
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem className="cursor-pointer text-red-600">
+                          <TrashIcon className="mr-2 h-4 w-4 text-red-500" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );
