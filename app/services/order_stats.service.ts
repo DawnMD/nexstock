@@ -1,4 +1,4 @@
-import { db } from "@/server/db";
+import { type PrismaClient } from "@prisma/client";
 
 export interface OrderStats {
   STANDARD: number;
@@ -8,7 +8,7 @@ export interface OrderStats {
 }
 
 export class OrderStatsService {
-  static async getOrderStats(): Promise<OrderStats> {
+  static async getOrderStats(db: PrismaClient): Promise<OrderStats> {
     const stats = await db.order.groupBy({
       by: ["orderType"],
       _count: {
@@ -24,7 +24,7 @@ export class OrderStatsService {
     };
 
     stats.forEach((stat) => {
-      statsMap[stat.orderType] = stat._count.orderNumber;
+      statsMap[stat.orderType as keyof OrderStats] = stat._count.orderNumber;
       statsMap.total += stat._count.orderNumber;
     });
 

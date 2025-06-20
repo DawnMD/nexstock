@@ -175,7 +175,7 @@ export const orderRouter = createTRPCRouter({
 
       return dockBooking;
     }),
-  getOrderStats: privateProcedure.query(async () => {
-    return OrderStatsService.getOrderStats();
+  getOrderStats: privateProcedure.query(async ({ ctx }) => {
+    return OrderStatsService.getOrderStats(ctx.db);
   }),
 });
