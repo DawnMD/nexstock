@@ -1,5 +1,6 @@
-import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
 import { z } from "zod";
+import { OrderStatsService } from "@/app/services/order_stats.service";
+import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
 
 export const orderRouter = createTRPCRouter({
   getAllOrders: privateProcedure.query(async ({ ctx }) => {
@@ -174,4 +175,7 @@ export const orderRouter = createTRPCRouter({
 
       return dockBooking;
     }),
+  getOrderStats: privateProcedure.query(async () => {
+    return OrderStatsService.getOrderStats();
+  }),
 });
