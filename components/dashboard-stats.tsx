@@ -1,19 +1,11 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
+import { api } from "@/trpc/react";
 
-type OrderStats = {
-  STANDARD: number;
-  IMPORT: number;
-  RETURN: number;
-  total: number;
-};
+export function DashboardStats() {
+  const [stats] = api.order.getOrderStats.useSuspenseQuery();
 
-interface DashboardStatsProps {
-  stats: OrderStats;
-}
-
-export function DashboardStats({ stats }: DashboardStatsProps) {
   const statCards = [
     {
       title: "Total Orders",
