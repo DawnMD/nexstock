@@ -391,116 +391,122 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
           </SheetContent>
         </Sheet>
       </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead>Dock</TableHead>
-                <TableHead>Vehicle</TableHead>
-                <TableHead>Driver</TableHead>
-                <TableHead>Weight (kg)</TableHead>
-                <TableHead>Queue</TableHead>
-                <TableHead>CBM</TableHead>
-                <TableHead>ETA</TableHead>
-                <TableHead>Created At</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {dockBookings.map((booking) => (
-                <TableRow key={booking.id} className="hover:bg-muted/50">
-                  <TableCell className="font-medium">
-                    <Badge variant="outline" className="font-mono">
-                      {booking.dock.name}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="font-mono text-sm font-medium">
-                        {booking.vehicleType.type}
-                      </div>
-                      <div className="text-muted-foreground text-xs">
-                        No. {booking.vehicleNumber}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="text-sm font-medium">
-                        {booking.driverName}
-                      </div>
-                      {booking.driverPhone && (
-                        <div className="text-muted-foreground font-mono text-xs">
-                          Phone:{booking.driverPhone}
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-medium">{booking.weight}</span>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Badge
-                      variant={booking.queue <= 2 ? "default" : "secondary"}
-                      className="flex h-8 w-8 items-center justify-center rounded-full p-0"
-                    >
-                      {booking.queue}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-mono text-sm">{booking.cbm}</span>
-                  </TableCell>
-                  <TableCell>
-                    {booking.eta ? (
-                      <div className="flex items-baseline gap-1">
-                        <div className="text-sm font-medium">
-                          {format(booking.eta, "dd")}
-                        </div>
-                        <div className="text-muted-foreground font-mono text-xs">
-                          {format(booking.eta, "MMM yyyy")}
-                        </div>
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-muted-foreground text-sm">
-                      {format(booking.createdAt, "dd MMM yyyy")}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 cursor-pointer"
-                        >
-                          <MoreVerticalIcon className="h-4 w-4" />
-                          <span className="sr-only">Open menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem className="cursor-pointer">
-                          <EditIcon className="mr-2 h-4 w-4 text-blue-500" />
-                          Edit
-                        </DropdownMenuItem>
-
-                        <DropdownMenuItem className="cursor-pointer text-red-600">
-                          <TrashIcon className="mr-2 h-4 w-4 text-red-500" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+      {dockBookings.length > 0 ? (
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Dock</TableHead>
+                  <TableHead>Vehicle</TableHead>
+                  <TableHead>Driver</TableHead>
+                  <TableHead>Weight (kg)</TableHead>
+                  <TableHead>Queue</TableHead>
+                  <TableHead>CBM</TableHead>
+                  <TableHead>ETA</TableHead>
+                  <TableHead>Created At</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
+              </TableHeader>
+              <TableBody>
+                {dockBookings.map((booking) => (
+                  <TableRow key={booking.id} className="hover:bg-muted/50">
+                    <TableCell className="font-medium">
+                      <Badge variant="outline" className="font-mono">
+                        {booking.dock.name}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="font-mono text-sm font-medium">
+                          {booking.vehicleType.type}
+                        </div>
+                        <div className="text-muted-foreground text-xs">
+                          No. {booking.vehicleNumber}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium">
+                          {booking.driverName}
+                        </div>
+                        {booking.driverPhone && (
+                          <div className="text-muted-foreground font-mono text-xs">
+                            Phone:{booking.driverPhone}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-medium">{booking.weight}</span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge
+                        variant={booking.queue <= 2 ? "default" : "secondary"}
+                        className="flex h-8 w-8 items-center justify-center rounded-full p-0"
+                      >
+                        {booking.queue}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-mono text-sm">{booking.cbm}</span>
+                    </TableCell>
+                    <TableCell>
+                      {booking.eta ? (
+                        <div className="flex items-baseline gap-1">
+                          <div className="text-sm font-medium">
+                            {format(booking.eta, "dd")}
+                          </div>
+                          <div className="text-muted-foreground font-mono text-xs">
+                            {format(booking.eta, "MMM yyyy")}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-muted-foreground text-sm">
+                        {format(booking.createdAt, "dd MMM yyyy")}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 cursor-pointer"
+                          >
+                            <MoreVerticalIcon className="h-4 w-4" />
+                            <span className="sr-only">Open menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem className="cursor-pointer">
+                            <EditIcon className="mr-2 h-4 w-4 text-blue-500" />
+                            Edit
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem className="cursor-pointer text-red-600">
+                            <TrashIcon className="mr-2 h-4 w-4 text-red-500" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      ) : (
+        <CardContent>
+          <div className="text-center font-medium">No dock bookings found</div>
+        </CardContent>
+      )}
     </Card>
   );
 }
