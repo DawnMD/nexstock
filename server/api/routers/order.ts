@@ -50,4 +50,128 @@ export const orderRouter = createTRPCRouter({
       });
       return orderDetails;
     }),
+
+  getDockBookingsByOrderNumber: privateProcedure
+    .input(
+      z.object({
+        orderNumber: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const order = await ctx.db.order.findUnique({
+        where: { orderNumber: input.orderNumber },
+        select: { id: true },
+      });
+
+      if (!order) {
+        return [];
+      }
+
+      const dockBookings = await ctx.db.dockBooking.findMany({
+        where: { orderId: order.id },
+        include: {
+          dock: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          vehicleType: {
+            select: {
+              id: true,
+              type: true,
+              description: true,
+              unloadTime: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      return dockBookings;
+    }),
+
+  getAvailableDocks: privateProcedure.query(async ({ ctx }) => {
+    const docks = await ctx.db.dock.findMany({
+      where: { status: true },
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: { name: "asc" },
+    });
+    return docks;
+  }),
+
+  getVehicleTypes: privateProcedure.query(async ({ ctx }) => {
+    const vehicleTypes = await ctx.db.vehicleType.findMany({
+      select: {
+        id: true,
+        type: true,
+        description: true,
+        unloadTime: true,
+      },
+      orderBy: { type: "asc" },
+    });
+    return vehicleTypes;
+  }),
+
+  createDockBooking: privateProcedure
+    .input(
+      z.object({
+        orderNumber: z.string(),
+        dockId: z.number(),
+        vehicleTypeId: z.number(),
+        vehicleNumber: z.string(),
+        weight: z.number(),
+        queue: z.number(),
+        cbm: z.number(),
+        driverName: z.string(),
+        driverPhone: z.string().optional(),
+        eta: z.date().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const order = await ctx.db.order.findUnique({
+        where: { orderNumber: input.orderNumber },
+        select: { id: true },
+      });
+
+      if (!order) {
+        throw new Error("Order not found");
+      }
+
+      const dockBooking = await ctx.db.dockBooking.create({
+        data: {
+          orderId: order.id,
+          dockId: input.dockId,
+          vehicleTypeId: input.vehicleTypeId,
+          vehicleNumber: input.vehicleNumber,
+          weight: input.weight,
+          queue: input.queue,
+          cbm: input.cbm,
+          driverName: input.driverName,
+          driverPhone: input.driverPhone,
+          eta: input.eta,
+        },
+        include: {
+          dock: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          vehicleType: {
+            select: {
+              id: true,
+              type: true,
+              description: true,
+              unloadTime: true,
+            },
+          },
+        },
+      });
+
+      return dockBooking;
+    }),
 });

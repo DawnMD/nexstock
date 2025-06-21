@@ -64,7 +64,7 @@ async function main() {
       data: {
         type: "Container",
         description: "Container",
-        unloadTime: "09",
+        unloadTime: "90",
       },
     }),
     prisma.vehicleType.create({

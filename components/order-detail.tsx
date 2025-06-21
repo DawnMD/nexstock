@@ -3,9 +3,11 @@
 import { OrderDetailHeader } from "@/components/order-detail-header";
 import { OrderDetailInfo } from "@/components/order-detail-info";
 import { OrderLineItems } from "@/components/order-line-items";
+import { DockBooking } from "@/components/dock-booking";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/trpc/react";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, PackageIcon, TruckIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export function OrderDetail({ orderNumber }: { orderNumber: string }) {
@@ -55,31 +57,56 @@ export function OrderDetail({ orderNumber }: { orderNumber: string }) {
         paymentStatus={orderDetails.paymentStatus ?? "N/A"}
       />
 
-      {/* Shipping info and timeline */}
-      <OrderDetailInfo
-        shippingInfo={{
-          vendorName: orderDetails.vendor.name,
-          vendorReference: orderDetails.vendor.reference,
-        }}
-        timeline={{
-          expectedReceiptDate: orderDetails.expectedReceiptDate,
-          orderDate: orderDetails.purchaseOrderDate,
-        }}
-      />
+      {/* Tabs for order details and dock bookings */}
+      <Tabs defaultValue="order-details" className="flex-1">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger
+            value="order-details"
+            className="flex items-center gap-2"
+          >
+            <PackageIcon className="h-4 w-4" />
+            Order Details
+          </TabsTrigger>
+          <TabsTrigger
+            value="dock-bookings"
+            className="flex items-center gap-2"
+          >
+            <TruckIcon className="h-4 w-4" />
+            Dock Bookings
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Line items */}
-      <OrderLineItems
-        lineItems={orderDetails.items.map((item) => ({
-          id: item.id,
-          sku: item.sku,
-          description: item.description,
-          status: item.status,
-          orderedQuantity: item.orderedQuantity,
-          receivedQuantity: item.receivedQuantity,
-          rejectedQuantity: item.rejectedQuantity,
-          department: item.department,
-        }))}
-      />
+        <TabsContent value="order-details" className="space-y-6">
+          {/* Shipping info and timeline */}
+          <OrderDetailInfo
+            shippingInfo={{
+              vendorName: orderDetails.vendor.name,
+              vendorReference: orderDetails.vendor.reference,
+            }}
+            timeline={{
+              expectedReceiptDate: orderDetails.expectedReceiptDate,
+              orderDate: orderDetails.purchaseOrderDate,
+            }}
+          />
+          {/* Line items */}
+          <OrderLineItems
+            lineItems={orderDetails.items.map((item) => ({
+              id: item.id,
+              sku: item.sku,
+              description: item.description,
+              status: item.status,
+              orderedQuantity: item.orderedQuantity,
+              receivedQuantity: item.receivedQuantity,
+              rejectedQuantity: item.rejectedQuantity,
+              department: item.department,
+            }))}
+          />
+        </TabsContent>
+
+        <TabsContent value="dock-bookings" className="space-y-6">
+          <DockBooking orderNumber={orderNumber} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
