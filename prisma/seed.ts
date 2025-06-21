@@ -4,548 +4,475 @@ import {
   PrismaClient,
   OrderType,
 } from "@prisma/client";
+import type { Vendor, Order } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+// Helper functions for generating realistic data
+const businessUnits = [
+  "Electronics Division",
+  "Apparel Division",
+  "Furniture Division",
+  "Kitchenware Division",
+  "Sports Division",
+  "Automotive Division",
+  "Home & Garden",
+  "Beauty & Health",
+  "Toys & Games",
+  "Books & Media",
+];
+
+const orderTypes = [OrderType.STANDARD, OrderType.IMPORT, OrderType.RETURN];
+const orderStatuses = [
+  OrderStatus.NEW,
+  OrderStatus.IN_PROGRESS,
+  OrderStatus.COMPLETED,
+  OrderStatus.CANCELLED,
+];
+const paymentStatuses = ["Paid", "Pending", "Partial", "Overdue"];
+const cities = [
+  "New York",
+  "Los Angeles",
+  "Chicago",
+  "Houston",
+  "Phoenix",
+  "Philadelphia",
+  "San Antonio",
+  "San Diego",
+  "Dallas",
+  "San Jose",
+  "Austin",
+  "Jacksonville",
+  "Fort Worth",
+  "Columbus",
+  "Charlotte",
+  "San Francisco",
+  "Indianapolis",
+  "Seattle",
+  "Denver",
+  "Washington",
+  "Boston",
+  "El Paso",
+  "Nashville",
+  "Detroit",
+  "Oklahoma City",
+  "Portland",
+  "Las Vegas",
+  "Memphis",
+  "Louisville",
+];
+
+const buyerNames = [
+  "Alice Johnson",
+  "Bob Smith",
+  "Carol Davis",
+  "David Wilson",
+  "Eva Brown",
+  "Frank Miller",
+  "Grace Lee",
+  "Henry Taylor",
+  "Ivy Chen",
+  "Jack Anderson",
+  "Kate Williams",
+  "Liam Martinez",
+  "Mia Garcia",
+  "Noah Rodriguez",
+  "Olivia Lopez",
+  "Paul Gonzalez",
+  "Quinn Perez",
+  "Rachel Torres",
+  "Sam Flores",
+  "Tina Rivera",
+  "Uma Patel",
+  "Victor Singh",
+  "Wendy Kumar",
+  "Xavier Sharma",
+  "Yara Gupta",
+  "Zoe Kim",
+  "Adam Park",
+  "Bella Choi",
+  "Carlos Silva",
+  "Diana Santos",
+];
+
+const userNames = [
+  "John Admin",
+  "Sarah Manager",
+  "Mike Supervisor",
+  "Lisa Coordinator",
+  "Tom Assistant",
+  "Emma Clerk",
+  "Alex Handler",
+  "Nina Processor",
+  "Chris Operator",
+  "Maria Controller",
+];
+
+const notes = [
+  "Priority order for summer collection",
+  "Electronics inventory restock",
+  "Office furniture for new branch",
+  "Additional furniture items",
+  "Smart devices for tech department",
+  "Athletic footwear collection",
+  "Kitchen equipment for restaurant",
+  "Additional kitchen appliances",
+  "Fitness equipment for gym",
+  "Sports accessories and equipment",
+  "Seasonal inventory update",
+  "Bulk order for retail stores",
+  "Replacement parts order",
+  "New product line launch",
+  "Warehouse restocking",
+  "Customer return processing",
+  "Quality control replacement",
+  "Emergency order for damaged goods",
+  "Holiday season preparation",
+  "Year-end inventory clearance",
+];
+
+const departments = [
+  "Electronics",
+  "Apparel",
+  "Furniture",
+  "Kitchenware",
+  "Sports",
+  "Automotive",
+  "Home & Garden",
+  "Beauty & Health",
+  "Toys & Games",
+  "Books & Media",
+  "Tools & Hardware",
+  "Pet Supplies",
+  "Baby Products",
+];
+
+const productDescriptions = [
+  "Premium Cotton T-Shirt",
+  "Denim Jeans",
+  "Wireless Headphones",
+  "Bluetooth Speaker",
+  "Office Chair",
+  "Desk Lamp",
+  "Storage Cabinet",
+  "Smart Watch",
+  "Running Shoes",
+  "Sports Socks",
+  "Kitchen Knife Set",
+  "Coffee Maker",
+  "Toaster",
+  "Yoga Mat",
+  "Dumbbell Set",
+  "Resistance Bands",
+  "Laptop Stand",
+  "Wireless Mouse",
+  "USB Cable",
+  "Power Bank",
+  "Phone Case",
+  "Tablet Cover",
+  "Gaming Headset",
+  "Mechanical Keyboard",
+  "Monitor Stand",
+  "Desk Organizer",
+  "File Cabinet",
+  "Bookshelf",
+  "Dining Table",
+  "Bed Frame",
+  "Sofa Set",
+  "Coffee Table",
+  "TV Stand",
+  "Wardrobe",
+  "Dresser",
+  "Nightstand",
+  "Lamp Shade",
+  "Throw Pillow",
+  "Bedding Set",
+  "Curtains",
+  "Rug",
+  "Wall Clock",
+  "Picture Frame",
+  "Vase",
+  "Plant Pot",
+  "Garden Tools",
+  "BBQ Grill",
+  "Patio Furniture",
+  "Swimming Pool",
+  "Tennis Racket",
+  "Basketball",
+  "Soccer Ball",
+  "Baseball Glove",
+  "Hockey Stick",
+  "Golf Clubs",
+  "Bicycle",
+  "Skateboard",
+  "Roller Skates",
+  "Helmet",
+  "Protective Gear",
+];
+
+function generateSKU(department: string, index: number): string {
+  const deptCode = department.substring(0, 2).toUpperCase();
+  const randomCode = Math.random().toString(36).substring(2, 5).toUpperCase();
+  return `${deptCode}-${randomCode}-${String(index).padStart(3, "0")}`;
+}
+
+function getRandomElement<T>(array: T[]): T {
+  return array[Math.floor(Math.random() * array.length)]!;
+}
+
+function getRandomDate(start: Date, end: Date): Date {
+  return new Date(
+    start.getTime() + Math.random() * (end.getTime() - start.getTime()),
+  );
+}
+
+function generateVendorName(index: number): string {
+  const prefixes = [
+    "Global",
+    "Premium",
+    "Elite",
+    "Standard",
+    "Quality",
+    "Best",
+    "Top",
+    "Prime",
+    "Select",
+    "Choice",
+  ];
+  const suffixes = [
+    "Suppliers",
+    "Trading",
+    "Import",
+    "Export",
+    "Manufacturing",
+    "Distributors",
+    "Corporation",
+    "Enterprises",
+    "Industries",
+    "Solutions",
+  ];
+  const prefix = getRandomElement(prefixes);
+  const suffix = getRandomElement(suffixes);
+  return `${prefix} ${suffix} ${index}`;
+}
+
+function generateVendorReference(): string {
+  return (Math.floor(Math.random() * 9000000000) + 1000000000).toString();
+}
+
 async function main() {
+  console.log("Starting database seeding...");
+
   // Delete all existing data to start fresh
   console.log("Deleting existing data...");
   await prisma.orderItem.deleteMany();
+  await prisma.dockBooking.deleteMany();
   await prisma.order.deleteMany();
   await prisma.vendor.deleteMany();
   await prisma.vehicleType.deleteMany();
   await prisma.dock.deleteMany();
   console.log("Existing data deleted successfully");
 
-  // Create 5 docks
-  const docks = await Promise.all([
-    prisma.dock.create({
-      data: {
-        name: "Dock 1",
-        status: true,
-      },
-    }),
-    prisma.dock.create({
-      data: {
-        name: "Dock 2",
-        status: true,
-      },
-    }),
-    prisma.dock.create({
-      data: {
-        name: "Dock 3",
-        status: true,
-      },
-    }),
-    prisma.dock.create({
-      data: {
-        name: "Dock 4",
-        status: true,
-      },
-    }),
-    prisma.dock.create({
-      data: {
-        name: "Dock 5",
-        status: true,
-      },
-    }),
-  ]);
+  // Create docks
+  console.log("Creating docks...");
+  const docks = await Promise.all(
+    Array.from({ length: 10 }, (_, i) =>
+      prisma.dock.create({
+        data: {
+          name: `Dock ${i + 1}`,
+          status: true,
+        },
+      }),
+    ),
+  );
+  console.log(`Created ${docks.length} docks`);
 
-  // Create 3 vehicle types
+  // Create vehicle types
+  console.log("Creating vehicle types...");
   const vehicleTypes = await Promise.all([
     prisma.vehicleType.create({
-      data: {
-        type: "Truck",
-        description: "Truck",
-        unloadTime: "60",
-      },
+      data: { type: "Truck", description: "Truck", unloadTime: "60" },
     }),
     prisma.vehicleType.create({
-      data: {
-        type: "Container",
-        description: "Container",
-        unloadTime: "90",
-      },
+      data: { type: "Container", description: "Container", unloadTime: "90" },
     }),
     prisma.vehicleType.create({
-      data: {
-        type: "Trailer",
-        description: "Trailer",
-        unloadTime: "120",
-      },
+      data: { type: "Trailer", description: "Trailer", unloadTime: "120" },
+    }),
+    prisma.vehicleType.create({
+      data: { type: "Van", description: "Van", unloadTime: "45" },
+    }),
+    prisma.vehicleType.create({
+      data: { type: "Flatbed", description: "Flatbed", unloadTime: "75" },
     }),
   ]);
+  console.log(`Created ${vehicleTypes.length} vehicle types`);
 
-  // Create 5 vendors
-  const vendors = await Promise.all([
-    prisma.vendor.create({
-      data: {
-        name: "Vendor 1",
-        reference: "1234567890",
-      },
-    }),
-    prisma.vendor.create({
-      data: {
-        name: "Vendor 2",
-        reference: "1234567891",
-      },
-    }),
-    prisma.vendor.create({
-      data: {
-        name: "Vendor 3",
-        reference: "1234567892",
-      },
-    }),
-    prisma.vendor.create({
-      data: {
-        name: "Vendor 4",
-        reference: "1234567893",
-      },
-    }),
-    prisma.vendor.create({
-      data: {
-        name: "Vendor 5",
-        reference: "1234567894",
-      },
-    }),
-  ]);
+  // Create 500 vendors in batches
+  console.log("Creating 500 vendors...");
+  const vendors: Vendor[] = [];
+  const batchSize = 50;
 
-  // Create 12 orders
-  const orders = await Promise.all([
-    prisma.order.create({
-      data: {
-        orderNumber: "1000000001",
-        businessUnit: "Unit1",
-        orderType: OrderType.STANDARD,
-        purchaseOrderDate: new Date(),
-        expectedReceiptDate: new Date(),
-        status: OrderStatus.NEW,
-        vendorReference: "1234567890",
-        paymentStatus: "Paid",
-        createdBy: "User A",
-        updatedBy: "User A",
-        notes: "Priority order for summer collection",
-        buyerName: "Alice Johnson",
-        buyerCity: "New York",
+  for (let i = 0; i < 500; i += batchSize) {
+    const batch = Array.from(
+      { length: Math.min(batchSize, 500 - i) },
+      (_, index) => ({
+        name: generateVendorName(i + index + 1),
+        reference: generateVendorReference(),
+      }),
+    );
+
+    await prisma.vendor.createMany({
+      data: batch,
+    });
+
+    // Fetch the created vendors to get their IDs
+    const createdVendorRecords = await prisma.vendor.findMany({
+      where: {
+        name: { in: batch.map((v) => v.name) },
       },
-    }),
-    prisma.order.create({
-      data: {
-        orderNumber: "1000000002",
-        businessUnit: "Unit2",
-        orderType: OrderType.STANDARD,
-        purchaseOrderDate: new Date(),
-        expectedReceiptDate: new Date(),
-        status: OrderStatus.NEW,
-        vendorReference: "1234567890",
-        paymentStatus: "Pending",
-        createdBy: "User A",
-        updatedBy: "User A",
-        notes: "Electronics inventory restock",
-        buyerName: "Bob Smith",
-        buyerCity: "Los Angeles",
+    });
+
+    vendors.push(...createdVendorRecords);
+
+    if ((i + batchSize) % 100 === 0) {
+      console.log(`Created ${Math.min(i + batchSize, 500)} vendors`);
+    }
+  }
+  console.log(`Created ${vendors.length} vendors`);
+
+  // Create 6000 orders in batches
+  console.log("Creating 6000 orders...");
+  const orders: Order[] = [];
+  const orderBatchSize = 100;
+
+  for (let i = 0; i < 6000; i += orderBatchSize) {
+    const batch = Array.from(
+      { length: Math.min(orderBatchSize, 6000 - i) },
+      (_, index) => {
+        const orderIndex = i + index + 1;
+        const vendor = getRandomElement(vendors);
+        const orderDate = getRandomDate(
+          new Date(2023, 0, 1),
+          new Date(2024, 11, 31),
+        );
+        const receiptDate = new Date(
+          orderDate.getTime() + Math.random() * 30 * 24 * 60 * 60 * 1000,
+        );
+
+        return {
+          orderNumber: `1000000${String(orderIndex).padStart(3, "0")}`,
+          businessUnit: getRandomElement(businessUnits),
+          orderType: getRandomElement(orderTypes),
+          purchaseOrderDate: orderDate,
+          expectedReceiptDate: receiptDate,
+          status: getRandomElement(orderStatuses),
+          vendorReference: vendor.reference,
+          paymentStatus: getRandomElement(paymentStatuses),
+          createdBy: getRandomElement(userNames),
+          updatedBy: getRandomElement(userNames),
+          notes: getRandomElement(notes),
+          buyerName: getRandomElement(buyerNames),
+          buyerCity: getRandomElement(cities),
+        };
       },
-    }),
-    prisma.order.create({
-      data: {
-        orderNumber: "1000000003",
-        businessUnit: "Unit3",
-        orderType: OrderType.STANDARD,
-        purchaseOrderDate: new Date(),
-        expectedReceiptDate: new Date(),
-        status: OrderStatus.NEW,
-        vendorReference: "1234567891",
-        paymentStatus: "Pending",
-        createdBy: "User B",
-        updatedBy: "User B",
-        notes: "Office furniture for new branch",
-        buyerName: "Carol Davis",
-        buyerCity: "Chicago",
+    );
+
+    await prisma.order.createMany({
+      data: batch,
+    });
+
+    // Fetch the created orders to get their IDs
+    const createdOrderRecords = await prisma.order.findMany({
+      where: {
+        orderNumber: { in: batch.map((o) => o.orderNumber) },
       },
-    }),
-    prisma.order.create({
-      data: {
-        orderNumber: "1000000004",
-        businessUnit: "Unit4",
-        orderType: OrderType.STANDARD,
-        purchaseOrderDate: new Date(),
-        expectedReceiptDate: new Date(),
-        status: OrderStatus.NEW,
-        vendorReference: "1234567891",
-        paymentStatus: "Pending",
-        createdBy: "User B",
-        updatedBy: "User B",
-        notes: "Additional furniture items",
-        buyerName: "David Wilson",
-        buyerCity: "Houston",
-      },
-    }),
-    prisma.order.create({
-      data: {
-        orderNumber: "1000000005",
-        businessUnit: "Unit5",
-        orderType: OrderType.IMPORT,
-        purchaseOrderDate: new Date(),
-        expectedReceiptDate: new Date(),
-        status: OrderStatus.NEW,
-        vendorReference: "1234567892",
-        paymentStatus: "Paid",
-        createdBy: "User C",
-        updatedBy: "User C",
-        notes: "Smart devices for tech department",
-        buyerName: "Eva Brown",
-        buyerCity: "Phoenix",
-      },
-    }),
-    prisma.order.create({
-      data: {
-        orderNumber: "1000000006",
-        businessUnit: "Unit6",
-        orderType: OrderType.IMPORT,
-        purchaseOrderDate: new Date(),
-        expectedReceiptDate: new Date(),
-        status: OrderStatus.NEW,
-        vendorReference: "1234567892",
-        paymentStatus: "Paid",
-        createdBy: "User C",
-        updatedBy: "User C",
-        notes: "Athletic footwear collection",
-        buyerName: "Frank Miller",
-        buyerCity: "Philadelphia",
-      },
-    }),
-    prisma.order.create({
-      data: {
-        orderNumber: "1000000007",
-        businessUnit: "Unit7",
-        orderType: OrderType.IMPORT,
-        purchaseOrderDate: new Date(),
-        expectedReceiptDate: new Date(),
-        status: OrderStatus.NEW,
-        vendorReference: "1234567893",
-        paymentStatus: "Paid",
-        createdBy: "User D",
-        updatedBy: "User D",
-        notes: "Kitchen equipment for restaurant",
-        buyerName: "Grace Lee",
-        buyerCity: "San Antonio",
-      },
-    }),
-    prisma.order.create({
-      data: {
-        orderNumber: "1000000008",
-        businessUnit: "Unit8",
-        orderType: OrderType.IMPORT,
-        purchaseOrderDate: new Date(),
-        expectedReceiptDate: new Date(),
-        status: OrderStatus.NEW,
-        vendorReference: "1234567893",
-        paymentStatus: "Pending",
-        createdBy: "User D",
-        updatedBy: "User D",
-        notes: "Additional kitchen appliances",
-        buyerName: "Henry Taylor",
-        buyerCity: "San Diego",
-      },
-    }),
-    prisma.order.create({
-      data: {
-        orderNumber: "1000000009",
-        businessUnit: "Unit9",
-        orderType: OrderType.RETURN,
-        purchaseOrderDate: new Date(),
-        expectedReceiptDate: new Date(),
-        status: OrderStatus.NEW,
-        vendorReference: "1234567894",
-        paymentStatus: "Paid",
-        createdBy: "User E",
-        updatedBy: "User E",
-        notes: "Fitness equipment for gym",
-        buyerName: "Ivy Chen",
-        buyerCity: "Dallas",
-      },
-    }),
-    prisma.order.create({
-      data: {
-        orderNumber: "1000000010",
-        businessUnit: "Unit10",
-        orderType: OrderType.RETURN,
-        purchaseOrderDate: new Date(),
-        expectedReceiptDate: new Date(),
-        status: OrderStatus.NEW,
-        vendorReference: "1234567894",
-        paymentStatus: "Paid",
-        createdBy: "User E",
-        updatedBy: "User E",
-        notes: "Sports accessories and equipment",
-        buyerName: "Jack Anderson",
-        buyerCity: "San Jose",
-      },
-    }),
-    prisma.order.create({
-      data: {
-        orderNumber: "1000000011",
-        businessUnit: "Unit11",
-        orderType: OrderType.RETURN,
-        purchaseOrderDate: new Date(),
-        expectedReceiptDate: new Date(),
-        status: OrderStatus.NEW,
-        vendorReference: "1234567894",
-        paymentStatus: "Paid",
-        createdBy: "User E",
-        updatedBy: "User E",
-        notes: "Sports accessories and equipment",
-        buyerName: "Jack Anderson",
-        buyerCity: "San Jose",
-      },
-    }),
-    prisma.order.create({
-      data: {
-        orderNumber: "1000000012",
-        businessUnit: "Unit12",
-        orderType: OrderType.RETURN,
-        purchaseOrderDate: new Date(),
-        expectedReceiptDate: new Date(),
-        status: OrderStatus.NEW,
-        vendorReference: "1234567894",
-        paymentStatus: "Paid",
-        createdBy: "User E",
-        updatedBy: "User E",
-        notes: "Sports accessories and equipment",
-        buyerName: "Jack Anderson",
-        buyerCity: "San Jose",
-      },
-    }),
-  ]);
+    });
+
+    orders.push(...createdOrderRecords);
+
+    if ((i + orderBatchSize) % 1000 === 0) {
+      console.log(`Created ${Math.min(i + orderBatchSize, 6000)} orders`);
+    }
+  }
+  console.log(`Created ${orders.length} orders`);
 
   // Create order items for each order
-  const orderItems = await Promise.all([
-    // Items for ORDER1
-    prisma.orderItem.create({
-      data: {
-        description: "Premium Cotton T-Shirt",
-        sku: "TS-COT-PRE-001",
-        department: "Apparel",
-        orderId: orders[0].id,
-        orderedQuantity: 50,
-        status: OrderItemStatus.RECEIVED,
-        receivedQuantity: 50,
-        rejectedQuantity: 0,
-        qualityCheck: true,
-      },
-    }),
-    prisma.orderItem.create({
-      data: {
-        description: "Denim Jeans",
-        sku: "JN-DNM-001",
-        department: "Apparel",
-        orderId: orders[0].id,
-        orderedQuantity: 50,
-        status: OrderItemStatus.RECEIVING,
-        receivedQuantity: 20,
-        rejectedQuantity: 0,
-        qualityCheck: false,
-      },
-    }),
-    // Items for ORDER2
-    prisma.orderItem.create({
-      data: {
-        description: "Wireless Headphones",
-        sku: "EL-HP-WL-001",
-        department: "Electronics",
-        orderId: orders[1].id,
-        orderedQuantity: 20,
-        status: OrderItemStatus.RECEIVING,
-        receivedQuantity: 15,
-        rejectedQuantity: 0,
-        qualityCheck: false,
-      },
-    }),
-    prisma.orderItem.create({
-      data: {
-        description: "Bluetooth Speaker",
-        sku: "EL-SP-BT-001",
-        department: "Electronics",
-        orderId: orders[1].id,
-        orderedQuantity: 20,
-        status: OrderItemStatus.RECEIVING,
-        receivedQuantity: 12,
-        rejectedQuantity: 0,
-        qualityCheck: false,
-      },
-    }),
-    // Items for ORDER3
-    prisma.orderItem.create({
-      data: {
-        description: "Office Chair",
-        sku: "FN-CHR-OFF-001",
-        department: "Furniture",
-        orderId: orders[2].id,
-        orderedQuantity: 30,
-        status: OrderItemStatus.REJECTED,
-        receivedQuantity: 0,
-        rejectedQuantity: 30,
-        qualityCheck: true,
-      },
-    }),
-    // Items for ORDER4
-    prisma.orderItem.create({
-      data: {
-        description: "Desk Lamp",
-        sku: "FN-LMP-DSK-001",
-        department: "Furniture",
-        orderId: orders[3].id,
-        orderedQuantity: 30,
-        status: OrderItemStatus.RECEIVED,
-        receivedQuantity: 30,
-        rejectedQuantity: 0,
-        qualityCheck: true,
-      },
-    }),
-    prisma.orderItem.create({
-      data: {
-        description: "Storage Cabinet",
-        sku: "FN-CAB-STR-001",
-        department: "Furniture",
-        orderId: orders[3].id,
-        orderedQuantity: 10,
-        status: OrderItemStatus.RECEIVED,
-        receivedQuantity: 10,
-        rejectedQuantity: 0,
-        qualityCheck: true,
-      },
-    }),
-    // Items for ORDER5
-    prisma.orderItem.create({
-      data: {
-        description: "Smart Watch",
-        sku: "EL-WT-SM-001",
-        department: "Electronics",
-        orderId: orders[4].id,
-        orderedQuantity: 10,
-        status: OrderItemStatus.NOT_RECEIVED,
-        receivedQuantity: 0,
-        rejectedQuantity: 0,
-        qualityCheck: false,
-      },
-    }),
-    // Items for ORDER6
-    prisma.orderItem.create({
-      data: {
-        description: "Running Shoes",
-        sku: "SH-RUN-001",
-        department: "Footwear",
-        orderId: orders[5].id,
-        orderedQuantity: 40,
-        status: OrderItemStatus.RECEIVING,
-        receivedQuantity: 35,
-        rejectedQuantity: 0,
-        qualityCheck: false,
-      },
-    }),
-    prisma.orderItem.create({
-      data: {
-        description: "Sports Socks",
-        sku: "SH-SOC-SPT-001",
-        department: "Footwear",
-        orderId: orders[5].id,
-        orderedQuantity: 100,
-        status: OrderItemStatus.RECEIVED,
-        receivedQuantity: 100,
-        rejectedQuantity: 0,
-        qualityCheck: true,
-      },
-    }),
-    // Items for ORDER7
-    prisma.orderItem.create({
-      data: {
-        description: "Kitchen Knife Set",
-        sku: "KT-KNV-SET-001",
-        department: "Kitchenware",
-        orderId: orders[6].id,
-        orderedQuantity: 20,
-        status: OrderItemStatus.RECEIVED,
-        receivedQuantity: 20,
-        rejectedQuantity: 0,
-        qualityCheck: true,
-      },
-    }),
-    // Items for ORDER8
-    prisma.orderItem.create({
-      data: {
-        description: "Coffee Maker",
-        sku: "KT-CFM-001",
-        department: "Kitchenware",
-        orderId: orders[7].id,
-        orderedQuantity: 20,
-        status: OrderItemStatus.RECEIVED,
-        receivedQuantity: 20,
-        rejectedQuantity: 0,
-        qualityCheck: true,
-      },
-    }),
-    prisma.orderItem.create({
-      data: {
-        description: "Toaster",
-        sku: "KT-TST-001",
-        department: "Kitchenware",
-        orderId: orders[7].id,
-        orderedQuantity: 20,
-        status: OrderItemStatus.RECEIVED,
-        receivedQuantity: 20,
-        rejectedQuantity: 0,
-        qualityCheck: true,
-      },
-    }),
-    // Items for ORDER9
-    prisma.orderItem.create({
-      data: {
-        description: "Yoga Mat",
-        sku: "SP-YOG-MAT-001",
-        department: "Sports",
-        orderId: orders[8].id,
-        orderedQuantity: 30,
-        status: OrderItemStatus.REJECTED,
-        receivedQuantity: 0,
-        rejectedQuantity: 30,
-        qualityCheck: true,
-      },
-    }),
-    // Items for ORDER10
-    prisma.orderItem.create({
-      data: {
-        description: "Dumbbell Set",
-        sku: "SP-DMB-SET-001",
-        department: "Sports",
-        orderId: orders[9].id,
-        orderedQuantity: 25,
-        status: OrderItemStatus.RECEIVED,
-        receivedQuantity: 25,
-        rejectedQuantity: 0,
-        qualityCheck: true,
-      },
-    }),
-    prisma.orderItem.create({
-      data: {
-        description: "Resistance Bands",
-        sku: "SP-RES-BND-001",
-        department: "Sports",
-        orderId: orders[9].id,
-        orderedQuantity: 50,
-        status: OrderItemStatus.RECEIVED,
-        receivedQuantity: 50,
-        rejectedQuantity: 0,
-        qualityCheck: true,
-      },
-    }),
-  ]);
+  console.log("Creating order items...");
+  const orderItems = [];
+  const itemBatchSize = 200;
 
-  console.log({ vendors, orders, orderItems, docks, vehicleTypes });
+  for (let i = 0; i < orders.length; i += itemBatchSize) {
+    const batch = [];
+
+    for (let j = 0; j < Math.min(itemBatchSize, orders.length - i); j++) {
+      const order = orders[i + j];
+      if (!order) continue;
+
+      const numItems = Math.floor(Math.random() * 5) + 1; // 1-5 items per order
+
+      for (let k = 0; k < numItems; k++) {
+        const department = getRandomElement(departments);
+        const orderedQty = Math.floor(Math.random() * 100) + 10;
+        const receivedQty = Math.floor(Math.random() * (orderedQty + 1));
+        const rejectedQty = Math.floor(
+          Math.random() * (orderedQty - receivedQty + 1),
+        );
+        const status = getRandomElement([
+          OrderItemStatus.RECEIVED,
+          OrderItemStatus.RECEIVING,
+          OrderItemStatus.NOT_RECEIVED,
+          OrderItemStatus.REJECTED,
+        ]);
+
+        batch.push({
+          description: getRandomElement(productDescriptions),
+          sku: generateSKU(department, Math.floor(Math.random() * 1000)),
+          department: department,
+          orderId: order.id,
+          orderedQuantity: orderedQty,
+          status: status,
+          receivedQuantity:
+            status === OrderItemStatus.RECEIVED
+              ? orderedQty
+              : status === OrderItemStatus.RECEIVING
+                ? receivedQty
+                : 0,
+          rejectedQuantity:
+            status === OrderItemStatus.REJECTED ? orderedQty : rejectedQty,
+          qualityCheck: Math.random() > 0.3, // 70% pass quality check
+        });
+      }
+    }
+
+    await prisma.orderItem.createMany({
+      data: batch,
+    });
+
+    orderItems.push(...batch);
+
+    if ((i + itemBatchSize) % 1000 === 0) {
+      console.log(
+        `Created ${Math.min(i + itemBatchSize, orders.length)} order items`,
+      );
+    }
+  }
+
+  console.log(`Created ${orderItems.length} order items`);
+
+  // Summary
+  console.log("\n=== SEEDING COMPLETE ===");
+  console.log(`Vendors: ${vendors.length}`);
+  console.log(`Orders: ${orders.length}`);
+  console.log(`Order Items: ${orderItems.length}`);
+  console.log(`Docks: ${docks.length}`);
+  console.log(`Vehicle Types: ${vehicleTypes.length}`);
+  console.log("Database has been successfully seeded!");
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error("Error during seeding:", e);
     process.exit(1);
   })
   .finally(() => {
