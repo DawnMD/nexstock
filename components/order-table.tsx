@@ -1,32 +1,5 @@
 "use client";
 
-import {
-  type ColumnDef,
-  type ColumnFiltersState,
-  type SortingState,
-  type VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import {
-  CheckCircle2Icon,
-  ChevronDownIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ChevronsLeftIcon,
-  ChevronsRightIcon,
-  ClockIcon,
-  ColumnsIcon,
-  ExternalLinkIcon,
-  XCircleIcon,
-  PlusCircleIcon,
-} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,10 +26,35 @@ import {
 } from "@/components/ui/table";
 import type { AppRouter } from "@/server/api/root";
 import { api } from "@/trpc/react";
+import { OrderStatus } from "@prisma/client";
+import {
+  type ColumnDef,
+  type ColumnFiltersState,
+  type VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  getFilteredRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import type { inferRouterOutputs } from "@trpc/server";
 import { format } from "date-fns";
+import {
+  CheckCircle2Icon,
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronsLeftIcon,
+  ChevronsRightIcon,
+  ClockIcon,
+  ColumnsIcon,
+  ExternalLinkIcon,
+  PlusCircleIcon,
+  XCircleIcon,
+} from "lucide-react";
 import Link from "next/link";
-import { OrderStatus } from "@prisma/client";
 import { useState } from "react";
 
 const getStatusIcon = (status: OrderStatus) => {
@@ -111,7 +109,7 @@ const formatStatusDisplay = (status: OrderStatus) => {
 };
 
 const columns: ColumnDef<
-  inferRouterOutputs<AppRouter>["order"]["getAllOrders"][number]
+  inferRouterOutputs<AppRouter>["order"]["getPaginatedOrders"]["items"][number]
 >[] = [
   {
     accessorKey: "orderNumber",
@@ -206,35 +204,39 @@ const columns: ColumnDef<
 ];
 
 export function OrderTable() {
-  const [data] = api.order.getAllOrders.useSuspenseQuery();
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [sorting, setSorting] = useState<SortingState>([]);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 20,
   });
 
+  // Use suspense query for proper loading states
+  const [data] = api.order.getPaginatedOrders.useSuspenseQuery({
+    limit: pagination.pageSize,
+    pageIndex: pagination.pageIndex,
+  });
+
   const table = useReactTable({
-    data,
+    data: data.items ?? [],
     columns,
     state: {
-      sorting,
       columnVisibility,
       columnFilters,
       pagination,
     },
+    manualPagination: true,
+    pageCount: data.pagination.totalPages ?? 0,
     getRowId: (row) => row.id.toString(),
-    onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    rowCount: data.pagination.totalCount,
   });
 
   return (
@@ -339,17 +341,13 @@ export function OrderTable() {
         </div>
         <div className="flex items-center justify-between px-4">
           <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
-            Showing{" "}
-            {table.getState().pagination.pageIndex *
-              table.getState().pagination.pageSize +
-              1}{" "}
-            to{" "}
+            Showing {pagination.pageIndex * pagination.pageSize + 1} to{" "}
             {Math.min(
-              (table.getState().pagination.pageIndex + 1) *
-                table.getState().pagination.pageSize,
-              table.getFilteredRowModel().rows.length,
+              pagination.pageIndex * pagination.pageSize +
+                (data?.items.length ?? 0),
+              data?.pagination.totalCount ?? 0,
             )}{" "}
-            of {table.getFilteredRowModel().rows.length} row(s).
+            of {data?.pagination.totalCount ?? 0} row(s).
           </div>
           <div className="flex w-full items-center gap-8 py-2 lg:w-fit">
             <div className="hidden items-center gap-2 lg:flex">
@@ -385,7 +383,7 @@ export function OrderTable() {
                 variant="outline"
                 className="hidden h-8 w-8 p-0 lg:flex"
                 onClick={() => table.setPageIndex(0)}
-                disabled={!table.getCanPreviousPage()}
+                disabled={!data.pagination.hasPreviousPage}
               >
                 <span className="sr-only">Go to first page</span>
                 <ChevronsLeftIcon />
@@ -395,7 +393,7 @@ export function OrderTable() {
                 className="size-8"
                 size="icon"
                 onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
+                disabled={!data.pagination.hasPreviousPage}
               >
                 <span className="sr-only">Go to previous page</span>
                 <ChevronLeftIcon />
@@ -405,7 +403,7 @@ export function OrderTable() {
                 className="size-8"
                 size="icon"
                 onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
+                disabled={!data.pagination.hasNextPage}
               >
                 <span className="sr-only">Go to next page</span>
                 <ChevronRightIcon />
@@ -415,7 +413,7 @@ export function OrderTable() {
                 className="hidden size-8 lg:flex"
                 size="icon"
                 onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                disabled={!table.getCanNextPage()}
+                disabled={!data.pagination.hasNextPage}
               >
                 <span className="sr-only">Go to last page</span>
                 <ChevronsRightIcon />
