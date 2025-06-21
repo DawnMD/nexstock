@@ -3,13 +3,14 @@
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
+import { data } from "@/components/app-sidebar";
 
 export function SiteHeader() {
-  const pathname = usePathname().split("/")[1];
-  const titleCasePathName = pathname
-    ?.split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+  const path = usePathname();
+  const pathname = path.split("/")[1];
+  const currentPageName = data.navMain.find(
+    (item) => item.title.toLowerCase() === pathname,
+  )?.title;
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -19,7 +20,7 @@ export function SiteHeader() {
           orientation="vertical"
           className="mx-2 data-[orientation=vertical]:h-4"
         />
-        <h1 className="text-base font-medium">{titleCasePathName}</h1>
+        <h1 className="text-base font-medium">{currentPageName}</h1>
       </div>
     </header>
   );
