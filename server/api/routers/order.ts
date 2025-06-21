@@ -2,21 +2,65 @@ import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
 import { z } from "zod";
 
 export const orderRouter = createTRPCRouter({
-  getAllOrders: privateProcedure.query(async ({ ctx }) => {
-    const orders = await ctx.db.order.findMany({
-      include: {
-        vendor: {
-          select: {
-            name: true,
-            reference: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-    return orders;
-  }),
+  getPaginatedOrders: privateProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(100).default(20),
+        pageIndex: z.number().default(0),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      try {
+        const limit = input.limit;
+        const { pageIndex } = input;
 
+        // Get total count for metadata
+        const totalCount = await ctx.db.order.count();
+
+        // Calculate skip for offset-based pagination
+        const skip = pageIndex * limit;
+
+        // Fetch orders with vendor data
+        const items = await ctx.db.order.findMany({
+          take: limit,
+          skip,
+          include: {
+            vendor: {
+              select: {
+                id: true,
+                name: true,
+                reference: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "desc", // Always show most recent orders first
+          },
+        });
+
+        // Calculate pagination metadata
+        const hasNextPage = skip + limit < totalCount;
+        const hasPreviousPage = pageIndex > 0;
+        const currentPage = pageIndex + 1;
+
+        return {
+          items,
+          pagination: {
+            hasNextPage,
+            hasPreviousPage,
+            totalCount,
+            currentPage,
+            totalPages: Math.ceil(totalCount / limit),
+            limit,
+            pageIndex,
+          },
+        };
+      } catch (error) {
+        throw new Error(
+          `Failed to fetch paginated orders: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+      }
+    }),
   getOrderDetailsByOrderNumber: privateProcedure
     .input(
       z.object({
