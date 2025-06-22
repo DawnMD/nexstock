@@ -56,7 +56,6 @@ import {
   XCircleIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 const getStatusIcon = (status: OrderStatus) => {
@@ -205,9 +204,7 @@ const columns: ColumnDef<
   },
 ];
 
-export function OrderTable() {
-  const searchParams = useSearchParams();
-  const query = searchParams.get("query");
+export function OrderTable({ query }: { query?: string | null }) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = useState({

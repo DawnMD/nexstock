@@ -5,9 +5,7 @@ export default async function Page({
   searchParams,
 }: {
   searchParams: Promise<{
-    page?: string;
-    limit?: string;
-    query?: string;
+    query?: string | null;
   }>;
 }) {
   const { query } = await searchParams;
@@ -19,7 +17,7 @@ export default async function Page({
 
   return (
     <HydrateClient>
-      <OrderTable />
+      <OrderTable query={query} />
     </HydrateClient>
   );
 }
