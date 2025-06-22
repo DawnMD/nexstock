@@ -1,0 +1,29 @@
+export interface OrderStats {
+  STANDARD: number;
+  IMPORT: number;
+  RETURN: number;
+  total: number;
+}
+
+type OrderTypeGroup = {
+  orderType: "STANDARD" | "IMPORT" | "RETURN";
+  _count: {
+    orderNumber: number;
+  };
+};
+
+export function calculateOrderStats(orderGroups: OrderTypeGroup[]): OrderStats {
+  const statsMap: OrderStats = {
+    STANDARD: 0,
+    IMPORT: 0,
+    RETURN: 0,
+    total: 0,
+  };
+
+  orderGroups.forEach((group) => {
+    statsMap[group.orderType] = group._count.orderNumber;
+    statsMap.total += group._count.orderNumber;
+  });
+
+  return statsMap;
+}
