@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { OrderStatsService } from "@/app/services/order_stats.service";
+import { calculateOrderStats } from "@/lib/order-utils";
 import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
 
 export const orderRouter = createTRPCRouter({
@@ -176,6 +176,13 @@ export const orderRouter = createTRPCRouter({
       return dockBooking;
     }),
   getOrderStats: privateProcedure.query(async ({ ctx }) => {
-    return OrderStatsService.getOrderStats(ctx.db);
+    const orderGroups = await ctx.db.order.groupBy({
+      by: ["orderType"],
+      _count: {
+        orderNumber: true,
+      },
+    });
+
+    return calculateOrderStats(orderGroups);
   }),
 });
