@@ -1,5 +1,6 @@
 "use client";
 
+import { SearchForm } from "@/components/order-search-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,6 +56,7 @@ import {
   XCircleIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 const getStatusIcon = (status: OrderStatus) => {
@@ -204,6 +206,8 @@ const columns: ColumnDef<
 ];
 
 export function OrderTable() {
+  const searchParams = useSearchParams();
+  const query = searchParams.get("query");
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = useState({
@@ -215,6 +219,7 @@ export function OrderTable() {
   const [data] = api.order.getPaginatedOrders.useSuspenseQuery({
     limit: pagination.pageSize,
     pageIndex: pagination.pageIndex,
+    search: query,
   });
 
   const table = useReactTable({
@@ -241,7 +246,8 @@ export function OrderTable() {
 
   return (
     <div className="flex w-full flex-col justify-start gap-6">
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-between">
+        <SearchForm query={query} />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">
