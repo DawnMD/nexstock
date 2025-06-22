@@ -116,6 +116,12 @@ export const orderRouter = createTRPCRouter({
     return vehicleTypes;
   }),
 
+  deleteDockBooking: privateProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.dockBooking.delete({ where: { id: input.id } });
+    }),
+
   createDockBooking: privateProcedure
     .input(
       z.object({

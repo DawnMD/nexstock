@@ -142,6 +142,15 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
     },
   });
 
+  const deleteDockBookingMutation = api.order.deleteDockBooking.useMutation({
+    onSuccess: async () => {
+      toast.success("Dock booking deleted successfully");
+      await utils.order.getDockBookingsByOrderNumber.invalidate({
+        orderNumber,
+      });
+    },
+  });
+
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     createDockBookingMutation.mutate({
       orderNumber,
@@ -488,7 +497,14 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
                           Edit
                         </DropdownMenuItem>
 
-                        <DropdownMenuItem className="cursor-pointer text-red-600">
+                        <DropdownMenuItem
+                          className="cursor-pointer text-red-600"
+                          onClick={() => {
+                            deleteDockBookingMutation.mutate({
+                              id: booking.id,
+                            });
+                          }}
+                        >
                           <TrashIcon className="mr-2 h-4 w-4 text-red-500" />
                           Delete
                         </DropdownMenuItem>
