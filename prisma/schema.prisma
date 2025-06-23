@@ -30,6 +30,13 @@ enum OrderItemStatus {
     REJECTED
 }
 
+enum ActivityType {
+    CHECK_IN
+    OPEN
+    CLOSE
+    CHECK_OUT
+}
+
 model Vendor {
     id        Int      @id @default(autoincrement())
     name      String
@@ -101,10 +108,10 @@ model VehicleType {
 }
 
 model DockBooking {
-    id            Int         @id @default(autoincrement())
-    dock          Dock        @relation(fields: [dockId], references: [id])
+    id            Int            @id @default(autoincrement())
+    dock          Dock           @relation(fields: [dockId], references: [id])
     dockId        Int
-    vehicleType   VehicleType @relation(fields: [vehicleTypeId], references: [id])
+    vehicleType   VehicleType    @relation(fields: [vehicleTypeId], references: [id])
     vehicleTypeId Int
     vehicleNumber String
     weight        Int
@@ -113,10 +120,26 @@ model DockBooking {
     driverName    String
     driverPhone   String?
     eta           DateTime?
-    createdAt     DateTime    @default(now())
-    updatedAt     DateTime    @updatedAt
-    order         Order?      @relation(fields: [orderId], references: [id])
+    createdAt     DateTime       @default(now())
+    updatedAt     DateTime       @updatedAt
+    order         Order?         @relation(fields: [orderId], references: [id])
     orderId       Int?
+    activities    DockActivity[]
 
     @@index([orderId])
+}
+
+model DockActivity {
+    id                 Int          @id @default(autoincrement())
+    activityType       ActivityType
+    createdAt          DateTime     @default(now())
+    updatedAt          DateTime     @updatedAt
+    createdBy          String
+    updatedBy          String?
+    containerCondition Boolean?
+    notes              String?
+    DockBooking        DockBooking  @relation(fields: [dockBookingId], references: [id])
+    dockBookingId      Int
+
+    @@index([dockBookingId])
 }
