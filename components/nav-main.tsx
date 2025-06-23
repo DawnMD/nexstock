@@ -30,6 +30,7 @@ export function NavMain({
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
+                className="dark"
                 asChild
                 tooltip={item.title}
                 isActive={pathname === item.url}
