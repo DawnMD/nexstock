@@ -18,7 +18,7 @@ import {
 } from "@tabler/icons-react";
 import Link from "next/link";
 
-const data = {
+export const data = {
   navMain: [
     {
       title: "Dashboard",

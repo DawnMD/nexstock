@@ -1,5 +1,6 @@
-import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
 import { z } from "zod";
+import { calculateOrderStats } from "@/lib/order-utils";
+import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
 
 export const orderRouter = createTRPCRouter({
   getPaginatedOrders: privateProcedure
@@ -160,6 +161,18 @@ export const orderRouter = createTRPCRouter({
     return vehicleTypes;
   }),
 
+  deleteDockBooking: privateProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const deletedBooking = await ctx.db.dockBooking.delete({
+        where: { id: input.id },
+        select: {
+          id: true,
+        },
+      });
+      return deletedBooking;
+    }),
+
   createDockBooking: privateProcedure
     .input(
       z.object({
@@ -218,4 +231,14 @@ export const orderRouter = createTRPCRouter({
 
       return dockBooking;
     }),
+  getOrderStats: privateProcedure.query(async ({ ctx }) => {
+    const orderGroups = await ctx.db.order.groupBy({
+      by: ["orderType"],
+      _count: {
+        orderNumber: true,
+      },
+    });
+
+    return calculateOrderStats(orderGroups);
+  }),
 });
