@@ -1,4 +1,5 @@
 import { OrderDetail } from "@/components/order-detail";
+import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
 
 export default async function OrderDetailsPage({
@@ -24,10 +25,13 @@ export default async function OrderDetailsPage({
   ]);
 
   return (
-    <HydrateClient>
-      <div className="flex flex-1 flex-col">
-        <OrderDetail orderNumber={orderNumber} />
-      </div>
-    </HydrateClient>
+    <>
+      <SiteHeader title={"Order Details"} />
+      <main className="p-4">
+        <HydrateClient>
+          <OrderDetail orderNumber={orderNumber} />
+        </HydrateClient>
+      </main>
+    </>
   );
 }

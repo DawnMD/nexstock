@@ -1,3 +1,4 @@
+import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,7 +16,8 @@ import { ArrowLeftIcon, PackageIcon, TruckIcon } from "lucide-react";
 export default function OrderDetailLoading() {
   return (
     <>
-      <div className="flex flex-1 flex-col">
+      <SiteHeader title={"Order Details"} />
+      <div className="flex flex-1 flex-col p-4">
         <div className="flex flex-1 flex-col gap-4 lg:gap-6">
           {/* Header with back button and actions */}
           <div className="flex items-center justify-between">
@@ -25,7 +27,7 @@ export default function OrderDetailLoading() {
                 <span className="sr-only">Go back</span>
               </Button>
               <div>
-                <h1 className="text-2xl font-semibold">Order Details</h1>
+                <Skeleton className="h-8 w-40" />
                 <p className="text-muted-foreground">
                   View and manage order information
                 </p>
