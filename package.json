@@ -2,6 +2,7 @@
   "name": "shelf_sync",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "prisma": {
     "seed": "ts-node --project tsconfig.prisma.json prisma/seed.ts"
   },
