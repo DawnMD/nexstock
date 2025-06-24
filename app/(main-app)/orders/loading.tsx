@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -7,12 +9,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Search } from "lucide-react";
 
 export default function OrdersLoading() {
   return (
     <div className="flex w-full flex-col justify-start gap-6">
       {/* Header with customize columns button */}
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-between">
+        <div className="relative flex items-center gap-2">
+          <Input
+            id="search"
+            placeholder="Type to search..."
+            className="h-8 pl-7"
+            disabled
+          />
+          <Search className="pointer-events-none absolute top-1/2 left-2 size-4 -translate-y-1/2 opacity-50 select-none" />
+          <Button variant="outline" className="h-8" disabled>
+            Search
+          </Button>
+        </div>
         <Skeleton className="h-9 w-32" />
       </div>
 

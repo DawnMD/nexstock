@@ -1,6 +1,7 @@
-import { z } from "zod";
 import { calculateOrderStats } from "@/lib/order-utils";
 import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
+import type { Prisma } from "@prisma/client";
+import { z } from "zod";
 
 export const orderRouter = createTRPCRouter({
   getPaginatedOrders: privateProcedure
@@ -8,36 +9,49 @@ export const orderRouter = createTRPCRouter({
       z.object({
         limit: z.number().min(1).max(100).default(20),
         pageIndex: z.number().default(0),
+        search: z.string().nullish(),
       }),
     )
     .query(async ({ ctx, input }) => {
       try {
         const limit = input.limit;
-        const { pageIndex } = input;
+        const { pageIndex, search } = input;
 
-        // Get total count for metadata
-        const totalCount = await ctx.db.order.count();
+        const where: Prisma.OrderWhereInput = search
+          ? {
+              OR: [
+                { orderNumber: { contains: search, mode: "insensitive" } },
+                {
+                  vendor: {
+                    reference: { contains: search, mode: "insensitive" },
+                  },
+                },
+              ],
+            }
+          : {};
 
-        // Calculate skip for offset-based pagination
         const skip = pageIndex * limit;
 
-        // Fetch orders with vendor data
-        const items = await ctx.db.order.findMany({
-          take: limit,
-          skip,
-          include: {
-            vendor: {
-              select: {
-                id: true,
-                name: true,
-                reference: true,
+        const [items, totalCount] = await Promise.all([
+          ctx.db.order.findMany({
+            where,
+            skip,
+            take: limit,
+            include: {
+              vendor: {
+                select: {
+                  id: true,
+                  name: true,
+                  reference: true,
+                },
               },
             },
-          },
-          orderBy: {
-            createdAt: "desc", // Always show most recent orders first
-          },
-        });
+            orderBy: {
+              createdAt: "desc", // Always show most recent orders first
+            },
+          }),
+          ctx.db.order.count({ where }),
+        ]);
 
         // Calculate pagination metadata
         const hasNextPage = skip + limit < totalCount;
