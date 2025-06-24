@@ -1,5 +1,4 @@
 import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { RedirectToSignIn } from "@clerk/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
@@ -32,10 +31,7 @@ export default async function MainAppLayout({
       }
     >
       <AppSidebar variant="inset" user={userData} />
-      <SidebarInset>
-        <SiteHeader />
-        <main className="px-6 py-4">{children}</main>
-      </SidebarInset>
+      <SidebarInset>{children}</SidebarInset>
     </SidebarProvider>
   );
 }

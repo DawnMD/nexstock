@@ -1,4 +1,5 @@
 import { OrderTable } from "@/components/order-table";
+import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
 
 export default async function Page({
@@ -16,8 +17,13 @@ export default async function Page({
   });
 
   return (
-    <HydrateClient>
-      <OrderTable query={query} />
-    </HydrateClient>
+    <>
+      <SiteHeader title="Orders" />
+      <main className="p-4">
+        <HydrateClient>
+          <OrderTable query={query} />
+        </HydrateClient>
+      </main>
+    </>
   );
 }
