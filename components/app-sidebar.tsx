@@ -2,6 +2,7 @@
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Sidebar,
   SidebarContent,
@@ -58,6 +59,7 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
+        <ThemeToggle className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />
