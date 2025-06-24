@@ -3,56 +3,30 @@
 import { Badge } from "@/components/ui/badge";
 import { TruckIcon, PackageIcon, HashIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-const sampleBookings = [
-  {
-    id: 1,
-    orderNumber: "PO-2024-001",
-    dock: { name: "Dock A" },
-    vehicleType: { type: "Container Truck" },
-    vehicleNumber: "ABC 123",
-    driverName: "John Smith",
-    queue: 1,
-    status: "Checked In",
-  },
-  {
-    id: 2,
-    orderNumber: "PO-2024-002",
-    dock: { name: "Dock B" },
-    vehicleType: { type: "Box Truck" },
-    vehicleNumber: "XYZ 789",
-    driverName: "Mike Johnson",
-    queue: 2,
-    status: "Pending",
-  },
-  {
-    id: 3,
-    orderNumber: "PO-2024-003",
-    dock: { name: "Dock C" },
-    vehicleType: { type: "Flatbed" },
-    vehicleNumber: "DEF 456",
-    driverName: "Sarah Wilson",
-    queue: 3,
-    status: "Pending",
-  },
-  {
-    id: 4,
-    orderNumber: "PO-2024-004",
-    dock: { name: "Dock D" },
-    vehicleType: { type: "Container Truck" },
-    vehicleNumber: "GHI 789",
-    driverName: "Sarah Wilson",
-    queue: 3,
-    status: "Pending",
-  },
-];
+import { api } from "@/trpc/react";
 
 export function DockBookingList() {
+  const [bookings] = api.order.getTodayDockSchedule.useSuspenseQuery();
+
+  if (!bookings?.length) {
+    return (
+      <div className="flex flex-1 flex-col">
+        <Card>
+          <CardContent>
+            <div className="text-center font-medium">
+              No dock bookings found
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex flex-1 flex-col gap-4 lg:gap-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {sampleBookings.map((booking) => (
+          {bookings.map((booking) => (
             <Card key={booking.id}>
               <CardHeader className="pb-0">
                 <CardTitle className="flex items-center justify-between">
@@ -64,21 +38,13 @@ export function DockBookingList() {
                       {booking.dock.name}
                     </Badge>
                   </div>
-                  <Badge
-                    variant={
-                      booking.status === "Checked In" ? "default" : "secondary"
-                    }
-                  >
-                    {booking.status}
-                  </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid gap-4">
-                {/* Order Number */}
                 <div className="flex items-center gap-2">
                   <HashIcon className="text-muted-foreground h-4 w-4" />
                   <span className="font-mono text-sm">
-                    {booking.orderNumber}
+                    {booking.order?.orderNumber}
                   </span>
                 </div>
 

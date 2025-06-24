@@ -255,4 +255,43 @@ export const orderRouter = createTRPCRouter({
 
     return calculateOrderStats(orderGroups);
   }),
+  getTodayDockSchedule: privateProcedure.query(async ({ ctx }) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const dockBookings = await ctx.db.dockBooking.findMany({
+      where: {
+        createdAt: {
+          gte: today,
+          lt: tomorrow,
+        },
+      },
+      include: {
+        dock: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        vehicleType: {
+          select: {
+            id: true,
+            type: true,
+          },
+        },
+        order: {
+          select: {
+            orderNumber: true,
+          },
+        },
+      },
+      orderBy: {
+        queue: "asc",
+      },
+    });
+
+    return dockBookings;
+  }),
 });

@@ -1,7 +1,9 @@
-import { HydrateClient } from "@/trpc/server";
 import { DockBookingList } from "@/components/dock-booking-list";
+import { api, HydrateClient } from "@/trpc/server";
 
-export default function Page() {
+export default async function Page() {
+  void api.order.getTodayDockSchedule.prefetch();
+
   return (
     <HydrateClient>
       <DockBookingList />
