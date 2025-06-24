@@ -2,13 +2,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DockBookingListLoading() {
-  const loadingItems = Array.from({ length: 2 }, (_, i) => i);
-
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex flex-1 flex-col gap-4 lg:gap-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {loadingItems.map((i) => (
+          {Array.from({ length: 1 }).map((_, i) => (
             <Card key={i}>
               <CardHeader className="pb-0">
                 <CardTitle className="flex items-center justify-between">
