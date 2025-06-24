@@ -1,5 +1,5 @@
 {
- "compilerOptions": {
+  "compilerOptions": {
     /* Base Options: */
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -39,5 +39,4 @@
     ".next/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
-  
 }

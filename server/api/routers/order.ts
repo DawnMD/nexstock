@@ -1,23 +1,81 @@
-import { z } from "zod";
 import { calculateOrderStats } from "@/lib/order-utils";
 import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
+import type { Prisma } from "@prisma/client";
+import { z } from "zod";
 
 export const orderRouter = createTRPCRouter({
-  getAllOrders: privateProcedure.query(async ({ ctx }) => {
-    const orders = await ctx.db.order.findMany({
-      include: {
-        vendor: {
-          select: {
-            name: true,
-            reference: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-    return orders;
-  }),
+  getPaginatedOrders: privateProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(100).default(20),
+        pageIndex: z.number().default(0),
+        search: z.string().nullish(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      try {
+        const limit = input.limit;
+        const { pageIndex, search } = input;
 
+        const where: Prisma.OrderWhereInput = search
+          ? {
+              OR: [
+                { orderNumber: { contains: search, mode: "insensitive" } },
+                {
+                  vendor: {
+                    reference: { contains: search, mode: "insensitive" },
+                  },
+                },
+              ],
+            }
+          : {};
+
+        const skip = pageIndex * limit;
+
+        const [items, totalCount] = await Promise.all([
+          ctx.db.order.findMany({
+            where,
+            skip,
+            take: limit,
+            include: {
+              vendor: {
+                select: {
+                  id: true,
+                  name: true,
+                  reference: true,
+                },
+              },
+            },
+            orderBy: {
+              createdAt: "desc", // Always show most recent orders first
+            },
+          }),
+          ctx.db.order.count({ where }),
+        ]);
+
+        // Calculate pagination metadata
+        const hasNextPage = skip + limit < totalCount;
+        const hasPreviousPage = pageIndex > 0;
+        const currentPage = pageIndex + 1;
+
+        return {
+          items,
+          pagination: {
+            hasNextPage,
+            hasPreviousPage,
+            totalCount,
+            currentPage,
+            totalPages: Math.ceil(totalCount / limit),
+            limit,
+            pageIndex,
+          },
+        };
+      } catch (error) {
+        throw new Error(
+          `Failed to fetch paginated orders: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+      }
+    }),
   getOrderDetailsByOrderNumber: privateProcedure
     .input(
       z.object({

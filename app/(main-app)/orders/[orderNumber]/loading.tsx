@@ -59,7 +59,7 @@ export default function OrderDetailLoading() {
               </Card>
             ))}
           </div>
-          <Tabs defaultValue="order-details" className="flex-1">
+          <Tabs defaultValue="order-details">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger
                 value="order-details"
