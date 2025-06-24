@@ -15,6 +15,7 @@ import {
   IconDashboard,
   IconInnerShadowTop,
   IconPackage,
+  IconTruck,
 } from "@tabler/icons-react";
 import Link from "next/link";
 
@@ -29,6 +30,11 @@ export const data = {
       title: "Orders",
       url: "/orders",
       icon: IconPackage,
+    },
+    {
+      title: "Dock Booking List",
+      url: "/dock_booking",
+      icon: IconTruck,
     },
   ],
 };
