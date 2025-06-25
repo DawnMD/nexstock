@@ -4,9 +4,15 @@ import { Label } from "@/components/ui/label";
 import { Search } from "lucide-react";
 import Form from "next/form";
 
-export function SearchForm({ query }: { query?: string | null }) {
+export function SearchForm({
+  query,
+  action,
+}: {
+  query?: string | null;
+  action: string;
+}) {
   return (
-    <Form action={"/orders"}>
+    <Form action={action}>
       <div className="relative flex items-center gap-2">
         <Label htmlFor="search" className="sr-only">
           Search
