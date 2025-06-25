@@ -94,7 +94,7 @@ model Dock {
     status      Boolean       @default(true)
     createdAt   DateTime      @default(now())
     updatedAt   DateTime      @updatedAt
-    DockBooking DockBooking[]
+    dockBooking DockBooking[]
 }
 
 model VehicleType {
@@ -104,7 +104,7 @@ model VehicleType {
     unloadTime  String
     createdAt   DateTime      @default(now())
     updatedAt   DateTime      @updatedAt
-    DockBooking DockBooking[]
+    dockBooking DockBooking[]
 }
 
 model DockBooking {
@@ -138,7 +138,7 @@ model DockActivity {
     updatedBy          String?
     containerCondition Boolean?
     notes              String?
-    DockBooking        DockBooking  @relation(fields: [dockBookingId], references: [id])
+    dockBooking        DockBooking  @relation(fields: [dockBookingId], references: [id])
     dockBookingId      Int
 
     @@index([dockBookingId])
