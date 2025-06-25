@@ -1,8 +1,8 @@
+import { z } from "zod";
+import type { Prisma } from "@prisma/client";
+import { startOfDay, endOfDay } from "date-fns";
 import { calculateOrderStats } from "@/lib/order-utils";
 import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
-import type { Prisma } from "@prisma/client";
-import { z } from "zod";
-import { startOfDay, endOfDay } from "date-fns";
 
 export const orderRouter = createTRPCRouter({
   getPaginatedOrders: privateProcedure
@@ -265,24 +265,26 @@ export const orderRouter = createTRPCRouter({
         .optional(),
     )
     .query(async ({ ctx, input }) => {
-      const where: Prisma.DockBookingWhereInput = {
-        createdAt: {
-          gte: startOfDay(new Date()),
-          lt: endOfDay(new Date()),
-        },
-      };
+      const where: Prisma.DockBookingWhereInput = input?.search
+        ? {
+            OR: [
+              {
+                vehicleNumber: { contains: input.search, mode: "insensitive" },
+              },
+              {
+                order: {
+                  orderNumber: { contains: input.search, mode: "insensitive" },
+                },
+              },
+            ],
+          }
+        : {};
 
-      // Add search filter if provided
-      if (input?.search) {
-        where.OR = [
-          { vehicleNumber: { contains: input.search, mode: "insensitive" } },
-          {
-            order: {
-              orderNumber: { contains: input.search, mode: "insensitive" },
-            },
-          },
-        ];
-      }
+      // Add date filter for today's bookings
+      where.createdAt = {
+        gte: startOfDay(new Date()),
+        lt: endOfDay(new Date()),
+      };
 
       const dockBookings = await ctx.db.dockBooking.findMany({
         where,

@@ -1,10 +1,10 @@
 "use client";
 
+import { api } from "@/trpc/react";
 import { Badge } from "@/components/ui/badge";
+import { SearchForm } from "./order-search-form";
 import { TruckIcon, PackageIcon, HashIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { api } from "@/trpc/react";
-import { SearchForm } from "./order-search-form";
 
 export function DockBookingList({ query }: { query?: string | null }) {
   const [bookings] = api.order.getTodayDockSchedule.useSuspenseQuery({
@@ -14,9 +14,6 @@ export function DockBookingList({ query }: { query?: string | null }) {
   if (!bookings?.length) {
     return (
       <div className="flex flex-1 flex-col gap-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <SearchForm query={query} action="/dock_booking" />
-        </div>
         <Card>
           <CardContent>
             <div className="text-center font-medium">
