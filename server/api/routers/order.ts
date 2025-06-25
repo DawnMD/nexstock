@@ -2,6 +2,7 @@ import { calculateOrderStats } from "@/lib/order-utils";
 import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
 import type { Prisma } from "@prisma/client";
 import { z } from "zod";
+import { startOfDay, endOfDay } from "date-fns";
 
 export const orderRouter = createTRPCRouter({
   getPaginatedOrders: privateProcedure
@@ -254,5 +255,39 @@ export const orderRouter = createTRPCRouter({
     });
 
     return calculateOrderStats(orderGroups);
+  }),
+  getTodayDockSchedule: privateProcedure.query(async ({ ctx }) => {
+    const dockBookings = await ctx.db.dockBooking.findMany({
+      where: {
+        createdAt: {
+          gte: startOfDay(new Date()),
+          lt: endOfDay(new Date()),
+        },
+      },
+      include: {
+        dock: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        vehicleType: {
+          select: {
+            id: true,
+            type: true,
+          },
+        },
+        order: {
+          select: {
+            orderNumber: true,
+          },
+        },
+      },
+      orderBy: {
+        queue: "asc",
+      },
+    });
+
+    return dockBookings;
   }),
 });

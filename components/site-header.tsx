@@ -2,8 +2,6 @@
 
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { usePathname } from "next/navigation";
-import { data } from "@/components/app-sidebar";
 
 export function SiteHeader({ title }: { title: string }) {
   return (
