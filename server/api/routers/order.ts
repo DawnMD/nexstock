@@ -256,38 +256,60 @@ export const orderRouter = createTRPCRouter({
 
     return calculateOrderStats(orderGroups);
   }),
-  getTodayDockSchedule: privateProcedure.query(async ({ ctx }) => {
-    const dockBookings = await ctx.db.dockBooking.findMany({
-      where: {
+  getTodayDockSchedule: privateProcedure
+    .input(
+      z
+        .object({
+          search: z.string().nullish(),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const where: Prisma.DockBookingWhereInput = {
         createdAt: {
           gte: startOfDay(new Date()),
           lt: endOfDay(new Date()),
         },
-      },
-      include: {
-        dock: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        vehicleType: {
-          select: {
-            id: true,
-            type: true,
-          },
-        },
-        order: {
-          select: {
-            orderNumber: true,
-          },
-        },
-      },
-      orderBy: {
-        queue: "asc",
-      },
-    });
+      };
 
-    return dockBookings;
-  }),
+      // Add search filter if provided
+      if (input?.search) {
+        where.OR = [
+          { vehicleNumber: { contains: input.search, mode: "insensitive" } },
+          {
+            order: {
+              orderNumber: { contains: input.search, mode: "insensitive" },
+            },
+          },
+        ];
+      }
+
+      const dockBookings = await ctx.db.dockBooking.findMany({
+        where,
+        include: {
+          dock: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          vehicleType: {
+            select: {
+              id: true,
+              type: true,
+            },
+          },
+          order: {
+            select: {
+              orderNumber: true,
+            },
+          },
+        },
+        orderBy: {
+          queue: "asc",
+        },
+      });
+
+      return dockBookings;
+    }),
 });
