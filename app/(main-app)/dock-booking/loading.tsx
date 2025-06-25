@@ -1,10 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SiteHeader } from "@/components/site-header";
 
 export default function DockBookingListLoading() {
   return (
     <div className="flex flex-1 flex-col">
-      <div className="flex flex-1 flex-col gap-4 lg:gap-6">
+      <SiteHeader title="Dock Booking List" />
+      <div className="flex flex-1 flex-col gap-4 p-4 lg:gap-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 1 }).map((_, i) => (
             <Card key={i}>
