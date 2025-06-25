@@ -130,10 +130,13 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
   const createDockBookingMutation = api.order.createDockBooking.useMutation({
     onSuccess: async () => {
       toast.success("Dock booking created successfully");
-      // Invalidate the dock bookings query to refresh the list
-      await utils.order.getDockBookingsByOrderNumber.invalidate({
-        orderNumber,
-      });
+      // Invalidate the dock bookings and today's dock schedule queries to refresh the list
+      await Promise.all([
+        utils.order.getDockBookingsByOrderNumber.invalidate({
+          orderNumber,
+        }),
+        utils.order.getTodayDockSchedule.invalidate(),
+      ]);
       setIsCreateDialogOpen(false);
       form.reset();
     },
