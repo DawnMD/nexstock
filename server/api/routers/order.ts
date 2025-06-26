@@ -1,8 +1,8 @@
+import { z } from "zod";
+import type { Prisma } from "@prisma/client";
+import { startOfDay, endOfDay } from "date-fns";
 import { calculateOrderStats } from "@/lib/order-utils";
 import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
-import type { Prisma } from "@prisma/client";
-import { z } from "zod";
-import { startOfDay, endOfDay } from "date-fns";
 
 export const orderRouter = createTRPCRouter({
   getPaginatedOrders: privateProcedure
@@ -256,38 +256,62 @@ export const orderRouter = createTRPCRouter({
 
     return calculateOrderStats(orderGroups);
   }),
-  getTodayDockSchedule: privateProcedure.query(async ({ ctx }) => {
-    const dockBookings = await ctx.db.dockBooking.findMany({
-      where: {
-        createdAt: {
-          gte: startOfDay(new Date()),
-          lt: endOfDay(new Date()),
-        },
-      },
-      include: {
-        dock: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        vehicleType: {
-          select: {
-            id: true,
-            type: true,
-          },
-        },
-        order: {
-          select: {
-            orderNumber: true,
-          },
-        },
-      },
-      orderBy: {
-        queue: "asc",
-      },
-    });
+  getTodayDockSchedule: privateProcedure
+    .input(
+      z
+        .object({
+          search: z.string().nullish(),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const where: Prisma.DockBookingWhereInput = input?.search
+        ? {
+            OR: [
+              {
+                vehicleNumber: { contains: input.search, mode: "insensitive" },
+              },
+              {
+                order: {
+                  orderNumber: { contains: input.search, mode: "insensitive" },
+                },
+              },
+            ],
+          }
+        : {};
 
-    return dockBookings;
-  }),
+      // Add date filter for today's bookings
+      where.createdAt = {
+        gte: startOfDay(new Date()),
+        lt: endOfDay(new Date()),
+      };
+
+      const dockBookings = await ctx.db.dockBooking.findMany({
+        where,
+        include: {
+          dock: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          vehicleType: {
+            select: {
+              id: true,
+              type: true,
+            },
+          },
+          order: {
+            select: {
+              orderNumber: true,
+            },
+          },
+        },
+        orderBy: {
+          queue: "asc",
+        },
+      });
+
+      return dockBookings;
+    }),
 });
