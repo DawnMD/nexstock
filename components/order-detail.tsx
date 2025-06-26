@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/trpc/react";
 import { ArrowLeftIcon, PackageIcon, TruckIcon } from "lucide-react";
 import { notFound, useRouter } from "next/navigation";
+import { getStatusVariant } from "@/lib/utils";
 
 export function OrderDetail({ orderNumber }: { orderNumber: string }) {
   const [orderDetails] =
@@ -22,21 +23,6 @@ export function OrderDetail({ orderNumber }: { orderNumber: string }) {
   if (!orderDetails) {
     notFound();
   }
-
-  const getStatusVariant = (status: string) => {
-    switch (status.toUpperCase()) {
-      case "NEW":
-        return "blue";
-      case "IN_PROGRESS":
-        return "yellow";
-      case "COMPLETED":
-        return "green";
-      case "CANCELLED":
-        return "red";
-      default:
-        return "secondary";
-    }
-  };
 
   return (
     <div className="flex flex-1 flex-col gap-4 lg:gap-6">

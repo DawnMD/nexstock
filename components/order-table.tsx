@@ -57,6 +57,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { getStatusVariant } from "@/lib/utils";
 
 const getStatusIcon = (status: OrderStatus) => {
   switch (status) {
@@ -76,21 +77,6 @@ const getStatusIcon = (status: OrderStatus) => {
       return <XCircleIcon className="size-3 text-red-500 dark:text-red-400" />;
     default:
       return <ClockIcon className="size-3 text-gray-500 dark:text-gray-400" />;
-  }
-};
-
-const getStatusVariant = (status: OrderStatus) => {
-  switch (status) {
-    case OrderStatus.NEW:
-      return "secondary";
-    case OrderStatus.IN_PROGRESS:
-      return "outline";
-    case OrderStatus.COMPLETED:
-      return "default";
-    case OrderStatus.CANCELLED:
-      return "destructive";
-    default:
-      return "outline";
   }
 };
 
