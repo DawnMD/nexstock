@@ -23,7 +23,7 @@ import { api } from "@/trpc/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ActivityType } from "@prisma/client";
 import { format } from "date-fns";
-import { TruckIcon, UserIcon } from "lucide-react";
+import { ArrowLeftIcon, TruckIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
 import { redirect, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -79,16 +79,16 @@ export function VehicleCheckIn({
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+    <div className="flex flex-1 flex-col gap-4 lg:gap-6">
       <div className="flex items-center gap-4">
-        <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
-          <TruckIcon className="text-primary h-5 w-5" />
-        </div>
+        <Button variant="outline" size="icon" onClick={() => router.back()}>
+          <ArrowLeftIcon className="h-4 w-4" />
+          <span className="sr-only">Go back</span>
+        </Button>
         <div>
-          <h1 className="text-2xl font-semibold">Vehicle Check In</h1>
-          <p className="text-muted-foreground text-sm">
-            Register a new vehicle arrival at the dock
-          </p>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold">{orderNumber}</h1>
+          </div>
         </div>
       </div>
       <Form {...form}>
@@ -222,15 +222,6 @@ export function VehicleCheckIn({
                         : ""
                     }
                     required
-                    disabled
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="orderNumber">Order Number</Label>
-                  <Input
-                    id="orderNumber"
-                    placeholder="Enter order number"
-                    value={orderNumber}
                     disabled
                   />
                 </div>
