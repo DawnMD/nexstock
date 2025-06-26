@@ -244,7 +244,7 @@ export function OrderTable({ query }: { query?: string | null }) {
   return (
     <div className="flex w-full flex-col justify-start gap-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <SearchForm query={query} />
+        <SearchForm query={query} action="/orders" />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">

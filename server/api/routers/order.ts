@@ -258,40 +258,64 @@ export const orderRouter = createTRPCRouter({
 
     return calculateOrderStats(orderGroups);
   }),
-  getTodayDockSchedule: privateProcedure.query(async ({ ctx }) => {
-    const dockBookings = await ctx.db.dockBooking.findMany({
-      where: {
-        createdAt: {
-          gte: startOfDay(new Date()),
-          lt: endOfDay(new Date()),
-        },
-      },
-      include: {
-        dock: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        vehicleType: {
-          select: {
-            id: true,
-            type: true,
-          },
-        },
-        order: {
-          select: {
-            orderNumber: true,
-          },
-        },
-      },
-      orderBy: {
-        queue: "asc",
-      },
-    });
+  getTodayDockSchedule: privateProcedure
+    .input(
+      z
+        .object({
+          search: z.string().nullish(),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const where: Prisma.DockBookingWhereInput = input?.search
+        ? {
+            OR: [
+              {
+                vehicleNumber: { contains: input.search, mode: "insensitive" },
+              },
+              {
+                order: {
+                  orderNumber: { contains: input.search, mode: "insensitive" },
+                },
+              },
+            ],
+          }
+        : {};
 
-    return dockBookings;
-  }),
+      // Add date filter for today's bookings
+      where.createdAt = {
+        gte: startOfDay(new Date()),
+        lt: endOfDay(new Date()),
+      };
+
+      const dockBookings = await ctx.db.dockBooking.findMany({
+        where,
+        include: {
+          dock: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          vehicleType: {
+            select: {
+              id: true,
+              type: true,
+            },
+          },
+          order: {
+            select: {
+              orderNumber: true,
+            },
+          },
+        },
+        orderBy: {
+          queue: "asc",
+        },
+      });
+
+      return dockBookings;
+    }),
   getDockBookingByVehicleNumberAndOrderNumber: privateProcedure
     .input(
       z.object({
