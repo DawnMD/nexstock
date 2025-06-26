@@ -27,10 +27,10 @@ export default function OrderDetailLoading() {
                 <span className="sr-only">Go back</span>
               </Button>
               <div>
-                <Skeleton className="h-8 w-40" />
-                <p className="text-muted-foreground">
-                  View and manage order information
-                </p>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-8 w-40" />
+                  <Skeleton className="h-6 w-20 rounded-md" />
+                </div>
               </div>
             </div>
             {/* <div className="flex items-center gap-2">
