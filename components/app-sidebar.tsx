@@ -34,7 +34,7 @@ export const data = {
     },
     {
       title: "Dock Booking List",
-      url: "/dock_booking",
+      url: "/dock-booking",
       icon: IconTruck,
     },
   ],

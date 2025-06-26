@@ -1,8 +1,10 @@
-import { z } from "zod";
-import type { Prisma } from "@prisma/client";
-import { startOfDay, endOfDay } from "date-fns";
 import { calculateOrderStats } from "@/lib/order-utils";
 import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
+import type { Prisma } from "@prisma/client";
+import { ActivityType } from "@prisma/client";
+import { TRPCError } from "@trpc/server";
+import { endOfDay, startOfDay } from "date-fns";
+import { z } from "zod";
 
 export const orderRouter = createTRPCRouter({
   getPaginatedOrders: privateProcedure
@@ -313,5 +315,97 @@ export const orderRouter = createTRPCRouter({
       });
 
       return dockBookings;
+    }),
+  getDockBookingByVehicleNumberAndOrderNumber: privateProcedure
+    .input(
+      z.object({
+        vehicleNumber: z.string(),
+        orderNumber: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const dockBooking = await ctx.db.dockBooking.findFirst({
+        where: {
+          vehicleNumber: input.vehicleNumber,
+          order: {
+            orderNumber: input.orderNumber,
+          },
+        },
+        include: {
+          dock: {
+            select: {
+              name: true,
+            },
+          },
+          vehicleType: {
+            select: {
+              type: true,
+            },
+          },
+        },
+      });
+      return dockBooking;
+    }),
+  updateDockActivity: privateProcedure
+    .input(
+      z.object({
+        vehicleNumber: z.string(),
+        activity: z.nativeEnum(ActivityType),
+        notes: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Find the dock booking by vehicle number
+      const dockBooking = await ctx.db.dockBooking.findFirst({
+        where: {
+          vehicleNumber: input.vehicleNumber,
+        },
+      });
+
+      if (!dockBooking) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Dock booking not found for vehicle number ${input.vehicleNumber}`,
+        });
+      }
+
+      // Create a new dock activity
+      const dockActivity = await ctx.db.dockActivity.create({
+        data: {
+          activityType: input.activity,
+          dockBookingId: dockBooking.id,
+          createdBy: ctx.userId,
+          updatedBy: ctx.userId,
+          notes: input.notes,
+        },
+      });
+
+      return dockActivity;
+    }),
+  // get the last activity for a vehicle, will implement the redirection later
+  getVehicleLastActivity: privateProcedure
+    .input(z.object({ vehicleNumber: z.string(), orderNumber: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const lastActivity = await ctx.db.dockActivity.findFirst({
+        where: {
+          AND: [
+            {
+              dockBooking: {
+                vehicleNumber: input.vehicleNumber,
+              },
+            },
+            {
+              dockBooking: {
+                order: {
+                  orderNumber: input.orderNumber,
+                },
+              },
+            },
+          ],
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      return lastActivity;
     }),
 });
