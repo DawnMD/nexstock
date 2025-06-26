@@ -260,32 +260,29 @@ export const orderRouter = createTRPCRouter({
   }),
   getTodayDockSchedule: privateProcedure
     .input(
-      z
-        .object({
-          search: z.string().nullish(),
-        })
-        .optional(),
+      z.object({
+        search: z.string().nullish(),
+        date: z.string().nullish(),
+      }),
     )
     .query(async ({ ctx, input }) => {
-      const where: Prisma.DockBookingWhereInput = input?.search
-        ? {
-            OR: [
-              {
-                vehicleNumber: { contains: input.search, mode: "insensitive" },
+      const where: Prisma.DockBookingWhereInput = {
+        ...(input.search && {
+          OR: [
+            {
+              vehicleNumber: { contains: input.search, mode: "insensitive" },
+            },
+            {
+              order: {
+                orderNumber: { contains: input.search, mode: "insensitive" },
               },
-              {
-                order: {
-                  orderNumber: { contains: input.search, mode: "insensitive" },
-                },
-              },
-            ],
-          }
-        : {};
-
-      // Add date filter for today's bookings
-      where.createdAt = {
-        gte: startOfDay(new Date()),
-        lt: endOfDay(new Date()),
+            },
+          ],
+        }),
+        createdAt: {
+          gte: startOfDay(input.date ? new Date(input.date) : new Date()),
+          lt: endOfDay(input.date ? new Date(input.date) : new Date()),
+        },
       };
 
       const dockBookings = await ctx.db.dockBooking.findMany({
