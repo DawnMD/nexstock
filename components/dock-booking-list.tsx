@@ -1,10 +1,10 @@
 "use client";
 
-import { api } from "@/trpc/react";
+import { SearchForm } from "@/components/order-search-form";
 import { Badge } from "@/components/ui/badge";
-import { SearchForm } from "./order-search-form";
-import { TruckIcon, PackageIcon, HashIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { api } from "@/trpc/react";
+import { HashIcon, PackageIcon, TruckIcon } from "lucide-react";
 import Link from "next/link";
 
 export function DockBookingList({ query }: { query?: string | null }) {
