@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -9,6 +10,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Form,
   FormControl,
@@ -60,13 +67,20 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Badge } from "./ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+
+// Function to generate random CBM based on vehicle type
+const generateRandomCBM = (vehicleType: string): number => {
+  const cbmRanges: Record<string, { min: number; max: number }> = {
+    Truck: { min: 20, max: 80 },
+    Container: { min: 30, max: 120 },
+    Trailer: { min: 40, max: 150 },
+    Van: { min: 10, max: 40 },
+    Flatbed: { min: 15, max: 60 },
+  };
+
+  const range = cbmRanges[vehicleType] ?? { min: 20, max: 80 };
+  return Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+};
 
 const formSchema = z.object({
   dockId: z.string().min(1, { message: "Dock is required" }),
@@ -90,13 +104,7 @@ const formSchema = z.object({
     .refine((val) => Number(val) > 0, {
       message: "Queue must be greater than 0",
     }),
-  cbm: z
-    .string()
-    .min(1, { message: "CBM is required" })
-    .refine((val) => !isNaN(Number(val)), { message: "CBM must be a number" })
-    .refine((val) => Number(val) > 0, {
-      message: "CBM must be greater than 0",
-    }),
+  cbm: z.string(),
   driverName: z.string().min(1, { message: "Driver name is required" }),
   driverPhone: z.string().optional(),
   eta: z.date().optional(),
@@ -234,7 +242,21 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
                     <FormItem>
                       <FormLabel>Vehicle Type *</FormLabel>
                       <Select
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          // Generate random CBM when vehicle type is selected
+                          if (value) {
+                            const selectedVehicleType = vehicleTypes.find(
+                              (vt) => vt.id.toString() === value,
+                            );
+                            if (selectedVehicleType) {
+                              const randomCBM = generateRandomCBM(
+                                selectedVehicleType.type,
+                              );
+                              form.setValue("cbm", randomCBM.toString());
+                            }
+                          }
+                        }}
                         defaultValue={field.value}
                       >
                         <FormControl>
@@ -318,9 +340,13 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
                   name="cbm"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>CBM *</FormLabel>
+                      <FormLabel>CBM (Auto-generated) *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter CBM" {...field} />
+                        <Input
+                          placeholder="Auto-generated based on vehicle type"
+                          {...field}
+                          disabled
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
