@@ -5,10 +5,12 @@ import { OrderDetailInfo } from "@/components/order-detail-info";
 import { OrderLineItems } from "@/components/order-line-items";
 import { DockBooking } from "@/components/dock-booking";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/trpc/react";
 import { ArrowLeftIcon, PackageIcon, TruckIcon } from "lucide-react";
 import { notFound, useRouter } from "next/navigation";
+import { getStatusVariant } from "@/lib/utils";
 
 export function OrderDetail({ orderNumber }: { orderNumber: string }) {
   const [orderDetails] =
@@ -32,12 +34,14 @@ export function OrderDetail({ orderNumber }: { orderNumber: string }) {
             <span className="sr-only">Go back</span>
           </Button>
           <div>
-            <h1 className="text-2xl font-semibold">
-              {orderDetails.orderNumber}
-            </h1>
-            <p className="text-muted-foreground">
-              View and manage order information
-            </p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-semibold">
+                {orderDetails.orderNumber}
+              </h1>
+              <Badge variant={getStatusVariant(orderDetails.status)}>
+                {orderDetails.status}
+              </Badge>
+            </div>
           </div>
         </div>
         {/* <div className="flex items-center gap-2">
