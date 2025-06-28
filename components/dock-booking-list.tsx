@@ -1,15 +1,21 @@
 "use client";
 
-import { SearchForm } from "@/components/order-search-form";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/trpc/react";
 import { HashIcon, PackageIcon, TruckIcon } from "lucide-react";
 import Link from "next/link";
 
-export function DockBookingList({ query }: { query?: string | null }) {
+export function DockBookingList({
+  query,
+  date,
+}: {
+  query?: string | null;
+  date?: string | null;
+}) {
   const [bookings] = api.order.getTodayDockSchedule.useSuspenseQuery({
     search: query,
+    date,
   });
 
   if (bookings.length === 0) {
@@ -29,9 +35,6 @@ export function DockBookingList({ query }: { query?: string | null }) {
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex flex-1 flex-col gap-4 lg:gap-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <SearchForm query={query} action="/dock_booking" />
-        </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {bookings.map(
             (booking) =>
