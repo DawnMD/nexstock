@@ -358,6 +358,7 @@ export const orderRouter = createTRPCRouter({
         vehicleNumber: z.string(),
         activity: z.nativeEnum(ActivityType),
         notes: z.string().optional(),
+        containerCondition: z.boolean().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -383,6 +384,7 @@ export const orderRouter = createTRPCRouter({
           createdBy: ctx.userId,
           updatedBy: ctx.userId,
           notes: input.notes,
+          containerCondition: input.containerCondition,
         },
       });
 

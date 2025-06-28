@@ -29,9 +29,11 @@ import { redirect, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const activitySchema = z.object({
   notes: z.string().optional(),
+  containerCondition: z.boolean().optional(),
 });
 
 interface VehicleActivityFormProps {
@@ -71,6 +73,7 @@ export function VehicleActivityForm({
     resolver: zodResolver(activitySchema),
     defaultValues: {
       notes: "",
+      containerCondition: undefined,
     },
   });
 
@@ -79,6 +82,7 @@ export function VehicleActivityForm({
       vehicleNumber,
       activity: activityType,
       notes: data.notes,
+      containerCondition: data.containerCondition,
     });
   };
 
@@ -241,10 +245,48 @@ export function VehicleActivityForm({
             <CardHeader>
               <CardTitle>Additional Information</CardTitle>
               <CardDescription>
-                Any additional notes or special instructions
+                Record container condition and any additional notes
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
+              {activityType === "OPEN" && (
+                <FormField
+                  control={form.control}
+                  name="containerCondition"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-y-0 space-x-3">
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={(value) =>
+                            field.onChange(value === "good")
+                          }
+                          defaultValue={field.value ? "good" : "bad"}
+                          className="flex flex-row space-x-4"
+                        >
+                          <FormItem className="flex items-center space-y-0 space-x-2">
+                            <FormControl>
+                              <RadioGroupItem value="good" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Good Condition
+                            </FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-y-0 space-x-2">
+                            <FormControl>
+                              <RadioGroupItem value="bad" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Bad Condition
+                            </FormLabel>
+                          </FormItem>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
               <FormField
                 control={form.control}
                 name="notes"
