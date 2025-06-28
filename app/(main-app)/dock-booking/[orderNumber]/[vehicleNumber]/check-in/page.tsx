@@ -1,5 +1,5 @@
 import { SiteHeader } from "@/components/site-header";
-import { VehicleCheckIn } from "@/components/vehicle-check-in";
+import { VehicleActivityForm } from "@/components/vehicle-activity-form";
 import { api, HydrateClient } from "@/trpc/server";
 
 export default async function CheckInPage({
@@ -19,9 +19,12 @@ export default async function CheckInPage({
       <SiteHeader title="Vehicle Check In" />
       <main className="p-4">
         <HydrateClient>
-          <VehicleCheckIn
+          <VehicleActivityForm
             vehicleNumber={vehicleNumber}
             orderNumber={orderNumber}
+            activityType="CHECK_IN"
+            buttonText="Check In Vehicle"
+            loadingText="Checking In..."
           />
         </HydrateClient>
       </main>
