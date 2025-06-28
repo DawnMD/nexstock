@@ -305,6 +305,15 @@ export const orderRouter = createTRPCRouter({
               orderNumber: true,
             },
           },
+          activities: {
+            select: {
+              activityType: true,
+            },
+            orderBy: {
+              createdAt: "desc",
+            },
+            take: 1,
+          },
         },
         orderBy: {
           queue: "asc",
