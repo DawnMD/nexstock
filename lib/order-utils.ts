@@ -1,3 +1,5 @@
+import type { ActivityType } from "@prisma/client";
+
 export interface OrderStats {
   STANDARD: number;
   IMPORT: number;
@@ -26,4 +28,19 @@ export function calculateOrderStats(orderGroups: OrderTypeGroup[]): OrderStats {
   });
 
   return statsMap;
+}
+
+export function getActivityType(activityType?: ActivityType) {
+  switch (activityType) {
+    case "CHECK_IN":
+      return "Check In";
+    case "CHECK_OUT":
+      return "Check Out";
+    case "OPEN":
+      return "Open";
+    case "CLOSE":
+      return "Close";
+    default:
+      return "Unknown";
+  }
 }

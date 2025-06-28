@@ -26,7 +26,7 @@ export default function DockBookingListLoading() {
           <Skeleton className="h-9 w-full lg:w-32" />
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 1 }).map((_, i) => (
+          {Array.from({ length: 3 }).map((_, i) => (
             <Card key={i}>
               <CardHeader className="pb-0">
                 <CardTitle className="flex items-center justify-between">
@@ -34,6 +34,7 @@ export default function DockBookingListLoading() {
                     <Skeleton className="h-8 w-8 rounded-lg" />
                     <Skeleton className="h-5 w-20" />
                   </div>
+                  <Skeleton className="h-5 w-20" />
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid gap-4">
