@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getActivityType } from "@/lib/order-utils";
 import { api } from "@/trpc/react";
 import { HashIcon, PackageIcon, TruckIcon } from "lucide-react";
 import Link from "next/link";
@@ -52,6 +53,26 @@ export function DockBookingList({
                           </div>
                           <Badge variant="outline" className="font-mono">
                             {booking.dock.name}
+                          </Badge>
+                        </div>
+                        <div>
+                          <Badge
+                            variant={
+                              booking.activities[0]?.activityType === "CHECK_IN"
+                                ? "green"
+                                : booking.activities[0]?.activityType ===
+                                    "CHECK_OUT"
+                                  ? "yellow"
+                                  : booking.activities[0]?.activityType ===
+                                      "OPEN"
+                                    ? "blue"
+                                    : "red"
+                            }
+                            className="font-mono"
+                          >
+                            {getActivityType(
+                              booking.activities[0]?.activityType,
+                            )}
                           </Badge>
                         </div>
                       </CardTitle>
