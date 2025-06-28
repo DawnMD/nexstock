@@ -38,7 +38,6 @@ interface VehicleActivityFormProps {
   vehicleNumber: string;
   orderNumber: string;
   activityType: ActivityType;
-  //   title: string;
   buttonText: string;
   loadingText: string;
 }
@@ -47,7 +46,6 @@ export function VehicleActivityForm({
   vehicleNumber,
   orderNumber,
   activityType,
-  //   title,
   buttonText,
   loadingText,
 }: VehicleActivityFormProps) {
