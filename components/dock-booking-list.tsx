@@ -41,7 +41,11 @@ export function DockBookingList({
             (booking) =>
               booking.order && (
                 <Link
-                  href={`/dock-booking/${booking.order.orderNumber}/${booking.vehicleNumber}/check-in`}
+                  href={`/dock-booking/${booking.order.orderNumber}/${booking.vehicleNumber}/${
+                    booking.activities[0]?.activityType === "CHECK_IN"
+                      ? "open"
+                      : "check-in"
+                  }`}
                   key={booking.id}
                 >
                   <Card>

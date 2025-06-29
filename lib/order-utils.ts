@@ -41,6 +41,6 @@ export function getActivityType(activityType?: ActivityType) {
     case "CLOSE":
       return "Close";
     default:
-      return "Unknown";
+      return "Scheduled";
   }
 }

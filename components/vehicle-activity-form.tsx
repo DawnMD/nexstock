@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/trpc/react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ActivityType } from "@prisma/client";
+import { type ActivityType } from "@prisma/client";
 import { format } from "date-fns";
 import { ArrowLeftIcon, TruckIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
@@ -29,18 +29,28 @@ import { redirect, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-const checkInSchema = z.object({
+const activitySchema = z.object({
   notes: z.string().optional(),
+  containerCondition: z.boolean().optional(),
 });
 
-export function VehicleCheckIn({
-  vehicleNumber,
-  orderNumber,
-}: {
+interface VehicleActivityFormProps {
   vehicleNumber: string;
   orderNumber: string;
-}) {
+  activityType: ActivityType;
+  buttonText: string;
+  loadingText: string;
+}
+
+export function VehicleActivityForm({
+  vehicleNumber,
+  orderNumber,
+  activityType,
+  buttonText,
+  loadingText,
+}: VehicleActivityFormProps) {
   const router = useRouter();
 
   const [dockBookingVehicle] =
@@ -51,26 +61,28 @@ export function VehicleCheckIn({
 
   const updateDockActivity = api.order.updateDockActivity.useMutation({
     onSuccess: () => {
-      toast.success("Dock activity updated");
+      toast.success("Activity updated successfully");
       router.push("/dock-booking");
     },
     onError: (error) => {
-      toast.error(error.message ?? "Failed to update dock activity");
+      toast.error(error.message ?? "Failed to update activity");
     },
   });
 
-  const form = useForm<z.infer<typeof checkInSchema>>({
-    resolver: zodResolver(checkInSchema),
+  const form = useForm<z.infer<typeof activitySchema>>({
+    resolver: zodResolver(activitySchema),
     defaultValues: {
       notes: "",
+      containerCondition: undefined,
     },
   });
 
-  const onSubmit = (data: z.infer<typeof checkInSchema>) => {
+  const onSubmit = (data: z.infer<typeof activitySchema>) => {
     updateDockActivity.mutate({
       vehicleNumber,
-      activity: ActivityType.CHECK_IN,
+      activity: activityType,
       notes: data.notes,
+      containerCondition: data.containerCondition,
     });
   };
 
@@ -233,10 +245,48 @@ export function VehicleCheckIn({
             <CardHeader>
               <CardTitle>Additional Information</CardTitle>
               <CardDescription>
-                Any additional notes or special instructions
+                Record container condition and any additional notes
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
+              {activityType === "OPEN" && (
+                <FormField
+                  control={form.control}
+                  name="containerCondition"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-y-0 space-x-3">
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={(value) =>
+                            field.onChange(value === "good")
+                          }
+                          defaultValue={field.value ? "good" : "bad"}
+                          className="flex flex-row space-x-4"
+                        >
+                          <FormItem className="flex items-center space-y-0 space-x-2">
+                            <FormControl>
+                              <RadioGroupItem value="good" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Good Condition
+                            </FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-y-0 space-x-2">
+                            <FormControl>
+                              <RadioGroupItem value="bad" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Bad Condition
+                            </FormLabel>
+                          </FormItem>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
               <FormField
                 control={form.control}
                 name="notes"
@@ -269,8 +319,8 @@ export function VehicleCheckIn({
               type="submit"
             >
               {updateDockActivity.isPending || form.formState.isSubmitting
-                ? "Checking In..."
-                : "Check In Vehicle"}
+                ? loadingText
+                : buttonText}
             </Button>
           </div>
         </form>
