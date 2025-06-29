@@ -2,7 +2,7 @@ import { SiteHeader } from "@/components/site-header";
 import { VehicleActivityForm } from "@/components/vehicle-activity-form";
 import { api, HydrateClient } from "@/trpc/server";
 
-export default async function OpenPage({
+export default async function ClosePage({
   params,
 }: {
   params: Promise<{ orderNumber: string; vehicleNumber: string }>;
@@ -16,7 +16,7 @@ export default async function OpenPage({
 
   return (
     <>
-      <SiteHeader title="Vehicle Open" />
+      <SiteHeader title="Vehicle Close" />
       <main className="p-4">
         <HydrateClient>
           <VehicleActivityForm
