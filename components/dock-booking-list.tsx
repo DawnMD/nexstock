@@ -44,7 +44,9 @@ export function DockBookingList({
                   href={`/dock-booking/${booking.order.orderNumber}/${booking.vehicleNumber}/${
                     booking.activities[0]?.activityType === "CHECK_IN"
                       ? "open"
-                      : "check-in"
+                      : booking.activities[0]?.activityType === "OPEN"
+                        ? "close"
+                        : "check-in"
                   }`}
                   key={booking.id}
                 >
