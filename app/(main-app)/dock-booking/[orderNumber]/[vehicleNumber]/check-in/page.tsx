@@ -1,6 +1,8 @@
 import { SiteHeader } from "@/components/site-header";
+import { VehicleActivityContainer } from "@/components/vehicle-activity-containner";
 import { VehicleActivityForm } from "@/components/vehicle-activity-form";
 import { api, HydrateClient } from "@/trpc/server";
+import { notFound } from "next/navigation";
 
 export default async function CheckInPage({
   params,
@@ -9,23 +11,33 @@ export default async function CheckInPage({
 }) {
   const { orderNumber, vehicleNumber } = await params;
 
-  await api.order.getDockBookingByVehicleNumberAndOrderNumber.prefetch({
-    vehicleNumber,
-    orderNumber,
-  });
+  const dockBookingDetails =
+    await api.order.getDockBookingByVehicleNumberAndOrderNumber({
+      vehicleNumber,
+      orderNumber,
+    });
+
+  if (!dockBookingDetails) {
+    notFound();
+  }
 
   return (
     <>
       <SiteHeader title="Vehicle Check In" />
       <main className="p-4">
         <HydrateClient>
-          <VehicleActivityForm
-            vehicleNumber={vehicleNumber}
+          <VehicleActivityContainer
+            dockBookingDetails={dockBookingDetails}
             orderNumber={orderNumber}
-            activityType="CHECK_IN"
-            buttonText="Check In Vehicle"
-            loadingText="Checking In..."
-          />
+            vehicleNumber={vehicleNumber}
+          >
+            <HydrateClient>
+              <VehicleActivityForm
+                vehicleNumber={vehicleNumber}
+                activityType="CHECK_IN"
+              />
+            </HydrateClient>
+          </VehicleActivityContainer>
         </HydrateClient>
       </main>
     </>

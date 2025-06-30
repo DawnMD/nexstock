@@ -104,8 +104,8 @@ export default function OpenLoading() {
 
             {/* Form Actions Skeleton */}
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-end">
-              <Skeleton className="h-10 w-20" />
-              <Skeleton className="h-10 w-32" />
+              <Skeleton className="h-10 w-full sm:w-20" />
+              <Skeleton className="h-10 w-full sm:w-24" />
             </div>
           </div>
         </div>

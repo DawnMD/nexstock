@@ -1,6 +1,8 @@
 import { SiteHeader } from "@/components/site-header";
+import { VehicleActivityContainer } from "@/components/vehicle-activity-containner";
 import { VehicleActivityForm } from "@/components/vehicle-activity-form";
 import { api, HydrateClient } from "@/trpc/server";
+import { notFound } from "next/navigation";
 
 export default async function ClosePage({
   params,
@@ -9,24 +11,32 @@ export default async function ClosePage({
 }) {
   const { orderNumber, vehicleNumber } = await params;
 
-  await api.order.getDockBookingByVehicleNumberAndOrderNumber.prefetch({
-    vehicleNumber,
-    orderNumber,
-  });
+  const dockBookingDetails =
+    await api.order.getDockBookingByVehicleNumberAndOrderNumber({
+      vehicleNumber,
+      orderNumber,
+    });
+
+  if (!dockBookingDetails) {
+    notFound();
+  }
 
   return (
     <>
       <SiteHeader title="Vehicle Close" />
       <main className="p-4">
-        <HydrateClient>
-          <VehicleActivityForm
-            vehicleNumber={vehicleNumber}
-            orderNumber={orderNumber}
-            activityType="CLOSE"
-            buttonText="Close Vehicle"
-            loadingText="Closing Vehicle..."
-          />
-        </HydrateClient>
+        <VehicleActivityContainer
+          dockBookingDetails={dockBookingDetails}
+          orderNumber={orderNumber}
+          vehicleNumber={vehicleNumber}
+        >
+          <HydrateClient>
+            <VehicleActivityForm
+              vehicleNumber={vehicleNumber}
+              activityType="CLOSE"
+            />
+          </HydrateClient>
+        </VehicleActivityContainer>
       </main>
     </>
   );
