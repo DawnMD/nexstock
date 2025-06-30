@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import DockBookingHeaderButton from "@/components/dock-booking-header-button";
 import {
   Card,
   CardContent,
@@ -31,10 +31,10 @@ export function VehicleActivityContainer({
   return (
     <div className="flex flex-1 flex-col gap-4 lg:gap-6">
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon">
+        <DockBookingHeaderButton>
           <ArrowLeftIcon className="h-4 w-4" />
           <span className="sr-only">Go back</span>
-        </Button>
+        </DockBookingHeaderButton>
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-semibold">{orderNumber}</h1>
