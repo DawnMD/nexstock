@@ -55,12 +55,11 @@ export function DockBookingList({
       <div className="flex flex-1 flex-col gap-4 lg:gap-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {bookings.map((booking) => {
-            const checkInActivity =
+            const isCheckIn =
               booking.activities.find(
                 (activity) => activity.activityType === ActivityType.CHECK_IN,
               ) ?? false;
-
-            const checkOutActivity =
+            const isCheckOut =
               booking.activities.find(
                 (activity) => activity.activityType === ActivityType.CHECK_OUT,
               ) ?? false;
@@ -101,13 +100,13 @@ export function DockBookingList({
                     <Badge
                       className="font-mono"
                       variant={
-                        checkInActivity && !isOpen
+                        isCheckIn && !isOpen
                           ? "green"
                           : isOpen && !isClosed
                             ? "blue"
-                            : isClosed && !checkOutActivity
+                            : isClosed && !isCheckOut
                               ? "red"
-                              : checkOutActivity
+                              : isCheckOut
                                 ? "yellow"
                                 : "secondary"
                       }
@@ -135,23 +134,20 @@ export function DockBookingList({
                         {booking.order.orderNumber}
                       </span>
                     </div>
-                    {checkInActivity && (
+                    {isCheckIn && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">
                           Check-in Time:
                         </span>
                         <span className="text-xs">
-                          {format(
-                            checkInActivity.createdAt,
-                            "dd MMM yyyy hh:mm a",
-                          )}
+                          {format(isCheckIn.createdAt, "dd MMM yyyy hh:mm a")}
                         </span>
                       </div>
                     )}
                   </div>
 
                   {/* Timeline Information */}
-                  {(isOpen || isClosed || checkOutActivity) && (
+                  {(isOpen || isClosed || isCheckOut) && (
                     <div className="bg-muted/50 rounded-lg p-3">
                       <div className="mb-2 text-sm font-medium">Timeline</div>
                       <div className="text-muted-foreground space-y-1 text-xs">
@@ -174,12 +170,12 @@ export function DockBookingList({
                             </span>
                           </div>
                         )}
-                        {checkOutActivity && (
+                        {isCheckOut && (
                           <div className="flex justify-between">
                             <span>Checked Out:</span>
                             <span>
                               {format(
-                                checkOutActivity.createdAt,
+                                isCheckOut.createdAt,
                                 "dd MMM yyyy hh:mm a",
                               )}
                             </span>
@@ -203,7 +199,7 @@ export function DockBookingList({
                       </Button>
                     )}
                     {/* If checked in, show open button */}
-                    {checkInActivity && !isOpen && (
+                    {isCheckIn && !isOpen && (
                       <Button size="sm" className="flex-1" asChild>
                         <Link
                           href={`/dock-booking/${booking.order.orderNumber}/${booking.vehicleNumber}/open`}
@@ -230,7 +226,7 @@ export function DockBookingList({
                       </Button>
                     )}
                     {/* If closed, show check out button */}
-                    {isClosed && !checkOutActivity && (
+                    {isClosed && !isCheckOut && (
                       <Button
                         size="sm"
                         variant="outline"
@@ -246,7 +242,7 @@ export function DockBookingList({
                       </Button>
                     )}
                     {/* If checked out, show complete badge */}
-                    {checkOutActivity && (
+                    {isCheckOut && (
                       <div className="flex flex-1 items-center justify-center">
                         <Button
                           size="sm"
