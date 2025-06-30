@@ -98,7 +98,7 @@ export function OrderDetail({ orderNumber }: { orderNumber: string }) {
           <OrderLineItems
             lineItems={orderDetails.items.map((item) => ({
               id: item.id,
-              sku: item.sku,
+              sku: item.Sku.sku,
               description: item.description,
               status: item.status,
               orderedQuantity: item.orderedQuantity,
