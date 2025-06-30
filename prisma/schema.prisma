@@ -77,15 +77,16 @@ model OrderItem {
     orderedQuantity  Int             @default(0)
     receivedQuantity Int             @default(0)
     rejectedQuantity Int             @default(0)
-    sku              String
     department       String
     qualityCheck     Boolean         @default(false)
     createdAt        DateTime        @default(now())
     updatedAt        DateTime        @updatedAt
     Order            Order?          @relation(fields: [orderId], references: [id])
     orderId          Int?
+    Sku              Sku             @relation(fields: [skuId], references: [id])
+    skuId            Int
 
-    @@index([status, sku])
+    @@index([status, skuId])
 }
 
 model Dock {
@@ -142,4 +143,38 @@ model DockActivity {
     dockBookingId      Int
 
     @@index([dockBookingId])
+}
+
+model Sku {
+    id            Int         @id @default(autoincrement())
+    sku           String      @unique
+    description   String
+    //Physical attributes
+    weight        Float?
+    length        Float?
+    width         Float?
+    height        Float?
+    cbm           Float?
+    //Inventory attributes
+    uom           String?
+    //Quality check
+    qualityCheck  Boolean     @default(false)
+    hasShelfLife  Boolean     @default(false)
+    shelfLifeDays Int?
+    storageType   String?
+    storageZone   String?
+    // Classification
+    department    String
+    // Tracking
+    isActive      Boolean     @default(true)
+    createdAt     DateTime    @default(now())
+    updatedAt     DateTime    @updatedAt
+    createdBy     String
+    updatedBy     String
+    //Lot attributes
+    lot           String?
+    lotExpiryDate DateTime?
+    OrderItem     OrderItem[]
+
+    @@index([sku])
 }
