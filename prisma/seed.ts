@@ -498,7 +498,10 @@ async function main() {
   );
 
   console.log("\n=== SEEDING COMPLETE ===");
+  console.log(`Vendors: ${vendors.length}`);
   console.log(`SKUs: ${skus.length}`);
+  console.log(`Docks: ${docks.length}`);
+  console.log(`Vehicle Types: ${vehicleTypes.length}`);
   console.log(`Orders: ${orders.length}`);
   console.log("Database has been successfully seeded!");
 }
