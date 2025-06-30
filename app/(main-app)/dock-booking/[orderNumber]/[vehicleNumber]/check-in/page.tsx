@@ -25,20 +25,18 @@ export default async function CheckInPage({
     <>
       <SiteHeader title="Vehicle Check In" />
       <main className="p-4">
-        <HydrateClient>
-          <VehicleActivityContainer
-            dockBookingDetails={dockBookingDetails}
-            orderNumber={orderNumber}
-            vehicleNumber={vehicleNumber}
-          >
-            <HydrateClient>
-              <VehicleActivityForm
-                vehicleNumber={vehicleNumber}
-                activityType="CHECK_IN"
-              />
-            </HydrateClient>
-          </VehicleActivityContainer>
-        </HydrateClient>
+        <VehicleActivityContainer
+          dockBookingDetails={dockBookingDetails}
+          orderNumber={orderNumber}
+          vehicleNumber={vehicleNumber}
+        >
+          <HydrateClient>
+            <VehicleActivityForm
+              vehicleNumber={vehicleNumber}
+              activityType="CHECK_IN"
+            />
+          </HydrateClient>
+        </VehicleActivityContainer>
       </main>
     </>
   );
