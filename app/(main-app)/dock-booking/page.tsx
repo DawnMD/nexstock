@@ -23,11 +23,11 @@ export default async function Page({
     <>
       <SiteHeader title="Dock Booking List" />
       <main className="flex flex-col gap-4 p-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <SearchForm query={query} action="/dock_booking" />
+          <DockDateSearch date={date} />
+        </div>
         <HydrateClient>
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <SearchForm query={query} action="/dock_booking" />
-            <DockDateSearch date={date} />
-          </div>
           <DockBookingList query={query} date={date} />
         </HydrateClient>
       </main>
