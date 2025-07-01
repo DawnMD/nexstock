@@ -25,11 +25,7 @@ export default async function OpenPage({
     <>
       <SiteHeader title="Vehicle Open" />
       <main className="p-4">
-        <VehicleActivityContainer
-          dockBookingDetails={dockBookingDetails}
-          orderNumber={orderNumber}
-          vehicleNumber={vehicleNumber}
-        >
+        <VehicleActivityContainer dockBookingDetails={dockBookingDetails}>
           <HydrateClient>
             <VehicleActivityForm
               vehicleNumber={vehicleNumber}

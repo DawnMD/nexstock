@@ -16,8 +16,6 @@ import { ArrowLeftIcon, TruckIcon, UserIcon } from "lucide-react";
 export function VehicleActivityContainer({
   children,
   dockBookingDetails,
-  orderNumber,
-  vehicleNumber,
 }: {
   children: React.ReactNode;
   dockBookingDetails: NonNullable<
@@ -25,8 +23,6 @@ export function VehicleActivityContainer({
       typeof appRouter
     >["order"]["getDockBookingByVehicleNumberAndOrderNumber"]
   >;
-  orderNumber: string;
-  vehicleNumber: string;
 }) {
   return (
     <div className="flex flex-1 flex-col gap-4 lg:gap-6">
@@ -37,7 +33,10 @@ export function VehicleActivityContainer({
         </DockBookingHeaderButton>
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold">{orderNumber}</h1>
+            {/* Dock booking order number should not be null or undefined. Need to handle this case after talking to backend */}
+            <h1 className="text-2xl font-semibold">
+              {dockBookingDetails.order?.orderNumber}
+            </h1>
           </div>
         </div>
       </div>
@@ -81,7 +80,7 @@ export function VehicleActivityContainer({
                 <Input
                   id="vehicleNumber"
                   placeholder="Enter vehicle number/license plate"
-                  value={vehicleNumber}
+                  value={dockBookingDetails.vehicleNumber}
                   required
                   disabled
                 />

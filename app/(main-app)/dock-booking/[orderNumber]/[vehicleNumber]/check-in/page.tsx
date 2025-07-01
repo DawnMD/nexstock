@@ -25,11 +25,7 @@ export default async function CheckInPage({
     <>
       <SiteHeader title="Vehicle Check In" />
       <main className="p-4">
-        <VehicleActivityContainer
-          dockBookingDetails={dockBookingDetails}
-          orderNumber={orderNumber}
-          vehicleNumber={vehicleNumber}
-        >
+        <VehicleActivityContainer dockBookingDetails={dockBookingDetails}>
           <HydrateClient>
             <VehicleActivityForm
               vehicleNumber={vehicleNumber}

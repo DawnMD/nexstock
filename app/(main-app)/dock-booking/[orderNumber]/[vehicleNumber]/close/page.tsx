@@ -17,7 +17,7 @@ export default async function ClosePage({
       orderNumber,
     });
 
-  if (!dockBookingDetails) {
+  if (!dockBookingDetails || !dockBookingDetails.order) {
     notFound();
   }
 
@@ -25,11 +25,7 @@ export default async function ClosePage({
     <>
       <SiteHeader title="Vehicle Close" />
       <main className="p-4">
-        <VehicleActivityContainer
-          dockBookingDetails={dockBookingDetails}
-          orderNumber={orderNumber}
-          vehicleNumber={vehicleNumber}
-        >
+        <VehicleActivityContainer dockBookingDetails={dockBookingDetails}>
           <HydrateClient>
             <VehicleActivityForm
               vehicleNumber={vehicleNumber}
