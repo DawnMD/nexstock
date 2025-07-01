@@ -348,6 +348,11 @@ export const orderRouter = createTRPCRouter({
               type: true,
             },
           },
+          order: {
+            select: {
+              orderNumber: true,
+            },
+          },
         },
       });
       return dockBooking;
