@@ -16,20 +16,16 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/trpc/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type ActivityType } from "@prisma/client";
-import { format } from "date-fns";
-import { ArrowLeftIcon, TruckIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const activitySchema = z.object({
   notes: z.string().optional(),
@@ -38,31 +34,21 @@ const activitySchema = z.object({
 
 interface VehicleActivityFormProps {
   vehicleNumber: string;
-  orderNumber: string;
   activityType: ActivityType;
-  buttonText: string;
-  loadingText: string;
 }
 
 export function VehicleActivityForm({
   vehicleNumber,
-  orderNumber,
   activityType,
-  buttonText,
-  loadingText,
 }: VehicleActivityFormProps) {
   const router = useRouter();
-
-  const [dockBookingVehicle] =
-    api.order.getDockBookingByVehicleNumberAndOrderNumber.useSuspenseQuery({
-      vehicleNumber,
-      orderNumber,
-    });
+  const apiUtils = api.useUtils();
 
   const updateDockActivity = api.order.updateDockActivity.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
+      await apiUtils.order.getTodayDockSchedule.invalidate();
       toast.success("Activity updated successfully");
-      router.push("/dock-booking");
+      router.back();
     },
     onError: (error) => {
       toast.error(error.message ?? "Failed to update activity");
@@ -86,245 +72,91 @@ export function VehicleActivityForm({
     });
   };
 
-  if (!dockBookingVehicle) {
-    redirect("/dock-booking");
-  }
-
   return (
-    <div className="flex flex-1 flex-col gap-4 lg:gap-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => router.back()}>
-          <ArrowLeftIcon className="h-4 w-4" />
-          <span className="sr-only">Go back</span>
-        </Button>
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold">{orderNumber}</h1>
-          </div>
-        </div>
-      </div>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TruckIcon className="h-5 w-5" />
-                  Vehicle Information
-                </CardTitle>
-                <CardDescription>
-                  Basic vehicle and dock assignment details
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="dock">Dock Assignment</Label>
-                    <Input
-                      id="dock"
-                      placeholder="Enter dock"
-                      value={dockBookingVehicle.dock.name}
-                      disabled
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="vehicleType">Vehicle Type</Label>
-                    <Input
-                      id="vehicleType"
-                      placeholder="Enter vehicle type"
-                      value={dockBookingVehicle.vehicleType.type}
-                      disabled
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="vehicleNumber">Vehicle Number</Label>
-                  <Input
-                    id="vehicleNumber"
-                    placeholder="Enter vehicle number/license plate"
-                    value={vehicleNumber}
-                    required
-                    disabled
-                  />
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="weight">Weight (kg)</Label>
-                    <Input
-                      id="weight"
-                      type="number"
-                      placeholder="0"
-                      value={dockBookingVehicle.weight.toString()}
-                      min="0"
-                      disabled
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="queue">Queue Position</Label>
-                    <Input
-                      id="queue"
-                      type="number"
-                      placeholder="0"
-                      value={dockBookingVehicle.queue.toString()}
-                      min="1"
-                      disabled
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="cbm">CBM</Label>
-                    <Input
-                      id="cbm"
-                      type="number"
-                      placeholder="0"
-                      value={dockBookingVehicle.cbm.toString()}
-                      min="0"
-                      disabled
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UserIcon className="h-5 w-5" />
-                  Driver Information
-                </CardTitle>
-                <CardDescription>
-                  Driver contact and scheduling details
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="driverName">Driver Name</Label>
-                  <Input
-                    id="driverName"
-                    placeholder="Enter driver's full name"
-                    value={dockBookingVehicle.driverName}
-                    required
-                    disabled
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="driverPhone">Driver Phone (Optional)</Label>
-                  <Input
-                    id="driverPhone"
-                    type="tel"
-                    placeholder="Enter phone number"
-                    value={dockBookingVehicle.driverPhone ?? ""}
-                    disabled
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Estimated Time of Arrival (Optional)</Label>
-                  <Input
-                    id="eta"
-                    placeholder="Enter driver's full name"
-                    value={
-                      dockBookingVehicle.eta
-                        ? format(dockBookingVehicle.eta, "PPP")
-                        : ""
-                    }
-                    required
-                    disabled
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Additional Information</CardTitle>
-              <CardDescription>
-                Record container condition and any additional notes
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {activityType === "OPEN" && (
-                <FormField
-                  control={form.control}
-                  name="containerCondition"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-y-0 space-x-3">
-                      <FormControl>
-                        <RadioGroup
-                          onValueChange={(value) =>
-                            field.onChange(value === "good")
-                          }
-                          defaultValue={field.value ? "good" : "bad"}
-                          className="flex flex-row space-x-4"
-                        >
-                          <FormItem className="flex items-center space-y-0 space-x-2">
-                            <FormControl>
-                              <RadioGroupItem value="good" />
-                            </FormControl>
-                            <FormLabel className="font-normal">
-                              Good Condition
-                            </FormLabel>
-                          </FormItem>
-                          <FormItem className="flex items-center space-y-0 space-x-2">
-                            <FormControl>
-                              <RadioGroupItem value="bad" />
-                            </FormControl>
-                            <FormLabel className="font-normal">
-                              Bad Condition
-                            </FormLabel>
-                          </FormItem>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Additional Information</CardTitle>
+            <CardDescription>
+              Record container condition and any additional notes
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {activityType === "OPEN" && (
               <FormField
                 control={form.control}
-                name="notes"
+                name="containerCondition"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel htmlFor="notes">Notes (Optional)</FormLabel>
+                  <FormItem className="flex flex-row items-start space-y-0 space-x-3">
                     <FormControl>
-                      <Textarea
-                        id="notes"
-                        placeholder="Enter any additional notes, special instructions, or observations..."
-                        className="min-h-[100px]"
-                        {...field}
-                      />
+                      <RadioGroup
+                        onValueChange={(value) =>
+                          field.onChange(value === "good")
+                        }
+                        defaultValue={field.value ? "good" : "bad"}
+                        className="flex flex-row space-x-4"
+                      >
+                        <FormItem className="flex items-center space-y-0 space-x-2">
+                          <FormControl>
+                            <RadioGroupItem value="good" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Good Condition
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-y-0 space-x-2">
+                          <FormControl>
+                            <RadioGroupItem value="bad" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Bad Condition
+                          </FormLabel>
+                        </FormItem>
+                      </RadioGroup>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </CardContent>
-          </Card>
+            )}
 
-          <div className="flex flex-col gap-4 sm:flex-row sm:justify-end">
-            <Button asChild type="button" variant="outline">
-              <Link href={"/dock-booking"}>Cancel</Link>
-            </Button>
-            <Button
-              disabled={
-                updateDockActivity.isPending || form.formState.isSubmitting
-              }
-              type="submit"
-            >
-              {updateDockActivity.isPending || form.formState.isSubmitting
-                ? loadingText
-                : buttonText}
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </div>
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem className="space-y-2">
+                  <FormLabel htmlFor="notes">Notes (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      id="notes"
+                      placeholder="Enter any additional notes, special instructions, or observations..."
+                      className="min-h-[100px]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-end">
+          <Button asChild type="button" variant="outline">
+            <Link href={"/dock-booking"}>Cancel</Link>
+          </Button>
+          <Button
+            disabled={
+              updateDockActivity.isPending || form.formState.isSubmitting
+            }
+            type="submit"
+          >
+            {updateDockActivity.isPending || form.formState.isSubmitting
+              ? "Submitting..."
+              : "Submit"}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }

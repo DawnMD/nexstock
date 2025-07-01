@@ -313,11 +313,11 @@ export const orderRouter = createTRPCRouter({
           activities: {
             select: {
               activityType: true,
+              createdAt: true,
             },
             orderBy: {
               createdAt: "desc",
             },
-            take: 1,
           },
         },
         orderBy: {
@@ -351,6 +351,11 @@ export const orderRouter = createTRPCRouter({
           vehicleType: {
             select: {
               type: true,
+            },
+          },
+          order: {
+            select: {
+              orderNumber: true,
             },
           },
         },
@@ -394,31 +399,5 @@ export const orderRouter = createTRPCRouter({
       });
 
       return dockActivity;
-    }),
-  // get the last activity for a vehicle, will implement the redirection later
-  getVehicleLastActivity: privateProcedure
-    .input(z.object({ vehicleNumber: z.string(), orderNumber: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const lastActivity = await ctx.db.dockActivity.findFirst({
-        where: {
-          AND: [
-            {
-              dockBooking: {
-                vehicleNumber: input.vehicleNumber,
-              },
-            },
-            {
-              dockBooking: {
-                order: {
-                  orderNumber: input.orderNumber,
-                },
-              },
-            },
-          ],
-        },
-        orderBy: { createdAt: "desc" },
-      });
-
-      return lastActivity;
     }),
 });
