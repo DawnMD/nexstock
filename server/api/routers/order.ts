@@ -125,17 +125,8 @@ export const orderRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const order = await ctx.db.order.findUnique({
-        where: { orderNumber: input.orderNumber },
-        select: { id: true },
-      });
-
-      if (!order) {
-        return [];
-      }
-
       const dockBookings = await ctx.db.dockBooking.findMany({
-        where: { orderId: order.id },
+        where: { orderId: input.orderNumber },
         include: {
           dock: {
             select: {
@@ -213,7 +204,6 @@ export const orderRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const order = await ctx.db.order.findUnique({
         where: { orderNumber: input.orderNumber },
-        select: { id: true },
       });
 
       if (!order) {
@@ -222,7 +212,7 @@ export const orderRouter = createTRPCRouter({
 
       const dockBooking = await ctx.db.dockBooking.create({
         data: {
-          orderId: order.id,
+          orderId: order.orderNumber,
           dockId: input.dockId,
           vehicleTypeId: input.vehicleTypeId,
           vehicleNumber: input.vehicleNumber,
@@ -305,11 +295,6 @@ export const orderRouter = createTRPCRouter({
               type: true,
             },
           },
-          order: {
-            select: {
-              orderNumber: true,
-            },
-          },
           activities: {
             select: {
               activityType: true,
@@ -338,9 +323,7 @@ export const orderRouter = createTRPCRouter({
       const dockBooking = await ctx.db.dockBooking.findFirst({
         where: {
           vehicleNumber: input.vehicleNumber,
-          order: {
-            orderNumber: input.orderNumber,
-          },
+          orderId: input.orderNumber,
         },
         include: {
           dock: {
@@ -351,11 +334,6 @@ export const orderRouter = createTRPCRouter({
           vehicleType: {
             select: {
               type: true,
-            },
-          },
-          order: {
-            select: {
-              orderNumber: true,
             },
           },
         },

@@ -33,9 +33,8 @@ export function VehicleActivityContainer({
         </DockBookingHeaderButton>
         <div>
           <div className="flex items-center gap-2">
-            {/* Dock booking order number should not be null or undefined. Need to handle this case after talking to backend */}
             <h1 className="text-2xl font-semibold">
-              {dockBookingDetails.order?.orderNumber}
+              {dockBookingDetails.orderId}
             </h1>
           </div>
         </div>

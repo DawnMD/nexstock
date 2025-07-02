@@ -72,10 +72,6 @@ export function DockBookingList({
                 (activity) => activity.activityType === ActivityType.CLOSE,
               ) ?? false;
 
-            if (!booking.order) {
-              return null;
-            }
-
             return (
               <Card key={booking.id} className="relative">
                 <CardHeader className="pb-3">
@@ -131,7 +127,7 @@ export function DockBookingList({
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Order:</span>
                       <span className="font-mono text-xs">
-                        {booking.order.orderNumber}
+                        {booking.orderId}
                       </span>
                     </div>
                     {isCheckIn && (
@@ -191,7 +187,7 @@ export function DockBookingList({
                     {booking.activities.length === 0 && (
                       <Button size="sm" className="flex-1" asChild>
                         <Link
-                          href={`/dock-booking/${booking.order.orderNumber}/${booking.vehicleNumber}/check-in`}
+                          href={`/dock-booking/${booking.orderId}/${booking.vehicleNumber}/check-in`}
                         >
                           <LogInIcon className="mr-1 h-3 w-3" />
                           Check In
@@ -202,7 +198,7 @@ export function DockBookingList({
                     {isCheckIn && !isOpen && (
                       <Button size="sm" className="flex-1" asChild>
                         <Link
-                          href={`/dock-booking/${booking.order.orderNumber}/${booking.vehicleNumber}/open`}
+                          href={`/dock-booking/${booking.orderId}/${booking.vehicleNumber}/open`}
                         >
                           <UnlockIcon className="mr-1 h-3 w-3" />
                           Open
@@ -218,7 +214,7 @@ export function DockBookingList({
                         asChild
                       >
                         <Link
-                          href={`/dock-booking/${booking.order.orderNumber}/${booking.vehicleNumber}/close`}
+                          href={`/dock-booking/${booking.orderId}/${booking.vehicleNumber}/close`}
                         >
                           <LockIcon className="mr-1 h-3 w-3" />
                           Close
@@ -234,7 +230,7 @@ export function DockBookingList({
                         asChild
                       >
                         <Link
-                          href={`/dock-booking/${booking.order.orderNumber}/${booking.vehicleNumber}/check-out`}
+                          href={`/dock-booking/${booking.orderId}/${booking.vehicleNumber}/check-out`}
                         >
                           <LogOutIcon className="mr-1 h-3 w-3" />
                           Check Out
