@@ -17,7 +17,7 @@ export default async function ClosePage({
       orderNumber,
     });
 
-  if (!dockBookingDetails || !dockBookingDetails.order) {
+  if (!dockBookingDetails) {
     notFound();
   }
 

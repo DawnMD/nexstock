@@ -1,20 +1,21 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import type { PaymentStatus } from "@prisma/client";
 import { TagIcon, BuildingIcon, CreditCardIcon } from "lucide-react";
 
 interface OrderDetailHeaderProps {
   orderNumber: string;
   businessUnit: string;
-  paymentStatus: string;
+  paymentStatus: PaymentStatus;
 }
 
-const getPaymentStatusVariant = (status: string) => {
-  switch (status.toUpperCase()) {
+const getPaymentStatusVariant = (paymentStatus: PaymentStatus) => {
+  switch (paymentStatus) {
     case "PAID":
       return "default";
     case "PENDING":
       return "outline";
-    case "FAILED":
+    case "NOT_PAID":
       return "destructive";
     default:
       return "secondary";

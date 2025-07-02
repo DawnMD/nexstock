@@ -60,7 +60,7 @@ export function OrderDetail({ orderNumber }: { orderNumber: string }) {
       <OrderDetailHeader
         orderNumber={orderDetails.orderNumber}
         businessUnit={orderDetails.businessUnit}
-        paymentStatus={orderDetails.paymentStatus ?? "N/A"}
+        paymentStatus={orderDetails.paymentStatus}
       />
 
       {/* Tabs for order details and dock bookings */}
