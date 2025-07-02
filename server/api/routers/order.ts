@@ -102,7 +102,12 @@ export const orderRouter = createTRPCRouter({
               status: true,
               receivedQuantity: true,
               rejectedQuantity: true,
-              sku: true,
+              Sku: {
+                select: {
+                  id: true,
+                  sku: true,
+                },
+              },
               department: true,
               qualityCheck: true,
               orderedQuantity: true,
@@ -346,6 +351,11 @@ export const orderRouter = createTRPCRouter({
           vehicleType: {
             select: {
               type: true,
+            },
+          },
+          order: {
+            select: {
+              orderNumber: true,
             },
           },
         },

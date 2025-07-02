@@ -4,7 +4,7 @@ import {
   PrismaClient,
   OrderType,
 } from "@prisma/client";
-import type { Vendor, Order } from "@prisma/client";
+import type { Vendor } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -22,13 +22,6 @@ const businessUnits = [
   "Books & Media",
 ];
 
-const orderTypes = [OrderType.STANDARD, OrderType.IMPORT, OrderType.RETURN];
-const orderStatuses = [
-  OrderStatus.NEW,
-  OrderStatus.IN_PROGRESS,
-  OrderStatus.COMPLETED,
-  OrderStatus.CANCELLED,
-];
 const paymentStatuses = ["Paid", "Pending", "Partial", "Overdue"];
 const cities = [
   "New York",
@@ -131,91 +124,6 @@ const notes = [
   "Year-end inventory clearance",
 ];
 
-const departments = [
-  "Electronics",
-  "Apparel",
-  "Furniture",
-  "Kitchenware",
-  "Sports",
-  "Automotive",
-  "Home & Garden",
-  "Beauty & Health",
-  "Toys & Games",
-  "Books & Media",
-  "Tools & Hardware",
-  "Pet Supplies",
-  "Baby Products",
-];
-
-const productDescriptions = [
-  "Premium Cotton T-Shirt",
-  "Denim Jeans",
-  "Wireless Headphones",
-  "Bluetooth Speaker",
-  "Office Chair",
-  "Desk Lamp",
-  "Storage Cabinet",
-  "Smart Watch",
-  "Running Shoes",
-  "Sports Socks",
-  "Kitchen Knife Set",
-  "Coffee Maker",
-  "Toaster",
-  "Yoga Mat",
-  "Dumbbell Set",
-  "Resistance Bands",
-  "Laptop Stand",
-  "Wireless Mouse",
-  "USB Cable",
-  "Power Bank",
-  "Phone Case",
-  "Tablet Cover",
-  "Gaming Headset",
-  "Mechanical Keyboard",
-  "Monitor Stand",
-  "Desk Organizer",
-  "File Cabinet",
-  "Bookshelf",
-  "Dining Table",
-  "Bed Frame",
-  "Sofa Set",
-  "Coffee Table",
-  "TV Stand",
-  "Wardrobe",
-  "Dresser",
-  "Nightstand",
-  "Lamp Shade",
-  "Throw Pillow",
-  "Bedding Set",
-  "Curtains",
-  "Rug",
-  "Wall Clock",
-  "Picture Frame",
-  "Vase",
-  "Plant Pot",
-  "Garden Tools",
-  "BBQ Grill",
-  "Patio Furniture",
-  "Swimming Pool",
-  "Tennis Racket",
-  "Basketball",
-  "Soccer Ball",
-  "Baseball Glove",
-  "Hockey Stick",
-  "Golf Clubs",
-  "Bicycle",
-  "Skateboard",
-  "Roller Skates",
-  "Helmet",
-  "Protective Gear",
-];
-
-function generateSKU(department: string, index: number): string {
-  const deptCode = department.substring(0, 2).toUpperCase();
-  const randomCode = Math.random().toString(36).substring(2, 5).toUpperCase();
-  return `${deptCode}-${randomCode}-${String(index).padStart(3, "0")}`;
-}
-
 function getRandomElement<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)]!;
 }
@@ -226,7 +134,7 @@ function getRandomDate(start: Date, end: Date): Date {
   );
 }
 
-function generateVendorName(index: number): string {
+function generateVendorName(_index: number): string {
   const prefixes = [
     "Global",
     "Premium",
@@ -253,25 +161,186 @@ function generateVendorName(index: number): string {
   ];
   const prefix = getRandomElement(prefixes);
   const suffix = getRandomElement(suffixes);
-  return `${prefix} ${suffix} ${index}`;
+  return `${prefix} ${suffix}`;
 }
 
 function generateVendorReference(): string {
   return (Math.floor(Math.random() * 9000000000) + 1000000000).toString();
 }
 
+// Add SKU-specific helper data
+const finishedGoods = [
+  {
+    sku: "FG-CHAIR-001",
+    description: "Executive Office Chair",
+    weight: 15.5,
+    length: 60,
+    width: 60,
+    height: 120,
+    cbm: 0.432,
+    uom: "EA",
+    qualityCheck: true,
+    hasShelfLife: false,
+    department: "Furniture",
+    storageType: "AMBIENT",
+    storageZone: "FG-A1",
+  },
+  {
+    sku: "FG-DESK-001",
+    description: "Standing Desk",
+    weight: 45.0,
+    length: 140,
+    width: 70,
+    height: 75,
+    cbm: 0.735,
+    uom: "EA",
+    qualityCheck: true,
+    hasShelfLife: false,
+    department: "Furniture",
+    storageType: "AMBIENT",
+    storageZone: "FG-A2",
+  },
+  {
+    sku: "FG-LAMP-001",
+    description: "LED Desk Lamp",
+    weight: 2.5,
+    length: 20,
+    width: 15,
+    height: 45,
+    cbm: 0.0135,
+    uom: "EA",
+    qualityCheck: true,
+    hasShelfLife: false,
+    department: "Electronics",
+    storageType: "AMBIENT",
+    storageZone: "FG-B1",
+  },
+  {
+    sku: "FG-SHELF-001",
+    description: "Bookshelf",
+    weight: 35.0,
+    length: 80,
+    width: 30,
+    height: 180,
+    cbm: 0.432,
+    uom: "EA",
+    qualityCheck: true,
+    hasShelfLife: false,
+    department: "Furniture",
+    storageType: "AMBIENT",
+    storageZone: "FG-A3",
+  },
+  {
+    sku: "FG-TABLE-001",
+    description: "Coffee Table",
+    weight: 25.0,
+    length: 100,
+    width: 60,
+    height: 45,
+    cbm: 0.27,
+    uom: "EA",
+    qualityCheck: true,
+    hasShelfLife: false,
+    department: "Furniture",
+    storageType: "AMBIENT",
+    storageZone: "FG-A4",
+  },
+];
+
+const consumables = [
+  {
+    sku: "CS-PAINT-001",
+    description: "Wall Paint",
+    weight: 5.0,
+    length: 20,
+    width: 20,
+    height: 30,
+    cbm: 0.012,
+    uom: "EA",
+    qualityCheck: true,
+    hasShelfLife: true,
+    shelfLifeDays: 730,
+    department: "Home & Garden",
+    storageType: "AMBIENT",
+    storageZone: "CS-C1",
+  },
+  {
+    sku: "CS-GLUE-001",
+    description: "Wood Glue",
+    weight: 1.0,
+    length: 10,
+    width: 10,
+    height: 20,
+    cbm: 0.002,
+    uom: "EA",
+    qualityCheck: true,
+    hasShelfLife: true,
+    shelfLifeDays: 365,
+    department: "Tools & Hardware",
+    storageType: "AMBIENT",
+    storageZone: "CS-C2",
+  },
+  {
+    sku: "CS-CLEAN-001",
+    description: "Surface Cleaner",
+    weight: 2.0,
+    length: 15,
+    width: 15,
+    height: 25,
+    cbm: 0.005625,
+    uom: "EA",
+    qualityCheck: true,
+    hasShelfLife: true,
+    shelfLifeDays: 548, // 1.5 years
+    department: "Home & Garden",
+    storageType: "AMBIENT",
+    storageZone: "CS-C3",
+  },
+  {
+    sku: "CS-OIL-001",
+    description: "Lubricating Oil",
+    weight: 0.5,
+    length: 8,
+    width: 8,
+    height: 15,
+    cbm: 0.00096,
+    uom: "EA",
+    qualityCheck: true,
+    hasShelfLife: true,
+    shelfLifeDays: 730, // 2 years
+    department: "Automotive",
+    storageType: "AMBIENT",
+    storageZone: "CS-D1",
+  },
+  {
+    sku: "CS-SOAP-001",
+    description: "Hand Soap",
+    weight: 1.0,
+    length: 10,
+    width: 10,
+    height: 20,
+    cbm: 0.002,
+    uom: "EA",
+    qualityCheck: true,
+    hasShelfLife: true,
+    shelfLifeDays: 548, // 1.5 years
+    department: "Beauty & Health",
+    storageType: "AMBIENT",
+    storageZone: "CS-E1",
+  },
+];
+
 async function main() {
   console.log("Starting database seeding...");
 
-  // Delete all existing data to start fresh
-  console.log("Deleting existing data...");
+  // Delete existing data
   await prisma.orderItem.deleteMany();
   await prisma.dockBooking.deleteMany();
   await prisma.order.deleteMany();
+  await prisma.sku.deleteMany();
   await prisma.vendor.deleteMany();
   await prisma.vehicleType.deleteMany();
   await prisma.dock.deleteMany();
-  console.log("Existing data deleted successfully");
 
   // Create docks
   console.log("Creating docks...");
@@ -308,14 +377,14 @@ async function main() {
   ]);
   console.log(`Created ${vehicleTypes.length} vehicle types`);
 
-  // Create 500 vendors in batches
-  console.log("Creating 500 vendors...");
+  // Create 50 vendors in batches
+  console.log("Creating 50 vendors...");
   const vendors: Vendor[] = [];
   const batchSize = 50;
 
-  for (let i = 0; i < 500; i += batchSize) {
+  for (let i = 0; i < 50; i += batchSize) {
     const batch = Array.from(
-      { length: Math.min(batchSize, 500 - i) },
+      { length: Math.min(batchSize, 50 - i) },
       (_, index) => ({
         name: generateVendorName(i + index + 1),
         reference: generateVendorReference(),
@@ -335,38 +404,60 @@ async function main() {
 
     vendors.push(...createdVendorRecords);
 
-    if ((i + batchSize) % 100 === 0) {
-      console.log(`Created ${Math.min(i + batchSize, 500)} vendors`);
+    if ((i + batchSize) % 10 === 0) {
+      console.log(`Created ${Math.min(i + batchSize, 50)} vendors`);
     }
   }
   console.log(`Created ${vendors.length} vendors`);
 
-  // Create 6000 orders in batches
-  console.log("Creating 6000 orders...");
-  const orders: Order[] = [];
-  const orderBatchSize = 100;
+  // Create SKUs
+  console.log("Creating SKUs...");
+  const skus = await Promise.all([
+    ...finishedGoods.map((sku) =>
+      prisma.sku.create({
+        data: {
+          ...sku,
+          createdBy: "SYSTEM",
+          updatedBy: "SYSTEM",
+        },
+      }),
+    ),
+    ...consumables.map((sku) =>
+      prisma.sku.create({
+        data: {
+          ...sku,
+          createdBy: "SYSTEM",
+          updatedBy: "SYSTEM",
+        },
+      }),
+    ),
+  ]);
+  console.log(`Created ${skus.length} SKUs`);
 
-  for (let i = 0; i < 6000; i += orderBatchSize) {
-    const batch = Array.from(
-      { length: Math.min(orderBatchSize, 6000 - i) },
-      (_, index) => {
-        const orderIndex = i + index + 1;
-        const vendor = getRandomElement(vendors);
-        const orderDate = getRandomDate(
-          new Date(2023, 0, 1),
-          new Date(2024, 11, 31),
-        );
-        const receiptDate = new Date(
-          orderDate.getTime() + Math.random() * 30 * 24 * 60 * 60 * 1000,
-        );
+  // Create 50 orders
+  console.log("Creating 50 orders...");
+  const orders = await Promise.all(
+    Array.from({ length: 50 }, async (_, i) => {
+      const vendor = getRandomElement(vendors);
+      const orderDate = getRandomDate(
+        new Date(2024, 0, 1),
+        new Date(2024, 11, 31),
+      );
 
-        return {
-          orderNumber: `1000000${String(orderIndex).padStart(3, "0")}`,
+      // Split SKUs into finished goods and consumables
+      const finishedGoodSkus = skus.slice(0, 5);
+      const consumableSkus = skus.slice(5, 10);
+
+      return prisma.order.create({
+        data: {
+          orderNumber: `2024${String(i + 1).padStart(4, "0")}`,
           businessUnit: getRandomElement(businessUnits),
-          orderType: getRandomElement(orderTypes),
+          orderType: OrderType.STANDARD,
           purchaseOrderDate: orderDate,
-          expectedReceiptDate: receiptDate,
-          status: getRandomElement(orderStatuses),
+          expectedReceiptDate: new Date(
+            orderDate.getTime() + 7 * 24 * 60 * 60 * 1000,
+          ),
+          status: OrderStatus.NEW,
           vendorReference: vendor.reference,
           paymentStatus: getRandomElement(paymentStatuses),
           createdBy: getRandomElement(userNames),
@@ -374,99 +465,44 @@ async function main() {
           notes: getRandomElement(notes),
           buyerName: getRandomElement(buyerNames),
           buyerCity: getRandomElement(cities),
-        };
-      },
-    );
+          items: {
+            create: Array.from({ length: 10 }, (_, index) => {
+              const sku =
+                index < 5 ? finishedGoodSkus[index] : consumableSkus[index - 5];
 
-    await prisma.order.createMany({
-      data: batch,
-    });
+              if (!sku) {
+                throw new Error(`SKU not found for index ${index}`);
+              }
 
-    // Fetch the created orders to get their IDs
-    const createdOrderRecords = await prisma.order.findMany({
-      where: {
-        orderNumber: { in: batch.map((o) => o.orderNumber) },
-      },
-    });
+              // More realistic quantities
+              const orderedQty =
+                sku.uom === "EA"
+                  ? Math.floor(Math.random() * 20) + 5 // 5-25 pieces for finished goods
+                  : Math.floor(Math.random() * 50) + 10; // 10-60 units for consumables
 
-    orders.push(...createdOrderRecords);
+              return {
+                description: sku.description,
+                department: sku.department,
+                orderedQuantity: orderedQty,
+                receivedQuantity: 0,
+                rejectedQuantity: 0,
+                status: OrderItemStatus.NOT_RECEIVED,
+                qualityCheck: sku.qualityCheck,
+                skuId: sku.id,
+              };
+            }),
+          },
+        },
+      });
+    }),
+  );
 
-    if ((i + orderBatchSize) % 1000 === 0) {
-      console.log(`Created ${Math.min(i + orderBatchSize, 6000)} orders`);
-    }
-  }
-  console.log(`Created ${orders.length} orders`);
-
-  // Create order items for each order
-  console.log("Creating order items...");
-  const orderItems = [];
-  const itemBatchSize = 200;
-
-  for (let i = 0; i < orders.length; i += itemBatchSize) {
-    const batch = [];
-
-    for (let j = 0; j < Math.min(itemBatchSize, orders.length - i); j++) {
-      const order = orders[i + j];
-      if (!order) continue;
-
-      const numItems = Math.floor(Math.random() * 5) + 1; // 1-5 items per order
-
-      for (let k = 0; k < numItems; k++) {
-        const department = getRandomElement(departments);
-        const orderedQty = Math.floor(Math.random() * 100) + 10;
-        const receivedQty = Math.floor(Math.random() * (orderedQty + 1));
-        const rejectedQty = Math.floor(
-          Math.random() * (orderedQty - receivedQty + 1),
-        );
-        const status = getRandomElement([
-          OrderItemStatus.RECEIVED,
-          OrderItemStatus.RECEIVING,
-          OrderItemStatus.NOT_RECEIVED,
-          OrderItemStatus.REJECTED,
-        ]);
-
-        batch.push({
-          description: getRandomElement(productDescriptions),
-          sku: generateSKU(department, Math.floor(Math.random() * 1000)),
-          department: department,
-          orderId: order.id,
-          orderedQuantity: orderedQty,
-          status: status,
-          receivedQuantity:
-            status === OrderItemStatus.RECEIVED
-              ? orderedQty
-              : status === OrderItemStatus.RECEIVING
-                ? receivedQty
-                : 0,
-          rejectedQuantity:
-            status === OrderItemStatus.REJECTED ? orderedQty : rejectedQty,
-          qualityCheck: Math.random() > 0.3, // 70% pass quality check
-        });
-      }
-    }
-
-    await prisma.orderItem.createMany({
-      data: batch,
-    });
-
-    orderItems.push(...batch);
-
-    if ((i + itemBatchSize) % 1000 === 0) {
-      console.log(
-        `Created ${Math.min(i + itemBatchSize, orders.length)} order items`,
-      );
-    }
-  }
-
-  console.log(`Created ${orderItems.length} order items`);
-
-  // Summary
   console.log("\n=== SEEDING COMPLETE ===");
   console.log(`Vendors: ${vendors.length}`);
-  console.log(`Orders: ${orders.length}`);
-  console.log(`Order Items: ${orderItems.length}`);
+  console.log(`SKUs: ${skus.length}`);
   console.log(`Docks: ${docks.length}`);
   console.log(`Vehicle Types: ${vehicleTypes.length}`);
+  console.log(`Orders: ${orders.length}`);
   console.log("Database has been successfully seeded!");
 }
 
