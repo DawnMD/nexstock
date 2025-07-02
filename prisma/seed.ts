@@ -3,6 +3,7 @@ import {
   OrderStatus,
   PrismaClient,
   OrderType,
+  PaymentStatus,
 } from "@prisma/client";
 import type { Vendor } from "@prisma/client";
 
@@ -22,7 +23,11 @@ const businessUnits = [
   "Books & Media",
 ];
 
-const paymentStatuses = ["Paid", "Pending", "Partial", "Overdue"];
+const paymentStatuses = [
+  PaymentStatus.PAID,
+  PaymentStatus.PENDING,
+  PaymentStatus.NOT_PAID,
+];
 const cities = [
   "New York",
   "Los Angeles",
@@ -488,7 +493,7 @@ async function main() {
                 rejectedQuantity: 0,
                 status: OrderItemStatus.NOT_RECEIVED,
                 qualityCheck: sku.qualityCheck,
-                skuId: sku.id,
+                skuId: sku.sku,
               };
             }),
           },

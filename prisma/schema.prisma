@@ -37,18 +37,26 @@ enum ActivityType {
     CHECK_OUT
 }
 
+enum PaymentStatus {
+    PENDING
+    PAID
+    NOT_PAID
+}
+
 model Vendor {
     id        Int      @id @default(autoincrement())
     name      String
-    reference String   @unique
+    reference String   @unique //Reference is the unique identifier for the vendor
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
     orders    Order[] // This establishes the one-to-many relationship
+
+    @@index([reference])
 }
 
 model Order {
     id                  Int           @id @default(autoincrement())
-    orderNumber         String        @unique
+    orderNumber         String        @unique //Order number is the unique identifier for the order
     businessUnit        String
     orderType           OrderType     @default(STANDARD)
     purchaseOrderDate   DateTime?
@@ -62,7 +70,7 @@ model Order {
     createdBy           String
     updatedAt           DateTime      @updatedAt
     updatedBy           String
-    paymentStatus       String?
+    paymentStatus       PaymentStatus @default(NOT_PAID)
     vendor              Vendor        @relation(fields: [vendorReference], references: [reference]) // Link to Vendor
     items               OrderItem[]
     dockBookings        DockBooking[] // Establishes the one-to-many relationship with DockBooking
@@ -81,10 +89,11 @@ model OrderItem {
     qualityCheck     Boolean         @default(false)
     createdAt        DateTime        @default(now())
     updatedAt        DateTime        @updatedAt
-    Order            Order?          @relation(fields: [orderId], references: [id])
-    orderId          Int?
-    Sku              Sku             @relation(fields: [skuId], references: [id])
-    skuId            Int
+    // Maybe need to check if we can create item
+    Order            Order?          @relation(fields: [orderId], references: [orderNumber]) // Link to Order by orderNumber for eg ORD-123456 not 1,2,4,5,6
+    orderId          String
+    Sku              Sku             @relation(fields: [skuId], references: [sku]) // Link to Sku by skuId for eg SKU-123456 not 1,2,4,5,6
+    skuId            String
 
     @@index([status, skuId])
 }
@@ -96,6 +105,8 @@ model Dock {
     createdAt   DateTime      @default(now())
     updatedAt   DateTime      @updatedAt
     dockBooking DockBooking[]
+
+    @@index([name])
 }
 
 model VehicleType {
@@ -106,6 +117,8 @@ model VehicleType {
     createdAt   DateTime      @default(now())
     updatedAt   DateTime      @updatedAt
     dockBooking DockBooking[]
+
+    @@index([type])
 }
 
 model DockBooking {
@@ -123,8 +136,8 @@ model DockBooking {
     eta           DateTime?
     createdAt     DateTime       @default(now())
     updatedAt     DateTime       @updatedAt
-    order         Order?         @relation(fields: [orderId], references: [id])
-    orderId       Int?
+    order         Order          @relation(fields: [orderId], references: [orderNumber])
+    orderId       String
     activities    DockActivity[]
 
     @@index([orderId])
@@ -137,7 +150,7 @@ model DockActivity {
     updatedAt          DateTime     @updatedAt
     createdBy          String
     updatedBy          String?
-    containerCondition Boolean?
+    containerCondition Boolean      @default(false) //Good or Bad
     notes              String?
     dockBooking        DockBooking  @relation(fields: [dockBookingId], references: [id])
     dockBookingId      Int
