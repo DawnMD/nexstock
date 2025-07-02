@@ -25,11 +25,7 @@ export default async function CheckOutPage({
     <>
       <SiteHeader title="Vehicle Check Out" />
       <main className="p-4">
-        <VehicleActivityContainer
-          dockBookingDetails={dockBookingDetails}
-          orderNumber={orderNumber}
-          vehicleNumber={vehicleNumber}
-        >
+        <VehicleActivityContainer dockBookingDetails={dockBookingDetails}>
           <HydrateClient>
             <VehicleActivityForm
               vehicleNumber={vehicleNumber}
