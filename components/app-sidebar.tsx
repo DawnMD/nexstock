@@ -18,6 +18,7 @@ import {
   IconPackage,
   IconTruck,
   IconSearch,
+  IconShoppingCart,
 } from "@tabler/icons-react";
 import Link from "next/link";
 
@@ -42,6 +43,11 @@ export const data = {
       title: "Quality Check",
       url: "/quality-check",
       icon: IconSearch,
+    },
+    {
+      title: "Receive",
+      url: "/receive",
+      icon: IconShoppingCart,
     },
   ],
 };
