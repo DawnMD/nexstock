@@ -1,14 +1,11 @@
-import { SearchIcon } from "lucide-react";
-import { api, HydrateClient } from "@/trpc/server";
 import { SiteHeader } from "@/components/site-header";
-import { ReceiveSkuOrderSearch } from "@/components/receive-sku-order-search";
+import { Skeleton } from "@/components/ui/skeleton";
+import { SearchIcon } from "lucide-react";
 
-export default function ReceivePage() {
-  void api.receive.getAllOrderNumbers.prefetch();
-
+export default function ReceiveOrderLoading() {
   return (
     <>
-      <SiteHeader title="Receive SKU" />
+      <SiteHeader title="Quality Check" />
       <main className="flex flex-col gap-4 p-4 lg:gap-6">
         <div className="flex flex-col gap-2">
           <h3 className="flex items-center gap-2 text-lg font-semibold">
@@ -19,9 +16,12 @@ export default function ReceivePage() {
             Enter an order number to retrieve associated SKUs for receiving
           </p>
         </div>
-        <HydrateClient>
-          <ReceiveSkuOrderSearch />
-        </HydrateClient>
+        <div className="relative">
+          <div className="absolute top-1/2 left-3 -translate-y-1/2 transform">
+            <SearchIcon className="h-4 w-4 text-gray-500" />
+          </div>
+          <Skeleton className="h-10 w-full" />
+        </div>
       </main>
     </>
   );
