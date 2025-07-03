@@ -17,6 +17,7 @@ import {
   IconInnerShadowTop,
   IconPackage,
   IconTruck,
+  IconSearch,
 } from "@tabler/icons-react";
 import Link from "next/link";
 
@@ -36,6 +37,11 @@ export const data = {
       title: "Dock Booking List",
       url: "/dock-booking",
       icon: IconTruck,
+    },
+    {
+      title: "Quality Check",
+      url: "/quality-check",
+      icon: IconSearch,
     },
   ],
 };
