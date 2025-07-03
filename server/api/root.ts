@@ -1,4 +1,5 @@
 import { orderRouter } from "@/server/api/routers/order";
+import { receiveRouter } from "@/server/api/routers/receive";
 import { qualityCheckRouter } from "@/server/api/routers/quality-check";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 
@@ -10,6 +11,7 @@ import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 export const appRouter = createTRPCRouter({
   order: orderRouter,
   qualityCheck: qualityCheckRouter,
+  receive: receiveRouter,
 });
 
 // export type definition of API
