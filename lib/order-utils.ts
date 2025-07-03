@@ -44,3 +44,33 @@ export function getActivityType(activityType?: ActivityType) {
       return "Scheduled";
   }
 }
+
+export const getStatusVariant = (status: string) => {
+  switch (status.toUpperCase()) {
+    case "NOT_RECEIVED":
+      return "secondary";
+    case "RECEIVING":
+      return "outline";
+    case "RECEIVED":
+      return "default";
+    case "REJECTED":
+      return "destructive";
+    default:
+      return "secondary";
+  }
+};
+
+export const formatStatusDisplay = (status: string) => {
+  switch (status.toUpperCase()) {
+    case "NOT_RECEIVED":
+      return "Not Received";
+    case "RECEIVING":
+      return "Receiving";
+    case "RECEIVED":
+      return "Received";
+    case "REJECTED":
+      return "Rejected";
+    default:
+      return status;
+  }
+};

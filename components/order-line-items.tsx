@@ -15,6 +15,7 @@ import {
   TruckIcon,
   XCircleIcon,
 } from "lucide-react";
+import { getStatusVariant, formatStatusDisplay } from "@/lib/order-utils";
 
 interface LineItem {
   id: number;
@@ -45,36 +46,6 @@ const getStatusIcon = (status: string) => {
       return <XCircleIcon className="h-3 w-3 text-white" />;
     default:
       return <ClockIcon className="h-3 w-3 text-gray-500 dark:text-gray-400" />;
-  }
-};
-
-const getStatusVariant = (status: string) => {
-  switch (status.toUpperCase()) {
-    case "NOT_RECEIVED":
-      return "secondary";
-    case "RECEIVING":
-      return "outline";
-    case "RECEIVED":
-      return "default";
-    case "REJECTED":
-      return "destructive";
-    default:
-      return "secondary";
-  }
-};
-
-const formatStatusDisplay = (status: string) => {
-  switch (status.toUpperCase()) {
-    case "NOT_RECEIVED":
-      return "Not Received";
-    case "RECEIVING":
-      return "Receiving";
-    case "RECEIVED":
-      return "Received";
-    case "REJECTED":
-      return "Rejected";
-    default:
-      return status;
   }
 };
 
