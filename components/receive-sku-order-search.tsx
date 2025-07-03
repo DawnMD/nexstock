@@ -11,8 +11,10 @@ import {
 } from "@/components/ui/command";
 import { api } from "@/trpc/react";
 import { PackageIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export function ReceiveSkuOrderSearch() {
+  const router = useRouter();
   const [orders] = api.receive.getAllOrderNumbers.useSuspenseQuery();
 
   return (
@@ -27,7 +29,7 @@ export function ReceiveSkuOrderSearch() {
               key={order.orderNumber}
               value={order.orderNumber}
               onSelect={() => {
-                console.log(order.orderNumber);
+                router.push(`/receive/${order.orderNumber}`);
               }}
             >
               <PackageIcon className="mr-2 h-4 w-4" />
