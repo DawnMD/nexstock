@@ -38,12 +38,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import {
   Table,
   TableBody,
@@ -111,7 +111,7 @@ const formSchema = z.object({
 });
 export function DockBooking({ orderNumber }: { orderNumber: string }) {
   const utils = api.useUtils();
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingBooking, setEditingBooking] = useState<
     (typeof dockBookings)[number] | null
   >(null);
@@ -148,7 +148,7 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
         }),
         utils.order.getTodayDockSchedule.invalidate(),
       ]);
-      setIsDrawerOpen(false);
+      setIsSheetOpen(false);
       form.reset();
     },
     onError: (error) => {
@@ -174,7 +174,7 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
         }),
         utils.order.getTodayDockSchedule.invalidate(),
       ]);
-      setIsDrawerOpen(false);
+      setIsSheetOpen(false);
       setEditingBooking(null);
       form.reset();
     },
@@ -222,7 +222,7 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
       driverPhone: booking.driverPhone ?? "",
       eta: booking.eta ?? undefined,
     });
-    setIsDrawerOpen(true);
+    setIsSheetOpen(true);
   };
 
   return (
@@ -237,28 +237,28 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
           </CardTitle>
           <CardDescription>Manage dock bookings for this order</CardDescription>
         </div>
-        <Drawer
-          open={isDrawerOpen}
+        <Sheet
+          open={isSheetOpen}
           onOpenChange={(open) => {
-            setIsDrawerOpen(open);
+            setIsSheetOpen(open);
             if (!open) {
               setEditingBooking(null);
               form.reset();
             }
           }}
         >
-          <DrawerTrigger asChild>
+          <SheetTrigger asChild>
             <Button className="cursor-pointer bg-black text-white hover:bg-black/90">
               <PlusIcon className="mr-2 h-4 w-4" />
               Create Booking
             </Button>
-          </DrawerTrigger>
-          <DrawerContent>
-            <DrawerHeader>
-              <DrawerTitle>
+          </SheetTrigger>
+          <SheetContent className="overflow-y-auto sm:max-w-[500px]">
+            <SheetHeader>
+              <SheetTitle>
                 {editingBooking ? "Edit" : "Create"} Dock Booking
-              </DrawerTitle>
-            </DrawerHeader>
+              </SheetTitle>
+            </SheetHeader>
             <div className="px-4">
               <Form {...form}>
                 <form
@@ -472,7 +472,7 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
                       type="button"
                       variant="outline"
                       onClick={() => {
-                        setIsDrawerOpen(false);
+                        setIsSheetOpen(false);
                         setEditingBooking(null);
                         form.reset();
                       }}
@@ -499,8 +499,8 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
                 </form>
               </Form>
             </div>
-          </DrawerContent>
-        </Drawer>
+          </SheetContent>
+        </Sheet>
       </CardHeader>
       {dockBookings.length > 0 ? (
         <CardContent>
