@@ -111,7 +111,10 @@ const formSchema = z.object({
 });
 export function DockBooking({ orderNumber }: { orderNumber: string }) {
   const utils = api.useUtils();
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [editingBooking, setEditingBooking] = useState<
+    (typeof dockBookings)[number] | null
+  >(null);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -145,7 +148,7 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
         }),
         utils.order.getTodayDockSchedule.invalidate(),
       ]);
-      setIsCreateDialogOpen(false);
+      setIsSheetOpen(false);
       form.reset();
     },
     onError: (error) => {
@@ -162,9 +165,26 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
     },
   });
 
+  const updateDockBookingMutation = api.order.updateDockBooking.useMutation({
+    onSuccess: async () => {
+      toast.success("Dock booking updated successfully");
+      await Promise.all([
+        utils.order.getDockBookingsByOrderNumber.invalidate({
+          orderNumber,
+        }),
+        utils.order.getTodayDockSchedule.invalidate(),
+      ]);
+      setIsSheetOpen(false);
+      setEditingBooking(null);
+      form.reset();
+    },
+    onError: (error: { message: string }) => {
+      toast.error(error.message);
+    },
+  });
+
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    createDockBookingMutation.mutate({
-      orderNumber,
+    const payload = {
       dockId: parseInt(values.dockId),
       vehicleTypeId: parseInt(values.vehicleTypeId),
       vehicleNumber: values.vehicleNumber,
@@ -174,7 +194,35 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
       driverName: values.driverName,
       driverPhone: values.driverPhone,
       eta: values.eta,
+    };
+
+    if (editingBooking) {
+      updateDockBookingMutation.mutate({
+        id: editingBooking.id,
+        ...payload,
+      });
+    } else {
+      createDockBookingMutation.mutate({
+        orderNumber,
+        ...payload,
+      });
+    }
+  };
+
+  const handleEdit = (booking: (typeof dockBookings)[number]) => {
+    setEditingBooking(booking);
+    form.reset({
+      dockId: booking.dock.id.toString(),
+      vehicleTypeId: booking.vehicleType.id.toString(),
+      vehicleNumber: booking.vehicleNumber,
+      weight: booking.weight.toString(),
+      queue: booking.queue.toString(),
+      cbm: booking.cbm.toString(),
+      driverName: booking.driverName,
+      driverPhone: booking.driverPhone ?? "",
+      eta: booking.eta ?? undefined,
     });
+    setIsSheetOpen(true);
   };
 
   return (
@@ -189,7 +237,16 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
           </CardTitle>
           <CardDescription>Manage dock bookings for this order</CardDescription>
         </div>
-        <Sheet open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <Sheet
+          open={isSheetOpen}
+          onOpenChange={(open) => {
+            setIsSheetOpen(open);
+            if (!open) {
+              setEditingBooking(null);
+              form.reset();
+            }
+          }}
+        >
           <SheetTrigger asChild>
             <Button className="cursor-pointer bg-black text-white hover:bg-black/90">
               <PlusIcon className="mr-2 h-4 w-4" />
@@ -198,7 +255,9 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
           </SheetTrigger>
           <SheetContent className="overflow-y-auto px-5 sm:max-w-[500px]">
             <SheetHeader>
-              <SheetTitle>Create Dock Booking</SheetTitle>
+              <SheetTitle>
+                {editingBooking ? "Edit" : "Create"} Dock Booking
+              </SheetTitle>
             </SheetHeader>
             <Form {...form}>
               <form
@@ -409,7 +468,8 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
                     type="button"
                     variant="outline"
                     onClick={() => {
-                      setIsCreateDialogOpen(false);
+                      setIsSheetOpen(false);
+                      setEditingBooking(null);
                       form.reset();
                     }}
                   >
@@ -417,11 +477,19 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={createDockBookingMutation.isPending}
+                    disabled={
+                      createDockBookingMutation.isPending ||
+                      updateDockBookingMutation.isPending
+                    }
                   >
-                    {createDockBookingMutation.isPending
-                      ? "Creating..."
-                      : "Create Booking"}
+                    {createDockBookingMutation.isPending ||
+                    updateDockBookingMutation.isPending
+                      ? editingBooking
+                        ? "Updating..."
+                        : "Creating..."
+                      : editingBooking
+                        ? "Update Booking"
+                        : "Create Booking"}
                   </Button>
                 </div>
               </form>
@@ -522,7 +590,10 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem className="cursor-pointer">
+                          <DropdownMenuItem
+                            className="cursor-pointer"
+                            onClick={() => handleEdit(booking)}
+                          >
                             <EditIcon className="mr-2 h-4 w-4 text-blue-500" />
                             Edit
                           </DropdownMenuItem>
