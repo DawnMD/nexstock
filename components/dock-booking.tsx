@@ -38,12 +38,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import {
   Table,
   TableBody,
@@ -111,7 +111,7 @@ const formSchema = z.object({
 });
 export function DockBooking({ orderNumber }: { orderNumber: string }) {
   const utils = api.useUtils();
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingBooking, setEditingBooking] = useState<
     (typeof dockBookings)[number] | null
   >(null);
@@ -148,7 +148,7 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
         }),
         utils.order.getTodayDockSchedule.invalidate(),
       ]);
-      setIsSheetOpen(false);
+      setIsDrawerOpen(false);
       form.reset();
     },
     onError: (error) => {
@@ -174,7 +174,7 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
         }),
         utils.order.getTodayDockSchedule.invalidate(),
       ]);
-      setIsSheetOpen(false);
+      setIsDrawerOpen(false);
       setEditingBooking(null);
       form.reset();
     },
@@ -222,7 +222,7 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
       driverPhone: booking.driverPhone ?? "",
       eta: booking.eta ?? undefined,
     });
-    setIsSheetOpen(true);
+    setIsDrawerOpen(true);
   };
 
   return (
@@ -237,265 +237,270 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
           </CardTitle>
           <CardDescription>Manage dock bookings for this order</CardDescription>
         </div>
-        <Sheet
-          open={isSheetOpen}
+        <Drawer
+          open={isDrawerOpen}
           onOpenChange={(open) => {
-            setIsSheetOpen(open);
+            setIsDrawerOpen(open);
             if (!open) {
               setEditingBooking(null);
               form.reset();
             }
           }}
         >
-          <SheetTrigger asChild>
+          <DrawerTrigger asChild>
             <Button className="cursor-pointer bg-black text-white hover:bg-black/90">
               <PlusIcon className="mr-2 h-4 w-4" />
               Create Booking
             </Button>
-          </SheetTrigger>
-          <SheetContent className="overflow-y-auto px-5 sm:max-w-[500px]">
-            <SheetHeader>
-              <SheetTitle>
+          </DrawerTrigger>
+          <DrawerContent>
+            <DrawerHeader>
+              <DrawerTitle>
                 {editingBooking ? "Edit" : "Create"} Dock Booking
-              </SheetTitle>
-            </SheetHeader>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-4"
-              >
-                <FormField
-                  control={form.control}
-                  name="dockId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Dock *</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select a dock" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {availableDocks.map((dock) => (
-                            <SelectItem
-                              key={dock.id}
-                              value={dock.id.toString()}
-                            >
-                              {dock.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="vehicleTypeId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Vehicle Type *</FormLabel>
-                      <Select
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          // Generate random CBM when vehicle type is selected
-                          if (value) {
-                            const selectedVehicleType = vehicleTypes.find(
-                              (vt) => vt.id.toString() === value,
-                            );
-                            if (selectedVehicleType) {
-                              const randomCBM = generateRandomCBM(
-                                selectedVehicleType.type,
-                              );
-                              form.setValue("cbm", randomCBM.toString());
-                            }
-                          }
-                        }}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select a vehicle type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {vehicleTypes.map((vehicleType) => (
-                            <SelectItem
-                              key={vehicleType.id}
-                              value={vehicleType.id.toString()}
-                            >
-                              {vehicleType.type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="vehicleNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Vehicle Number *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter vehicle number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="driverName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Driver Name *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter driver name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="weight"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Weight (kg) *</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter weight"
-                          type="number"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="queue"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Queue *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter queue" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="cbm"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CBM (Auto-generated) *</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Auto-generated based on vehicle type"
-                          {...field}
-                          disabled
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="driverPhone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Driver Phone</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter driver phone" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="eta"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>ETA</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
+              </DrawerTitle>
+            </DrawerHeader>
+            <div className="px-4">
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={form.control}
+                    name="dockId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Dock *</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
                           <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground",
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a ETA</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select a dock" />
+                            </SelectTrigger>
                           </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="center">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) => date < subDays(new Date(), 1)}
-                            captionLayout="dropdown"
+                          <SelectContent>
+                            {availableDocks.map((dock) => (
+                              <SelectItem
+                                key={dock.id}
+                                value={dock.id.toString()}
+                              >
+                                {dock.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="vehicleTypeId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Vehicle Type *</FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            // Generate random CBM when vehicle type is selected
+                            if (value) {
+                              const selectedVehicleType = vehicleTypes.find(
+                                (vt) => vt.id.toString() === value,
+                              );
+                              if (selectedVehicleType) {
+                                const randomCBM = generateRandomCBM(
+                                  selectedVehicleType.type,
+                                );
+                                form.setValue("cbm", randomCBM.toString());
+                              }
+                            }
+                          }}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select a vehicle type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {vehicleTypes.map((vehicleType) => (
+                              <SelectItem
+                                key={vehicleType.id}
+                                value={vehicleType.id.toString()}
+                              >
+                                {vehicleType.type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="vehicleNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Vehicle Number *</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter vehicle number"
+                            {...field}
                           />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex justify-end gap-3 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setIsSheetOpen(false);
-                      setEditingBooking(null);
-                      form.reset();
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={
-                      createDockBookingMutation.isPending ||
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="driverName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Driver Name *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter driver name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="weight"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Weight (kg) *</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter weight"
+                            type="number"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="queue"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Queue *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter queue" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="cbm"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>CBM (Auto-generated) *</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Auto-generated based on vehicle type"
+                            {...field}
+                            disabled
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="driverPhone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Driver Phone</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter driver phone" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="eta"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>ETA</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground",
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a ETA</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="center">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) => date < subDays(new Date(), 1)}
+                              captionLayout="dropdown"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex justify-end gap-3 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setIsDrawerOpen(false);
+                        setEditingBooking(null);
+                        form.reset();
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={
+                        createDockBookingMutation.isPending ||
+                        updateDockBookingMutation.isPending
+                      }
+                    >
+                      {createDockBookingMutation.isPending ||
                       updateDockBookingMutation.isPending
-                    }
-                  >
-                    {createDockBookingMutation.isPending ||
-                    updateDockBookingMutation.isPending
-                      ? editingBooking
-                        ? "Updating..."
-                        : "Creating..."
-                      : editingBooking
-                        ? "Update Booking"
-                        : "Create Booking"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </SheetContent>
-        </Sheet>
+                        ? editingBooking
+                          ? "Updating..."
+                          : "Creating..."
+                        : editingBooking
+                          ? "Update Booking"
+                          : "Create Booking"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </div>
+          </DrawerContent>
+        </Drawer>
       </CardHeader>
       {dockBookings.length > 0 ? (
         <CardContent>
