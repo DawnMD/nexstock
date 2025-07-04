@@ -248,7 +248,23 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
           }}
         >
           <SheetTrigger asChild>
-            <Button className="cursor-pointer bg-black text-white hover:bg-black/90">
+            <Button
+              className="cursor-pointer bg-black text-white hover:bg-black/90"
+              onClick={() => {
+                setEditingBooking(null);
+                form.reset({
+                  dockId: "",
+                  vehicleTypeId: "",
+                  vehicleNumber: "",
+                  weight: "",
+                  queue: "",
+                  cbm: "",
+                  driverName: "",
+                  driverPhone: "",
+                  eta: undefined,
+                });
+              }}
+            >
               <PlusIcon className="mr-2 h-4 w-4" />
               Create Booking
             </Button>
