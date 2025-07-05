@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PackageIcon } from "lucide-react";
@@ -53,7 +52,6 @@ export default function ReceiveSkuOrderLoading() {
             </div>
           </CardContent>
         </Card>
-        <Input placeholder="Search for SKUs..." disabled />
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold">Order Items</h2>
