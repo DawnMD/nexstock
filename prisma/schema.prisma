@@ -43,6 +43,14 @@ enum PaymentStatus {
     NOT_PAID
 }
 
+enum QcStatus {
+    NOT_STARTED
+    IN_PROGRESS
+    PASSED
+    FAILED
+    DONE
+}
+
 model Vendor {
     id        Int      @id @default(autoincrement())
     name      String
@@ -94,6 +102,7 @@ model OrderItem {
     orderId          String
     Sku              Sku             @relation(fields: [skuId], references: [sku]) // Link to Sku by skuId for eg SKU-123456 not 1,2,4,5,6
     skuId            String
+    Qc               Qc?
 
     @@index([status, skuId])
 }
@@ -190,4 +199,21 @@ model Sku {
     OrderItem     OrderItem[]
 
     @@index([sku])
+}
+
+model Qc {
+    id                  Int       @id @default(autoincrement())
+    orderItem           OrderItem @relation(fields: [orderItemId], references: [id])
+    orderItemId         Int       @unique
+    qcStatus            QcStatus  @default(NOT_STARTED) // status enum for UI
+    inspectedBy         String
+    inspectedAt         DateTime  @default(now())
+    isAccepted          Boolean   @default(false)
+    remarks             String?
+    inspectedQuantity   Int       @default(0)
+    descrepencyQuantity Int       @default(0)
+    createdAt           DateTime  @default(now())
+    updatedAt           DateTime  @updatedAt
+
+    @@index([qcStatus, orderItemId])
 }
