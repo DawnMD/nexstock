@@ -43,6 +43,13 @@ enum PaymentStatus {
     NOT_PAID
 }
 
+enum QualityCheckStatus {
+    NOT_STARTED
+    IN_PROGRESS
+    PASSED
+    FAILED
+}
+
 model Vendor {
     id        Int      @id @default(autoincrement())
     name      String
@@ -79,21 +86,21 @@ model Order {
 }
 
 model OrderItem {
-    id               Int             @id @default(autoincrement())
-    description      String
-    status           OrderItemStatus @default(NOT_RECEIVED)
-    orderedQuantity  Int             @default(0)
-    receivedQuantity Int             @default(0)
-    rejectedQuantity Int             @default(0)
-    department       String
-    qualityCheck     Boolean         @default(false)
-    createdAt        DateTime        @default(now())
-    updatedAt        DateTime        @updatedAt
-    // Maybe need to check if we can create item
-    Order            Order?          @relation(fields: [orderId], references: [orderNumber]) // Link to Order by orderNumber for eg ORD-123456 not 1,2,4,5,6
-    orderId          String
-    Sku              Sku             @relation(fields: [skuId], references: [sku]) // Link to Sku by skuId for eg SKU-123456 not 1,2,4,5,6
-    skuId            String
+    id                   Int             @id @default(autoincrement())
+    description          String
+    status               OrderItemStatus @default(NOT_RECEIVED)
+    orderedQuantity      Int             @default(0)
+    receivedQuantity     Int             @default(0)
+    rejectedQuantity     Int             @default(0)
+    department           String
+    qualityCheckRequired Boolean         @default(false)
+    createdAt            DateTime        @default(now())
+    updatedAt            DateTime        @updatedAt
+    Order                Order?          @relation(fields: [orderId], references: [orderNumber]) // Link to Order by orderNumber for eg ORD-123456 not 1,2,4,5,6
+    orderId              String
+    Sku                  Sku             @relation(fields: [skuId], references: [sku]) // Link to Sku by skuId for eg SKU-123456 not 1,2,4,5,6
+    skuId                String
+    qualityCheck         QualityCheck?
 
     @@index([status, skuId])
 }
@@ -190,4 +197,21 @@ model Sku {
     OrderItem     OrderItem[]
 
     @@index([sku])
+}
+
+model QualityCheck {
+    id                  Int                @id @default(autoincrement())
+    orderItem           OrderItem          @relation(fields: [orderItemId], references: [id])
+    orderItemId         Int                @unique
+    qualityCheckStatus  QualityCheckStatus @default(NOT_STARTED) // status enum for UI
+    inspectedBy         String
+    inspectedAt         DateTime           @default(now())
+    isAccepted          Boolean            @default(false)
+    remarks             String?
+    inspectedQuantity   Int                @default(0)
+    descrepencyQuantity Int                @default(0)
+    createdAt           DateTime           @default(now())
+    updatedAt           DateTime           @updatedAt
+
+    @@index([qualityCheckStatus, orderItemId])
 }
