@@ -378,4 +378,53 @@ export const orderRouter = createTRPCRouter({
 
       return dockActivity;
     }),
+  updateDockBooking: privateProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        dockId: z.number(),
+        vehicleTypeId: z.number(),
+        vehicleNumber: z.string(),
+        weight: z.number(),
+        queue: z.number(),
+        cbm: z.number(),
+        driverName: z.string(),
+        driverPhone: z.string().optional(),
+        eta: z.date().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const updatedBooking = await ctx.db.dockBooking.update({
+        where: { id: input.id },
+        data: {
+          dockId: input.dockId,
+          vehicleTypeId: input.vehicleTypeId,
+          vehicleNumber: input.vehicleNumber,
+          weight: input.weight,
+          queue: input.queue,
+          cbm: input.cbm,
+          driverName: input.driverName,
+          driverPhone: input.driverPhone,
+          eta: input.eta,
+        },
+        include: {
+          dock: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          vehicleType: {
+            select: {
+              id: true,
+              type: true,
+              description: true,
+              unloadTime: true,
+            },
+          },
+        },
+      });
+
+      return updatedBooking;
+    }),
 });
