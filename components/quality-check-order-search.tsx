@@ -26,6 +26,9 @@ export function QualityCheckOrderSearch() {
         <CommandGroup heading="Order Numbers">
           {orders.map((order) => (
             <CommandItem
+              disabled={order.items.every(
+                (item) => item.qualityCheck?.qualityCheckStatus,
+              )}
               key={order.orderNumber}
               value={order.orderNumber}
               onSelect={() =>
