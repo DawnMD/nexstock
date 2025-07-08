@@ -1,11 +1,11 @@
+import type { Vendor } from "@prisma/client";
 import {
   OrderItemStatus,
   OrderStatus,
-  PrismaClient,
   OrderType,
   PaymentStatus,
+  PrismaClient,
 } from "@prisma/client";
-import type { Vendor } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -184,7 +184,7 @@ const finishedGoods = [
     height: 120,
     cbm: 0.432,
     uom: "EA",
-    qualityCheckRequired: true,
+    qualityCheck: true,
     hasShelfLife: false,
     department: "Furniture",
     storageType: "AMBIENT",
@@ -199,7 +199,7 @@ const finishedGoods = [
     height: 75,
     cbm: 0.735,
     uom: "EA",
-    qualityCheckRequired: true,
+    qualityCheck: true,
     hasShelfLife: false,
     department: "Furniture",
     storageType: "AMBIENT",
@@ -214,7 +214,7 @@ const finishedGoods = [
     height: 45,
     cbm: 0.0135,
     uom: "EA",
-    qualityCheckRequired: true,
+    qualityCheck: true,
     hasShelfLife: false,
     department: "Electronics",
     storageType: "AMBIENT",
@@ -229,7 +229,7 @@ const finishedGoods = [
     height: 180,
     cbm: 0.432,
     uom: "EA",
-    qualityCheckRequired: true,
+    qualityCheck: true,
     hasShelfLife: false,
     department: "Furniture",
     storageType: "AMBIENT",
@@ -244,7 +244,7 @@ const finishedGoods = [
     height: 45,
     cbm: 0.27,
     uom: "EA",
-    qualityCheckRequired: true,
+    qualityCheck: true,
     hasShelfLife: false,
     department: "Furniture",
     storageType: "AMBIENT",
@@ -262,7 +262,7 @@ const consumables = [
     height: 30,
     cbm: 0.012,
     uom: "EA",
-    qualityCheckRequired: true,
+    qualityCheck: true,
     hasShelfLife: true,
     shelfLifeDays: 730,
     department: "Home & Garden",
@@ -278,7 +278,7 @@ const consumables = [
     height: 20,
     cbm: 0.002,
     uom: "EA",
-    qualityCheckRequired: true,
+    qualityCheck: true,
     hasShelfLife: true,
     shelfLifeDays: 365,
     department: "Tools & Hardware",
@@ -294,7 +294,7 @@ const consumables = [
     height: 25,
     cbm: 0.005625,
     uom: "EA",
-    qualityCheckRequired: true,
+    qualityCheck: true,
     hasShelfLife: true,
     shelfLifeDays: 548, // 1.5 years
     department: "Home & Garden",
@@ -310,7 +310,7 @@ const consumables = [
     height: 15,
     cbm: 0.00096,
     uom: "EA",
-    qualityCheckRequired: true,
+    qualityCheck: true,
     hasShelfLife: true,
     shelfLifeDays: 730, // 2 years
     department: "Automotive",
@@ -326,7 +326,7 @@ const consumables = [
     height: 20,
     cbm: 0.002,
     uom: "EA",
-    qualityCheckRequired: true,
+    qualityCheck: true,
     hasShelfLife: true,
     shelfLifeDays: 548, // 1.5 years
     department: "Beauty & Health",
@@ -339,6 +339,8 @@ async function main() {
   console.log("Starting database seeding...");
 
   // Delete existing data
+  await prisma.receiveItem.deleteMany();
+  await prisma.qualityCheck.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.dockBooking.deleteMany();
   await prisma.order.deleteMany();

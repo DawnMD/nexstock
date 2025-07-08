@@ -44,8 +44,6 @@ enum PaymentStatus {
 }
 
 enum QualityCheckStatus {
-    NOT_STARTED
-    IN_PROGRESS
     PASSED
     FAILED
 }
@@ -103,7 +101,7 @@ model OrderItem {
     qualityCheck         QualityCheck?
     ReceiveItem          ReceiveItem?
 
-    @@index([status, skuId])
+    @@index([status, skuId, id])
 }
 
 model Dock {
@@ -201,18 +199,17 @@ model Sku {
 }
 
 model QualityCheck {
-    id                  Int                @id @default(autoincrement())
-    orderItem           OrderItem          @relation(fields: [orderItemId], references: [id])
-    orderItemId         Int                @unique
-    qualityCheckStatus  QualityCheckStatus @default(NOT_STARTED) // status enum for UI
+    id                  Int       @id @default(autoincrement())
+    orderItem           OrderItem @relation(fields: [orderItemId], references: [id])
+    orderItemId         Int       @unique
+    qualityCheckStatus  Boolean   @default(false)
     inspectedBy         String
-    inspectedAt         DateTime           @default(now())
-    isAccepted          Boolean            @default(false)
+    inspectedAt         DateTime  @default(now())
     remarks             String?
-    inspectedQuantity   Int                @default(0)
-    descrepencyQuantity Int                @default(0)
-    createdAt           DateTime           @default(now())
-    updatedAt           DateTime           @updatedAt
+    inspectedQuantity   Int       @default(0)
+    descrepencyQuantity Int       @default(0)
+    createdAt           DateTime  @default(now())
+    updatedAt           DateTime  @updatedAt
 
     @@index([qualityCheckStatus, orderItemId])
 }
