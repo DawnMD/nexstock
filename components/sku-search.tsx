@@ -47,7 +47,7 @@ export function SkuSearch({ orderNumber }: { orderNumber: string }) {
                 key={order.Sku.sku}
                 value={order.Sku.sku}
                 onSelect={() => {
-                  router.push(`/quality-check/${orderNumber}/${order.Sku.sku}`);
+                  router.push(`/quality-check/${orderNumber}/${order.id}`);
                 }}
               >
                 <PackageIcon className="mr-2 h-4 w-4" />
