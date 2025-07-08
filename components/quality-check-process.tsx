@@ -147,7 +147,7 @@ export function QualityCheckProcess({
                       <Slider
                         value={[field.value]}
                         onValueChange={(value) => {
-                          field.onChange(value);
+                          field.onChange(value[0]);
                           form.setValue("damagedQuantity", 0);
                         }}
                         max={100}
