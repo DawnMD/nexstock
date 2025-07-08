@@ -18,15 +18,6 @@ export const qualityCheckRouter = createTRPCRouter({
             items: true,
           },
         },
-        items: {
-          select: {
-            qualityCheck: {
-              select: {
-                qualityCheckStatus: true,
-              },
-            },
-          },
-        },
       },
       where: {
         status: {
