@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import {
   CommandDialog,
   CommandEmpty,
@@ -42,6 +43,7 @@ export function SkuSearch({ orderNumber }: { orderNumber: string }) {
           <CommandGroup heading="SKUs">
             {orderItems.items.map((order) => (
               <CommandItem
+                disabled={!!order.qualityCheck?.qualityCheckStatus}
                 key={order.Sku.sku}
                 value={order.Sku.sku}
                 onSelect={() => {
@@ -50,10 +52,25 @@ export function SkuSearch({ orderNumber }: { orderNumber: string }) {
               >
                 <PackageIcon className="mr-2 h-4 w-4" />
                 <div className="flex flex-col">
-                  <span className="font-mono">{order.Sku.sku}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono">{order.Sku.sku}</span>
+                    <span className="text-muted-foreground text-xs">
+                      x {order.orderedQuantity}
+                    </span>
+                  </div>
                   <span className="text-muted-foreground text-xs">
                     {order.Sku.description}
                   </span>
+                  <Badge
+                    variant={
+                      order.qualityCheck?.qualityCheckStatus ? "green" : "blue"
+                    }
+                    className="text-xs"
+                  >
+                    {order.qualityCheck?.qualityCheckStatus
+                      ? "Done"
+                      : "Not Done"}
+                  </Badge>
                 </div>
               </CommandItem>
             ))}
