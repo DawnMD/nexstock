@@ -68,9 +68,6 @@ export const qualityCheckRouter = createTRPCRouter({
   getQualityCheckItem: privateProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input: { id } }) => {
-      await Promise.resolve(
-        new Promise((resolve) => setTimeout(resolve, 5000)),
-      );
       return await ctx.db.orderItem.findUnique({
         where: { id },
       });
