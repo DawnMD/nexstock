@@ -54,7 +54,7 @@ export function QualityCheckProcess({
 
   const router = useRouter();
   const apiUtils = api.useUtils();
-  const { mutate: updateQualityCheckStatus } =
+  const { mutate: updateQualityCheckStatus, isPending } =
     api.qualityCheck.updateQualityCheckStatus.useMutation({
       onSuccess: async () => {
         await Promise.all([
@@ -258,7 +258,9 @@ export function QualityCheckProcess({
           >
             Cancel
           </Button>
-          <Button type="submit">Submit</Button>
+          <Button type="submit" disabled={isPending}>
+            {isPending ? "Submitting..." : "Submit"}
+          </Button>
         </div>
       </form>
     </Form>
