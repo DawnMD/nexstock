@@ -14,7 +14,7 @@ import { PackageIcon } from "lucide-react";
 export default function QualityCheckOrderLoading() {
   return (
     <>
-      <SiteHeader title="Quality Check" />
+      <SiteHeader title="Quality Check Overview" />
       <main className="flex flex-col gap-4 p-4 lg:gap-6">
         <Card>
           <CardHeader>

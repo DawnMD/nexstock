@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { api, HydrateClient } from "@/trpc/server";
-import { format } from "date-fns";
 import { PackageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 
@@ -39,7 +38,7 @@ export default async function QualityCheckOrderPage({
 
   return (
     <>
-      <SiteHeader title="Quality Check" />
+      <SiteHeader title="Quality Check Overview" />
       <main className="flex flex-col gap-4 p-4 lg:gap-6">
         <Card>
           <CardHeader>
@@ -56,20 +55,6 @@ export default async function QualityCheckOrderPage({
                   Order Number
                 </Label>
                 <p className="font-mono font-medium">{orderNumber}</p>
-              </div>
-              <div>
-                <Label className="text-muted-foreground text-sm font-medium">
-                  Vendor
-                </Label>
-                <p className="font-medium">{order.vendor.name}</p>
-              </div>
-              <div>
-                <Label className="text-muted-foreground text-sm font-medium">
-                  Order Date
-                </Label>
-                <p className="text-sm">
-                  {format(order.createdAt, "MMM d, yyyy")}
-                </p>
               </div>
               <div>
                 <Label className="text-muted-foreground text-sm font-medium">
