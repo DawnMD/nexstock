@@ -14,7 +14,7 @@ import { PackageIcon } from "lucide-react";
 export default function QualityCheckOrderLoading() {
   return (
     <>
-      <SiteHeader title="Quality Check" />
+      <SiteHeader title="Quality Check Overview" />
       <main className="flex flex-col gap-4 p-4 lg:gap-6">
         <Card>
           <CardHeader>
@@ -29,18 +29,6 @@ export default function QualityCheckOrderLoading() {
               <div className="flex flex-col gap-1">
                 <Label className="text-muted-foreground text-sm font-medium">
                   Order Number
-                </Label>
-                <Skeleton className="h-4 w-24" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label className="text-muted-foreground text-sm font-medium">
-                  Vendor
-                </Label>
-                <Skeleton className="h-4 w-24" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label className="text-muted-foreground text-sm font-medium">
-                  Order Date
                 </Label>
                 <Skeleton className="h-4 w-24" />
               </div>
@@ -81,11 +69,15 @@ export default function QualityCheckOrderLoading() {
                 {/* SKU Details */}
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between">
+                    <span className="text-muted-foreground">QC Status:</span>
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                  <div className="flex justify-between">
                     <span className="text-muted-foreground">Category:</span>
                     <Skeleton className="h-4 w-24" />
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Supplier:</span>
+                    <span className="text-muted-foreground">Ordered :</span>
                     <span className="font-medium">
                       <Skeleton className="h-4 w-24" />
                     </span>

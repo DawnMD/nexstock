@@ -42,18 +42,50 @@ export const qualityCheckRouter = createTRPCRouter({
           items: {
             select: {
               Sku: true,
+              qualityCheck: {
+                select: {
+                  qualityCheckStatus: true,
+                },
+              },
+              orderedQuantity: true,
+              id: true,
             },
           },
-          vendor: {
-            select: {
-              name: true,
-            },
-          },
-          businessUnit: true,
-          createdAt: true,
         },
       });
 
       return orderItems;
     }),
+  getQualityCheckItem: privateProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input: { id } }) => {
+      return await ctx.db.orderItem.findUnique({
+        where: { id },
+      });
+    }),
+  updateQualityCheckStatus: privateProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        rejectedQuantity: z.number(),
+        inspectedQuantity: z.number(),
+      }),
+    )
+    .mutation(
+      async ({ ctx, input: { id, rejectedQuantity, inspectedQuantity } }) => {
+        return await ctx.db.orderItem.update({
+          where: { id },
+          data: {
+            qualityCheck: {
+              create: {
+                qualityCheckStatus: true,
+                inspectedBy: ctx.userId,
+                inspectedQuantity,
+              },
+            },
+            rejectedQuantity: rejectedQuantity,
+          },
+        });
+      },
+    ),
 });
