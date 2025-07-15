@@ -30,6 +30,7 @@ export default async function CheckOutPage({
             <VehicleActivityForm
               vehicleNumber={vehicleNumber}
               activityType="CHECK_OUT"
+              orderNumber={orderNumber}
             />
           </HydrateClient>
         </VehicleActivityContainer>

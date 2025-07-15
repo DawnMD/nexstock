@@ -30,6 +30,7 @@ export default async function OpenPage({
             <VehicleActivityForm
               vehicleNumber={vehicleNumber}
               activityType="OPEN"
+              orderNumber={orderNumber}
             />
           </HydrateClient>
         </VehicleActivityContainer>
