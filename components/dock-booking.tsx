@@ -140,16 +140,18 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
 
   const createDockBookingMutation = api.order.createDockBooking.useMutation({
     onSuccess: async () => {
-      toast.success("Dock booking created successfully");
       // Invalidate the dock bookings and today's dock schedule queries to refresh the list
       await Promise.all([
         utils.order.getDockBookingsByOrderNumber.invalidate({
           orderNumber,
         }),
         utils.order.getTodayDockSchedule.invalidate(),
+        utils.qualityCheck.getOrderItems.invalidate(),
+        utils.qualityCheck.getQualityCheckItems.invalidate(),
       ]);
       setIsSheetOpen(false);
       form.reset();
+      toast.success("Dock booking created successfully");
     },
     onError: (error) => {
       toast.error(error.message);
@@ -158,25 +160,31 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
 
   const deleteDockBookingMutation = api.order.deleteDockBooking.useMutation({
     onSuccess: async () => {
+      await Promise.all([
+        utils.order.getDockBookingsByOrderNumber.invalidate({
+          orderNumber,
+        }),
+        utils.qualityCheck.getOrderItems.invalidate(),
+        utils.qualityCheck.getQualityCheckItems.invalidate(),
+      ]);
       toast.success("Dock booking deleted successfully");
-      await utils.order.getDockBookingsByOrderNumber.invalidate({
-        orderNumber,
-      });
     },
   });
 
   const updateDockBookingMutation = api.order.updateDockBooking.useMutation({
     onSuccess: async () => {
-      toast.success("Dock booking updated successfully");
       await Promise.all([
         utils.order.getDockBookingsByOrderNumber.invalidate({
           orderNumber,
         }),
         utils.order.getTodayDockSchedule.invalidate(),
+        utils.qualityCheck.getOrderItems.invalidate(),
+        utils.qualityCheck.getQualityCheckItems.invalidate(),
       ]);
       setIsSheetOpen(false);
       setEditingBooking(null);
       form.reset();
+      toast.success("Dock booking updated successfully");
     },
     onError: (error: { message: string }) => {
       toast.error(error.message);
