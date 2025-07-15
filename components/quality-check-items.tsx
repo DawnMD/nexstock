@@ -9,6 +9,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { api } from "@/trpc/react";
 import {
   CheckIcon,
@@ -36,6 +44,16 @@ export function QualityCheckItems({ orderNumber }: { orderNumber: string }) {
       </Card>
     );
   }
+  const isAvailableForQualityCheck =
+    orderItems.dockBookings.length > 0 &&
+    orderItems.dockBookings.every(
+      (dockBooking) => dockBooking.activities.length >= 2,
+    ) &&
+    orderItems.dockBookings.every((dockBooking) =>
+      dockBooking.activities.some(
+        (activity) => activity.activityType === "OPEN",
+      ),
+    );
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -81,37 +99,57 @@ export function QualityCheckItems({ orderNumber }: { orderNumber: string }) {
               </div>
             </div>
             {/* Action Button */}
-            <div className="pt-2">
-              {!item.qualityCheck?.qualityCheckStatus && (
-                <Button size="sm" className="w-full cursor-pointer" asChild>
-                  <Link href={`/quality-check/${orderNumber}/${item.id}`}>
+            {isAvailableForQualityCheck ? (
+              <div className="pt-2">
+                {!item.qualityCheck?.qualityCheckStatus && (
+                  <Button size="sm" className="w-full cursor-pointer" asChild>
+                    <Link href={`/quality-check/${orderNumber}/${item.id}`}>
+                      <ClipboardCheckIcon className="mr-2 h-3 w-3" />
+                      Start QC
+                    </Link>
+                  </Button>
+                )}
+                {item.qualityCheck?.qualityCheckStatus && (
+                  <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+                    <Button
+                      size="sm"
+                      className="cursor-pointer lg:basis-1/2"
+                      variant="outline"
+                      disabled
+                    >
+                      <CheckIcon className="mr-2 h-3 w-3" />
+                      Completed
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="cursor-pointer lg:basis-1/2"
+                      variant={"destructive"}
+                    >
+                      <RotateCcwIcon className="mr-2 h-3 w-3" />
+                      Reset QC
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="mt-2 w-full cursor-pointer">
                     <ClipboardCheckIcon className="mr-2 h-3 w-3" />
                     Start QC
-                  </Link>
-                </Button>
-              )}
-              {item.qualityCheck?.qualityCheckStatus && (
-                <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-                  <Button
-                    size="sm"
-                    className="cursor-pointer lg:basis-1/2"
-                    variant="outline"
-                    disabled
-                  >
-                    <CheckIcon className="mr-2 h-3 w-3" />
-                    Completed
                   </Button>
-                  <Button
-                    size="sm"
-                    className="cursor-pointer lg:basis-1/2"
-                    variant={"destructive"}
-                  >
-                    <RotateCcwIcon className="mr-2 h-3 w-3" />
-                    Reset QC
-                  </Button>
-                </div>
-              )}
-            </div>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Unavailable for QC</DialogTitle>
+                    <DialogDescription>
+                      This SKU is not available for QC. Please check the dock
+                      booking and ensure the SKU is available for QC.
+                    </DialogDescription>
+                  </DialogHeader>
+                </DialogContent>
+              </Dialog>
+            )}
           </CardContent>
         </Card>
       ))}
