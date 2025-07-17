@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -115,7 +114,7 @@ export function ReceiveSkuProcess({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <FormField
             control={form.control}
             name="receivedQuantity"
@@ -125,15 +124,11 @@ export function ReceiveSkuProcess({
                 <FormControl>
                   <Input
                     type="number"
+                    placeholder="Enter quantity"
                     {...field}
                     onChange={(e) => field.onChange(Number(e.target.value))}
                   />
                 </FormControl>
-                <FormDescription>
-                  Ordered: {orderItem.orderedQuantity} | Already Received:{" "}
-                  {orderItem.receivedQuantity} | Remaining:{" "}
-                  {orderItem.orderedQuantity - orderItem.receivedQuantity}
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -150,11 +145,11 @@ export function ReceiveSkuProcess({
                   defaultValue={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select vehicle" />
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select vehicle number" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
+                  <SelectContent className="w-full">
                     {vehicles.map((vehicle) => (
                       <SelectItem
                         key={vehicle.vehicleNumber}
@@ -177,7 +172,7 @@ export function ReceiveSkuProcess({
               <FormItem>
                 <FormLabel>Location</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input placeholder="Enter storage location" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -191,7 +186,7 @@ export function ReceiveSkuProcess({
               <FormItem>
                 <FormLabel>LPN</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input placeholder="Enter License Plate Number" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -205,7 +200,7 @@ export function ReceiveSkuProcess({
               <FormItem>
                 <FormLabel>Lot (Optional)</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input placeholder="Enter lot number" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -221,6 +216,7 @@ export function ReceiveSkuProcess({
                 <FormControl>
                   <Input
                     type="date"
+                    placeholder="Select manufacture date"
                     {...field}
                     value={
                       field.value ? field.value.toISOString().split("T")[0] : ""
@@ -246,6 +242,7 @@ export function ReceiveSkuProcess({
                 <FormControl>
                   <Input
                     type="date"
+                    placeholder="Select expiry date"
                     {...field}
                     value={
                       field.value ? field.value.toISOString().split("T")[0] : ""
@@ -270,7 +267,11 @@ export function ReceiveSkuProcess({
             <FormItem>
               <FormLabel>Notes (Optional)</FormLabel>
               <FormControl>
-                <Textarea {...field} />
+                <Textarea
+                  placeholder="Enter any additional notes about this receipt"
+                  className="min-h-[100px]"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

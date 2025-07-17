@@ -56,6 +56,11 @@ export const receiveRouter = createTRPCRouter({
               orderedQuantity: true,
               receivedQuantity: true,
               status: true,
+              qualityCheck: {
+                select: {
+                  qualityCheckStatus: true,
+                },
+              },
             },
           },
           vendor: {

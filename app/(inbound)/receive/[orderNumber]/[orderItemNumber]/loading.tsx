@@ -25,44 +25,50 @@ export default function Loading() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <div className="flex flex-col gap-1">
+              <div>
                 <Label className="text-muted-foreground text-sm font-medium">
                   SKU Number
                 </Label>
-                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-6 w-32" />
               </div>
-              <div className="flex flex-col gap-1">
+              <div>
                 <Label className="text-muted-foreground text-sm font-medium">
                   Description
                 </Label>
-                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-6 w-48" />
               </div>
-              <div className="flex flex-col gap-1">
+              <div>
                 <Label className="text-muted-foreground text-sm font-medium">
                   Department
                 </Label>
-                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-6 w-32" />
               </div>
-              <div className="flex flex-col gap-1">
+              <div>
                 <Label className="text-muted-foreground text-sm font-medium">
                   Receive Status
                 </Label>
-                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-6 w-24" />
               </div>
             </div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardHeader>
-            <CardTitle>Receive Process</CardTitle>
-            <CardDescription>
-              Process for receiving this order item
-            </CardDescription>
-          </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <Skeleton className="h-4 w-64" />
-              <Skeleton className="h-4 w-48" />
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-24 w-full" />
+            </div>
+            <div className="mt-6">
+              <Skeleton className="h-10 w-24" />
             </div>
           </CardContent>
         </Card>

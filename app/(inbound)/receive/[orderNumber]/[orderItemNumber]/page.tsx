@@ -73,11 +73,16 @@ export default async function ReceiveItemPage({
             </div>
           </CardContent>
         </Card>
-        <ReceiveSkuProcess
-          orderNumber={orderNumber}
-          orderItemNumber={orderItemNumber}
-          orderItem={orderItem}
-        />
+
+        <Card>
+          <CardContent>
+            <ReceiveSkuProcess
+              orderNumber={orderNumber}
+              orderItemNumber={orderItemNumber}
+              orderItem={orderItem}
+            />
+          </CardContent>
+        </Card>
       </main>
     </>
   );
