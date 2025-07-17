@@ -52,7 +52,12 @@ export const receiveRouter = createTRPCRouter({
           items: {
             select: {
               id: true,
-              Sku: true,
+              Sku: {
+                select: {
+                  sku: true,
+                  description: true,
+                },
+              },
               orderedQuantity: true,
               receivedQuantity: true,
               status: true,
@@ -68,7 +73,6 @@ export const receiveRouter = createTRPCRouter({
               name: true,
             },
           },
-          businessUnit: true,
           createdAt: true,
         },
       });
@@ -80,8 +84,17 @@ export const receiveRouter = createTRPCRouter({
     .query(async ({ ctx, input: { id } }) => {
       return await ctx.db.orderItem.findUnique({
         where: { id },
-        include: {
-          Sku: true,
+        select: {
+          Sku: {
+            select: {
+              sku: true,
+              description: true,
+            },
+          },
+          description: true,
+          department: true,
+          orderedQuantity: true,
+          receivedQuantity: true,
           qualityCheck: {
             select: {
               qualityCheckStatus: true,
@@ -100,31 +113,6 @@ export const receiveRouter = createTRPCRouter({
         },
       });
       return dockBookings;
-    }),
-
-  checkLpnUniqueness: privateProcedure
-    .input(
-      z.object({
-        lpn: z.string(),
-        orderNumber: z.string(),
-        sku: z.string(),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      // Find any receive items with the same LPN for this order and SKU
-      const existingReceiveItem = await ctx.db.receiveItem.findFirst({
-        where: {
-          lpn: input.lpn,
-          sku: input.sku,
-          orderItem: {
-            orderId: input.orderNumber,
-          },
-        },
-      });
-
-      return {
-        isUnique: !existingReceiveItem,
-      };
     }),
 
   updateReceiveStatus: privateProcedure

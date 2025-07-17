@@ -45,7 +45,7 @@ export default function Loading() {
               </div>
               <div>
                 <Label className="text-muted-foreground text-sm font-medium">
-                  Receive Status
+                  Quality Check Status
                 </Label>
                 <Skeleton className="h-6 w-24" />
               </div>

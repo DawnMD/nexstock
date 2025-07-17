@@ -124,9 +124,22 @@ export function ReceiveSkuProcess({
                 <FormControl>
                   <Input
                     type="number"
-                    placeholder="Enter quantity"
+                    placeholder={`Enter quantity (max: ${orderItem.orderedQuantity - orderItem.receivedQuantity})`}
                     {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      const remaining =
+                        orderItem.orderedQuantity - orderItem.receivedQuantity;
+                      if (value > remaining) {
+                        form.setError("receivedQuantity", {
+                          type: "manual",
+                          message: `Cannot receive more than remaining quantity (${remaining})`,
+                        });
+                      } else {
+                        form.clearErrors("receivedQuantity");
+                      }
+                      field.onChange(value);
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
