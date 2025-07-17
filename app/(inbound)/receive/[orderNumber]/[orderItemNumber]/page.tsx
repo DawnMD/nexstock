@@ -7,8 +7,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { getStatusVariant } from "@/lib/order-utils";
-import { formatStatusDisplay } from "@/lib/order-utils";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/trpc/server";
 import { PackageIcon } from "lucide-react";
@@ -64,10 +62,16 @@ export default async function ReceiveItemPage({
               </div>
               <div>
                 <Label className="text-muted-foreground text-sm font-medium">
-                  Receive Status
+                  Quality Check Status
                 </Label>
-                <Badge variant={getStatusVariant(orderItem.status)}>
-                  {formatStatusDisplay(orderItem.status)}
+                <Badge
+                  variant={
+                    orderItem.qualityCheck?.qualityCheckStatus ? "green" : "red"
+                  }
+                >
+                  {orderItem.qualityCheck?.qualityCheckStatus
+                    ? "Done"
+                    : "Pending"}
                 </Badge>
               </div>
             </div>

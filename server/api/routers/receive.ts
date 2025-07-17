@@ -82,6 +82,11 @@ export const receiveRouter = createTRPCRouter({
         where: { id },
         include: {
           Sku: true,
+          qualityCheck: {
+            select: {
+              qualityCheckStatus: true,
+            },
+          },
         },
       });
     }),
