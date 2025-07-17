@@ -11,6 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/trpc/react";
 import { ClipboardCheckIcon, PackageIcon } from "lucide-react";
+import Link from "next/link";
 import { formatStatusDisplay } from "@/lib/order-utils";
 
 export function ReceiveSkuItems({ orderNumber }: { orderNumber: string }) {
@@ -56,16 +57,33 @@ export function ReceiveSkuItems({ orderNumber }: { orderNumber: string }) {
                 </Badge>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Status:</span>
+                <span className="text-muted-foreground">Received Qty:</span>
                 <Badge variant="outline" className="text-xs">
+                  {sku.receivedQuantity}
+                </Badge>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Status:</span>
+                <Badge
+                  variant={
+                    sku.receivedQuantity === 0
+                      ? "outline"
+                      : sku.receivedQuantity === sku.orderedQuantity
+                        ? "default"
+                        : "secondary"
+                  }
+                  className="text-xs"
+                >
                   {formatStatusDisplay(sku.status)}
                 </Badge>
               </div>
             </div>
             <div className="pt-2">
-              <Button size="sm" className="w-full">
-                <ClipboardCheckIcon className="mr-2 h-3 w-3" />
-                Receive SKU
+              <Button size="sm" className="w-full cursor-pointer" asChild>
+                <Link href={`/receive/${orderNumber}/${sku.id}`}>
+                  <ClipboardCheckIcon className="mr-2 h-3 w-3" />
+                  Receive SKU
+                </Link>
               </Button>
             </div>
           </CardContent>

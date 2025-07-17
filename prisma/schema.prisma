@@ -99,7 +99,7 @@ model OrderItem {
     Sku                  Sku             @relation(fields: [skuId], references: [sku]) // Link to Sku by skuId for eg SKU-123456 not 1,2,4,5,6
     skuId                String
     qualityCheck         QualityCheck?
-    ReceiveItem          ReceiveItem?
+    receiveItems         ReceiveItem[] // Updated to one-to-many
 
     @@index([status, skuId, id])
 }
@@ -217,7 +217,7 @@ model QualityCheck {
 model ReceiveItem {
     id               Int       @id @default(autoincrement())
     orderItem        OrderItem @relation(fields: [orderItemId], references: [id])
-    orderItemId      Int       @unique
+    orderItemId      Int // Removed @unique constraint
     receivedQuantity Int       @default(0)
     receivedBy       String
     receivedAt       DateTime
