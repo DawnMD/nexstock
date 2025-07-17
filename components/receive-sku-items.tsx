@@ -79,12 +79,19 @@ export function ReceiveSkuItems({ orderNumber }: { orderNumber: string }) {
               </div>
             </div>
             <div className="pt-2">
-              <Button size="sm" className="w-full cursor-pointer" asChild>
-                <Link href={`/receive/${orderNumber}/${sku.id}`}>
-                  <ClipboardCheckIcon className="mr-2 h-3 w-3" />
-                  Receive SKU
-                </Link>
-              </Button>
+              {sku.receivedQuantity === sku.orderedQuantity ? (
+                <Button size="sm" className="w-full" variant="outline" disabled>
+                  <PackageIcon className="mr-2 h-3 w-3" />
+                  Received
+                </Button>
+              ) : (
+                <Button size="sm" className="w-full cursor-pointer" asChild>
+                  <Link href={`/receive/${orderNumber}/${sku.id}`}>
+                    <ClipboardCheckIcon className="mr-2 h-3 w-3" />
+                    Receive SKU
+                  </Link>
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
