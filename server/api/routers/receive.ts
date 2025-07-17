@@ -101,6 +101,32 @@ export const receiveRouter = createTRPCRouter({
       });
       return dockBookings;
     }),
+
+  checkLpnUniqueness: privateProcedure
+    .input(
+      z.object({
+        lpn: z.string(),
+        orderNumber: z.string(),
+        sku: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      // Find any receive items with the same LPN for this order and SKU
+      const existingReceiveItem = await ctx.db.receiveItem.findFirst({
+        where: {
+          lpn: input.lpn,
+          sku: input.sku,
+          orderItem: {
+            orderId: input.orderNumber,
+          },
+        },
+      });
+
+      return {
+        isUnique: !existingReceiveItem,
+      };
+    }),
+
   updateReceiveStatus: privateProcedure
     .input(
       z.object({
@@ -119,6 +145,8 @@ export const receiveRouter = createTRPCRouter({
           select: {
             orderedQuantity: true,
             receivedQuantity: true,
+            orderId: true,
+            skuId: true,
           },
         });
 
@@ -126,6 +154,24 @@ export const receiveRouter = createTRPCRouter({
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Order item not found",
+          });
+        }
+
+        // Check if LPN is already used for this SKU in this order
+        const existingReceiveItem = await tx.receiveItem.findFirst({
+          where: {
+            lpn: receiveData.lpn,
+            sku: currentOrderItem.skuId,
+            orderItem: {
+              orderId: currentOrderItem.orderId,
+            },
+          },
+        });
+
+        if (existingReceiveItem) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "This LPN is already used for this SKU in this order",
           });
         }
 

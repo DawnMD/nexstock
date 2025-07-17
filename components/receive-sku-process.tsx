@@ -104,7 +104,7 @@ export function ReceiveSkuProcess({
       },
     });
 
-  function onSubmit(data: ReceiveSkuFormValues) {
+  async function onSubmit(data: ReceiveSkuFormValues) {
     updateReceiveStatus({
       id: Number(orderItemNumber),
       ...data,
