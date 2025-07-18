@@ -18,12 +18,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { api } from "@/trpc/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const ReceiveSkuFormSchema = z.object({
   receivedQuantity: z.number().min(1, "Received quantity must be at least 1"),
@@ -69,7 +78,7 @@ export function ReceiveSkuProcess({
   const form = useForm<ReceiveSkuFormValues>({
     resolver: zodResolver(ReceiveSkuFormSchema),
     defaultValues: {
-      receivedQuantity: 0,
+      receivedQuantity: 1,
       sku: orderItem.Sku.sku,
       receivedNotes: "",
       location: "STAGE",
@@ -99,6 +108,15 @@ export function ReceiveSkuProcess({
     });
 
   async function onSubmit(data: ReceiveSkuFormValues) {
+    console.log("Form data being submitted:", data);
+    console.log("Order item number:", orderItemNumber);
+
+    if (!data || Object.keys(data).length === 0) {
+      console.error("Form data is empty or invalid");
+      toast.error("Form data is invalid. Please check all required fields.");
+      return;
+    }
+
     updateReceiveStatus({
       id: Number(orderItemNumber),
       ...data,
@@ -218,23 +236,39 @@ export function ReceiveSkuProcess({
             control={form.control}
             name="manufacturedDate"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex flex-col">
                 <FormLabel>Manufactured Date (Optional)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="date"
-                    placeholder="Select manufacture date"
-                    {...field}
-                    value={
-                      field.value ? field.value.toISOString().split("T")[0] : ""
-                    }
-                    onChange={(e) =>
-                      field.onChange(
-                        e.target.value ? new Date(e.target.value) : null,
-                      )
-                    }
-                  />
-                </FormControl>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground",
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value ?? undefined}
+                      onSelect={field.onChange}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date("1900-01-01")
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
                 <FormMessage />
               </FormItem>
             )}
@@ -244,23 +278,39 @@ export function ReceiveSkuProcess({
             control={form.control}
             name="lotExpiryDate"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex flex-col">
                 <FormLabel>Lot Expiry Date (Optional)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="date"
-                    placeholder="Select expiry date"
-                    {...field}
-                    value={
-                      field.value ? field.value.toISOString().split("T")[0] : ""
-                    }
-                    onChange={(e) =>
-                      field.onChange(
-                        e.target.value ? new Date(e.target.value) : null,
-                      )
-                    }
-                  />
-                </FormControl>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground",
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value ?? undefined}
+                      onSelect={field.onChange}
+                      disabled={(date) =>
+                        date < new Date() || date < new Date("1900-01-01")
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
                 <FormMessage />
               </FormItem>
             )}
