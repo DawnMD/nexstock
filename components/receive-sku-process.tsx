@@ -24,12 +24,9 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useUser } from "@clerk/nextjs";
 
 const ReceiveSkuFormSchema = z.object({
   receivedQuantity: z.number().min(1, "Received quantity must be at least 1"),
-  receivedBy: z.string().min(1, "Receiver name is required"),
-  receivedAt: z.date(),
   sku: z.string(),
   receivedNotes: z.string().optional(),
   location: z.string().min(1, "Location is required"),
@@ -63,7 +60,6 @@ export function ReceiveSkuProcess({
 }: ReceiveSkuProcessProps) {
   const router = useRouter();
   const apiUtils = api.useUtils();
-  const { user } = useUser();
 
   // Get vehicle numbers for this order
   const [vehicles] = api.receive.getOrderVehicles.useSuspenseQuery({
@@ -74,8 +70,6 @@ export function ReceiveSkuProcess({
     resolver: zodResolver(ReceiveSkuFormSchema),
     defaultValues: {
       receivedQuantity: 0,
-      receivedBy: user?.fullName ?? "",
-      receivedAt: new Date(),
       sku: orderItem.Sku.sku,
       receivedNotes: "",
       location: "STAGE",

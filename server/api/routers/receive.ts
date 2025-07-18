@@ -3,21 +3,6 @@ import { OrderItemStatus } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-const ReceiveSkuFormSchema = z.object({
-  receivedQuantity: z.number().min(1, "Received quantity must be at least 1"),
-  receivedBy: z.string().min(1, "Receiver name is required"),
-  receivedAt: z.date(),
-  sku: z.string(),
-  receivedNotes: z.string().optional(),
-  location: z.string().min(1, "Location is required"),
-  lpn: z.string().min(1, "LPN is required"),
-  lot: z.string().optional(),
-  manufacturedDate: z.date().optional().nullable(),
-  uom: z.string(),
-  lotExpiryDate: z.date().optional().nullable(),
-  vehicleNumber: z.string().min(1, "Vehicle number is required"),
-});
-
 export const receiveRouter = createTRPCRouter({
   getAllOrderNumbers: privateProcedure.query(async ({ ctx }) => {
     const orderNumbers = await ctx.db.order.findMany({
@@ -119,7 +104,18 @@ export const receiveRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.number(),
-        ...ReceiveSkuFormSchema.shape,
+        receivedQuantity: z
+          .number()
+          .min(1, "Received quantity must be at least 1"),
+        sku: z.string(),
+        receivedNotes: z.string().optional(),
+        location: z.string().min(1, "Location is required"),
+        lpn: z.string().min(1, "LPN is required"),
+        lot: z.string().optional(),
+        manufacturedDate: z.date().optional().nullable(),
+        uom: z.string(),
+        lotExpiryDate: z.date().optional().nullable(),
+        vehicleNumber: z.string().min(1, "Vehicle number is required"),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -179,6 +175,8 @@ export const receiveRouter = createTRPCRouter({
         await tx.receiveItem.create({
           data: {
             orderItemId: id,
+            receivedBy: ctx.userId,
+            receivedAt: new Date(),
             ...receiveData,
           },
         });
