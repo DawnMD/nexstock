@@ -144,11 +144,15 @@ export const receiveRouter = createTRPCRouter({
         // Check if LPN is already used for this SKU in this order
         const existingReceiveItem = await tx.receiveItem.findFirst({
           where: {
-            lpn: receiveData.lpn,
-            sku: currentOrderItem.skuId,
-            orderItem: {
-              orderId: currentOrderItem.orderId,
-            },
+            AND: [
+              { lpn: receiveData.lpn },
+              { sku: currentOrderItem.skuId },
+              {
+                orderItem: {
+                  orderId: currentOrderItem.orderId,
+                },
+              },
+            ],
           },
         });
 
