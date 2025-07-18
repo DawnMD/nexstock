@@ -30,6 +30,7 @@ export default async function CheckInPage({
             <VehicleActivityForm
               vehicleNumber={vehicleNumber}
               activityType="CHECK_IN"
+              orderNumber={orderNumber}
             />
           </HydrateClient>
         </VehicleActivityContainer>

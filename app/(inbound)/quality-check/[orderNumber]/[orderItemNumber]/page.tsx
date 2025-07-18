@@ -22,11 +22,23 @@ export default async function OrderItemPage({
 }) {
   const { orderItemNumber, orderNumber } = await params;
 
-  const orderItem = await api.qualityCheck.getQualityCheckItem({
+  const orderItem = await api.qualityCheck.getQualityCheckItems({
     id: Number(orderItemNumber),
   });
 
-  if (!orderItem) {
+  const isAvailableForQualityCheck =
+    orderItem?.Order?.dockBookings?.length &&
+    orderItem?.Order?.dockBookings?.length > 0 &&
+    orderItem?.Order?.dockBookings?.every(
+      (dockBooking) => dockBooking.activities.length >= 2,
+    ) &&
+    orderItem?.Order?.dockBookings?.every((dockBooking) =>
+      dockBooking.activities.some(
+        (activity) => activity.activityType === "OPEN",
+      ),
+    );
+
+  if (!orderItem || !isAvailableForQualityCheck) {
     notFound();
   }
 

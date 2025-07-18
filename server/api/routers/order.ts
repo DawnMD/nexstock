@@ -347,13 +347,17 @@ export const orderRouter = createTRPCRouter({
         activity: z.nativeEnum(ActivityType),
         notes: z.string().optional(),
         containerCondition: z.boolean().optional(),
+        orderNumber: z.string(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       // Find the dock booking by vehicle number
       const dockBooking = await ctx.db.dockBooking.findFirst({
         where: {
-          vehicleNumber: input.vehicleNumber,
+          AND: [
+            { vehicleNumber: input.vehicleNumber },
+            { orderId: input.orderNumber },
+          ],
         },
       });
 

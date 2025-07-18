@@ -51,16 +51,44 @@ export const qualityCheckRouter = createTRPCRouter({
               id: true,
             },
           },
+          dockBookings: {
+            select: {
+              dockId: true,
+              activities: {
+                select: {
+                  activityType: true,
+                },
+              },
+            },
+          },
         },
       });
 
       return orderItems;
     }),
-  getQualityCheckItem: privateProcedure
+  getQualityCheckItems: privateProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input: { id } }) => {
       return await ctx.db.orderItem.findUnique({
         where: { id },
+        include: {
+          Order: {
+            include: {
+              dockBookings: {
+                include: {
+                  activities: {
+                    select: {
+                      activityType: true,
+                    },
+                  },
+                },
+                select: {
+                  dockId: true,
+                },
+              },
+            },
+          },
+        },
       });
     }),
   updateQualityCheckStatus: privateProcedure

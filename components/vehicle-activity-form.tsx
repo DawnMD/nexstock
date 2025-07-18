@@ -32,21 +32,25 @@ const activitySchema = z.object({
   containerCondition: z.boolean().optional(),
 });
 
-interface VehicleActivityFormProps {
-  vehicleNumber: string;
-  activityType: ActivityType;
-}
-
 export function VehicleActivityForm({
   vehicleNumber,
   activityType,
-}: VehicleActivityFormProps) {
+  orderNumber,
+}: {
+  vehicleNumber: string;
+  activityType: ActivityType;
+  orderNumber: string;
+}) {
   const router = useRouter();
   const apiUtils = api.useUtils();
 
   const updateDockActivity = api.order.updateDockActivity.useMutation({
     onSuccess: async () => {
-      await apiUtils.order.getTodayDockSchedule.invalidate();
+      await Promise.all([
+        apiUtils.order.getTodayDockSchedule.invalidate(),
+        apiUtils.qualityCheck.getOrderItems.invalidate(),
+        apiUtils.qualityCheck.getQualityCheckItems.invalidate(),
+      ]);
       toast.success("Activity updated successfully");
       router.back();
     },
@@ -69,6 +73,7 @@ export function VehicleActivityForm({
       activity: activityType,
       notes: data.notes,
       containerCondition: data.containerCondition,
+      orderNumber,
     });
   };
 

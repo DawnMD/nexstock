@@ -30,6 +30,7 @@ export default async function ClosePage({
             <VehicleActivityForm
               vehicleNumber={vehicleNumber}
               activityType="CLOSE"
+              orderNumber={orderNumber}
             />
           </HydrateClient>
         </VehicleActivityContainer>
