@@ -79,14 +79,16 @@ export default function ReceiveSkuOrderLoading() {
                 {/* SKU Details */}
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Category:</span>
+                    <span className="text-muted-foreground">Ordered Qty:</span>
                     <Skeleton className="h-4 w-24" />
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Supplier:</span>
-                    <span className="font-medium">
-                      <Skeleton className="h-4 w-24" />
-                    </span>
+                    <span className="text-muted-foreground">Received Qty:</span>
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Status:</span>
+                    <Skeleton className="h-4 w-24" />
                   </div>
                 </div>
                 {/* Action Button */}

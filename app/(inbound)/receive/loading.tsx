@@ -5,7 +5,7 @@ import { SearchIcon } from "lucide-react";
 export default function ReceiveOrderLoading() {
   return (
     <>
-      <SiteHeader title="Quality Check" />
+      <SiteHeader title="Receive SKU" />
       <main className="flex flex-col gap-4 p-4 lg:gap-6">
         <div className="flex flex-col gap-2">
           <h3 className="flex items-center gap-2 text-lg font-semibold">
