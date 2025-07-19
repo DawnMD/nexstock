@@ -12,7 +12,7 @@ export default async function Page({ searchParams }: PageProps) {
   const selectedDate = date ? new Date(date) : new Date();
 
   void api.order.getOrderStats.prefetch({
-    date: startOfDay(selectedDate),
+    date: selectedDate,
   });
 
   return (

@@ -246,10 +246,12 @@ export const orderRouter = createTRPCRouter({
   getOrderStats: privateProcedure
     .input(
       z.object({
-        date: z.date().default(() => new Date()),
+        date: z.date().nullish(),
       }),
     )
     .query(async ({ ctx, input }) => {
+      const selectedDate = input.date ?? new Date();
+
       const orderGroups = await ctx.db.order.groupBy({
         by: ["orderType"],
         _count: {
@@ -259,8 +261,8 @@ export const orderRouter = createTRPCRouter({
           dockBookings: {
             some: {
               eta: {
-                gte: startOfDay(input.date),
-                lte: endOfDay(input.date),
+                gte: startOfDay(selectedDate),
+                lte: endOfDay(selectedDate),
               },
             },
           },
