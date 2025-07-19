@@ -3,13 +3,20 @@
 import { Card } from "@/components/ui/card";
 import { api } from "@/trpc/react";
 import { DashboardDatePicker } from "./dashboard-date-picker";
-import { useState, useCallback } from "react";
-import { startOfDay } from "date-fns";
+import { useCallback } from "react";
+import { startOfDay, format } from "date-fns";
+import { useRouter, useSearchParams } from "next/navigation";
 
-export function DashboardStats() {
-  const [selectedDate, setSelectedDate] = useState(() =>
-    startOfDay(new Date()),
-  );
+interface DashboardStatsProps {
+  initialDate: Date;
+}
+
+export function DashboardStats({ initialDate }: DashboardStatsProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const selectedDate = startOfDay(initialDate);
+
   const [stats] = api.order.getOrderStats.useSuspenseQuery(
     {
       date: selectedDate,
@@ -20,9 +27,15 @@ export function DashboardStats() {
     },
   );
 
-  const handleDateChange = useCallback((date: Date) => {
-    setSelectedDate(startOfDay(date));
-  }, []);
+  const handleDateChange = useCallback(
+    (date: Date) => {
+      const dateString = format(date, "yyyy-MM-dd");
+      const params = new URLSearchParams(searchParams);
+      params.set("date", dateString);
+      router.push(`/dashboard?${params.toString()}`);
+    },
+    [router, searchParams],
+  );
 
   const statCards = [
     {
