@@ -107,16 +107,7 @@ export function ReceiveSkuProcess({
       },
     });
 
-  async function onSubmit(data: ReceiveSkuFormValues) {
-    console.log("Form data being submitted:", data);
-    console.log("Order item number:", orderItemNumber);
-
-    if (!data || Object.keys(data).length === 0) {
-      console.error("Form data is empty or invalid");
-      toast.error("Form data is invalid. Please check all required fields.");
-      return;
-    }
-
+  function onSubmit(data: ReceiveSkuFormValues) {
     updateReceiveStatus({
       id: Number(orderItemNumber),
       ...data,
