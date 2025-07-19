@@ -250,31 +250,19 @@ export const orderRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      // First get all orders that have dock bookings for the selected date
-      const ordersWithBookings = await ctx.db.dockBooking.findMany({
-        where: {
-          eta: {
-            gte: startOfDay(input.date),
-            lte: endOfDay(input.date),
-          },
-        },
-        select: {
-          orderId: true,
-        },
-        distinct: ["orderId"], // Ensure we don't count the same order multiple times
-      });
-
-      const orderIds = ordersWithBookings.map((booking) => booking.orderId);
-
-      // Then get the order types for these orders
       const orderGroups = await ctx.db.order.groupBy({
         by: ["orderType"],
         _count: {
           orderNumber: true,
         },
         where: {
-          orderNumber: {
-            in: orderIds,
+          dockBookings: {
+            some: {
+              eta: {
+                gte: startOfDay(input.date),
+                lte: endOfDay(input.date),
+              },
+            },
           },
         },
       });
