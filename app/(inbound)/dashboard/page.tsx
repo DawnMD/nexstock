@@ -9,7 +9,7 @@ interface PageProps {
 
 export default async function Page({ searchParams }: PageProps) {
   const { date } = await searchParams;
-  const selectedDate = date ? new Date(date) : new Date();
+  const selectedDate = startOfDay(date ? new Date(date) : new Date());
 
   void api.order.getOrderStats.prefetch({
     date: selectedDate,

@@ -10,6 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import { useState } from "react";
 
 interface DashboardDatePickerProps {
   date: Date;
@@ -20,8 +21,17 @@ export function DashboardDatePicker({
   date,
   onDateChange,
 }: DashboardDatePickerProps) {
+  const [open, setOpen] = useState(false);
+
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    if (selectedDate) {
+      onDateChange(selectedDate);
+      setOpen(false);
+    }
+  };
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -38,7 +48,7 @@ export function DashboardDatePicker({
         <Calendar
           mode="single"
           selected={date}
-          onSelect={(date) => date && onDateChange(date)}
+          onSelect={handleDateSelect}
           initialFocus
         />
       </PopoverContent>

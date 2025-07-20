@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { api } from "@/trpc/react";
 import { DashboardDatePicker } from "./dashboard-date-picker";
 import { useCallback } from "react";
-import { startOfDay, format } from "date-fns";
+import { format } from "date-fns";
 import { useRouter, useSearchParams } from "next/navigation";
 
 interface DashboardStatsProps {
@@ -15,17 +15,9 @@ export function DashboardStats({ initialDate }: DashboardStatsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const selectedDate = startOfDay(initialDate);
-
-  const [stats] = api.order.getOrderStats.useSuspenseQuery(
-    {
-      date: selectedDate,
-    },
-    {
-      // We don't need to refetch the stats too often, so we set a 5 minute stale time
-      staleTime: 1000 * 60 * 5,
-    },
-  );
+  const [stats] = api.order.getOrderStats.useSuspenseQuery({
+    date: initialDate,
+  });
 
   const handleDateChange = useCallback(
     (date: Date) => {
@@ -65,7 +57,7 @@ export function DashboardStats({ initialDate }: DashboardStatsProps) {
       <div className="flex flex-col space-y-2">
         <div className="flex justify-end">
           <DashboardDatePicker
-            date={selectedDate}
+            date={initialDate}
             onDateChange={handleDateChange}
           />
         </div>
