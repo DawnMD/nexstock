@@ -246,11 +246,11 @@ export const orderRouter = createTRPCRouter({
   getOrderStats: privateProcedure
     .input(
       z.object({
-        date: z.date().nullish(),
+        date: z.string().nullish(),
       }),
     )
     .query(async ({ ctx, input }) => {
-      const selectedDate = input.date ?? new Date();
+      const selectedDate = input.date ? new Date(input.date) : new Date();
 
       const orderGroups = await ctx.db.order.groupBy({
         by: ["orderType"],
@@ -279,6 +279,7 @@ export const orderRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
+      const selectedDate = input.date ? new Date(input.date) : new Date();
       const where: Prisma.DockBookingWhereInput = {
         ...(input.search && {
           OR: [
@@ -293,8 +294,8 @@ export const orderRouter = createTRPCRouter({
           ],
         }),
         createdAt: {
-          gte: startOfDay(input.date ? new Date(input.date) : new Date()),
-          lt: endOfDay(input.date ? new Date(input.date) : new Date()),
+          gte: startOfDay(selectedDate),
+          lt: endOfDay(selectedDate),
         },
       };
 
