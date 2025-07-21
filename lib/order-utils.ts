@@ -4,7 +4,7 @@ export interface OrderStats {
   STANDARD: number;
   IMPORT: number;
   RETURN: number;
-  total: number;
+  TOTAL: number;
 }
 
 type OrderTypeGroup = {
@@ -19,12 +19,12 @@ export function calculateOrderStats(orderGroups: OrderTypeGroup[]): OrderStats {
     STANDARD: 0,
     IMPORT: 0,
     RETURN: 0,
-    total: 0,
+    TOTAL: 0,
   };
 
   orderGroups.forEach((group) => {
     statsMap[group.orderType] = group._count.orderNumber;
-    statsMap.total += group._count.orderNumber;
+    statsMap.TOTAL += group._count.orderNumber;
   });
 
   return statsMap;

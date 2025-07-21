@@ -243,16 +243,34 @@ export const orderRouter = createTRPCRouter({
 
       return dockBooking;
     }),
-  getOrderStats: privateProcedure.query(async ({ ctx }) => {
-    const orderGroups = await ctx.db.order.groupBy({
-      by: ["orderType"],
-      _count: {
-        orderNumber: true,
-      },
-    });
+  getOrderStats: privateProcedure
+    .input(
+      z.object({
+        date: z.string().nullish(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const selectedDate = input.date ? new Date(input.date) : new Date();
 
-    return calculateOrderStats(orderGroups);
-  }),
+      const orderGroups = await ctx.db.order.groupBy({
+        by: ["orderType"],
+        _count: {
+          orderNumber: true,
+        },
+        where: {
+          dockBookings: {
+            some: {
+              eta: {
+                gte: startOfDay(selectedDate),
+                lte: endOfDay(selectedDate),
+              },
+            },
+          },
+        },
+      });
+
+      return calculateOrderStats(orderGroups);
+    }),
   getTodayDockSchedule: privateProcedure
     .input(
       z.object({
@@ -261,6 +279,7 @@ export const orderRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
+      const selectedDate = input.date ? new Date(input.date) : new Date();
       const where: Prisma.DockBookingWhereInput = {
         ...(input.search && {
           OR: [
@@ -275,8 +294,8 @@ export const orderRouter = createTRPCRouter({
           ],
         }),
         createdAt: {
-          gte: startOfDay(input.date ? new Date(input.date) : new Date()),
-          lt: endOfDay(input.date ? new Date(input.date) : new Date()),
+          gte: startOfDay(selectedDate),
+          lt: endOfDay(selectedDate),
         },
       };
 
