@@ -235,3 +235,23 @@ model ReceiveItem {
 
     @@index([orderItemId, lpn, sku])
 }
+
+model Location {
+    id             Int      @id @default(autoincrement())
+    location       String   @unique
+    status         Boolean  @default(true)
+    length         Int
+    width          Int
+    height         Int
+    cbm            Int?
+    weightCapacity Int?
+    zone           String
+    aisle          String
+    description    String?
+    createdBy      String
+    updatedBy      String?
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt
+
+    @@index([location])
+}
