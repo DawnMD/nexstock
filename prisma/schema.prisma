@@ -258,3 +258,41 @@ model Adjustment {
 
     @@index([orderItemId])
 }
+
+model Location {
+    id             Int       @id @default(autoincrement())
+    location       String    @unique
+    status         Boolean   @default(true)
+    length         Int
+    width          Int
+    height         Int
+    cbm            Int?
+    weightCapacity Int?
+    zone           String
+    aisle          String
+    description    String?
+    createdBy      String
+    updatedBy      String?
+    createdAt      DateTime  @default(now())
+    updatedAt      DateTime  @updatedAt
+    putaways       Putaway[] // Track putaways to this location
+
+    @@index([location])
+}
+
+model Putaway {
+    id           Int      @id @default(autoincrement())
+    lpn          String
+    sku          String
+    quantity     Int
+    fromLocation String
+    toLocation   String
+    putawayBy    String
+    putawayAt    DateTime @default(now())
+    notes        String?
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+    location     Location @relation(fields: [toLocation], references: [location])
+
+    @@index([lpn, sku, fromLocation, toLocation])
+}
