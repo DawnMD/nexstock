@@ -348,6 +348,7 @@ async function main() {
   await prisma.vendor.deleteMany();
   await prisma.vehicleType.deleteMany();
   await prisma.dock.deleteMany();
+  await prisma.location.deleteMany();
 
   // Create docks
   console.log("Creating docks...");
@@ -383,6 +384,33 @@ async function main() {
     }),
   ]);
   console.log(`Created ${vehicleTypes.length} vehicle types`);
+
+  // Create 20 locations
+  console.log("Creating 20 locations...");
+  const locations = await Promise.all(
+    Array.from({ length: 20 }, (_, i) => {
+      const zone = String.fromCharCode(65 + Math.floor(i / 4)); // A, B, C, D, E
+      const aisle = String(Math.floor((i % 4) + 1));
+
+      return prisma.location.create({
+        data: {
+          location: `LOC-${String(i + 1).padStart(3, "0")}`,
+          status: true,
+          length: Math.floor(Math.random() * 200) + 100, // 100-300 cm
+          width: Math.floor(Math.random() * 150) + 80, // 80-230 cm
+          height: Math.floor(Math.random() * 100) + 50, // 50-150 cm
+          cbm: Math.floor(Math.random() * 10) + 5, // 5-15 cubic meters
+          weightCapacity: Math.floor(Math.random() * 1000) + 500, // 500-1500 kg
+          zone: zone,
+          aisle: aisle,
+          description: `Storage location in Zone ${zone}, Aisle ${aisle}`,
+          createdBy: "SYSTEM",
+          updatedBy: "SYSTEM",
+        },
+      });
+    }),
+  );
+  console.log(`Created ${locations.length} locations`);
 
   // Create 50 vendors in batches
   console.log("Creating 50 vendors...");
@@ -509,6 +537,7 @@ async function main() {
   console.log(`SKUs: ${skus.length}`);
   console.log(`Docks: ${docks.length}`);
   console.log(`Vehicle Types: ${vehicleTypes.length}`);
+  console.log(`Locations: ${locations.length}`);
   console.log(`Orders: ${orders.length}`);
   console.log("Database has been successfully seeded!");
 }
