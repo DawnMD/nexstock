@@ -105,6 +105,11 @@ export function OrderDetail({ orderNumber }: { orderNumber: string }) {
               receivedQuantity: item.receivedQuantity,
               rejectedQuantity: item.rejectedQuantity,
               department: item.department,
+              adjustments: item.adjustments.map((adjustment) => ({
+                adjustedQuantity: adjustment.adjustedQuantity,
+                adjustmentType: adjustment.adjustmentType,
+              })),
+              qualityCheck: item.qualityCheck?.qualityCheckStatus,
             }))}
           />
         </TabsContent>

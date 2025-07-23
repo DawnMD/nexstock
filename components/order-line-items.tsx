@@ -26,6 +26,11 @@ interface LineItem {
   receivedQuantity: number;
   rejectedQuantity: number;
   department: string;
+  adjustments: {
+    adjustedQuantity: number;
+    adjustmentType: string;
+  }[];
+  qualityCheck?: boolean;
 }
 
 interface OrderLineItemsProps {
@@ -68,8 +73,10 @@ export function OrderLineItems({ lineItems }: OrderLineItemsProps) {
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Ordered</TableHead>
                 <TableHead className="text-right">Received</TableHead>
+                <TableHead className="text-right">Adjusted</TableHead>
                 <TableHead className="text-right">Rejected</TableHead>
                 <TableHead>Department</TableHead>
+                <TableHead>Quality Check</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -91,15 +98,38 @@ export function OrderLineItems({ lineItems }: OrderLineItemsProps) {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    {item.orderedQuantity}
+                    {item.orderedQuantity +
+                      item.adjustments.reduce(
+                        (acc, adjustment) =>
+                          adjustment.adjustmentType === "ADD"
+                            ? acc + adjustment.adjustedQuantity
+                            : acc - adjustment.adjustedQuantity,
+                        0,
+                      )}
                   </TableCell>
                   <TableCell className="text-right">
                     {item.receivedQuantity}
                   </TableCell>
                   <TableCell className="text-right">
+                    {item.adjustments.reduce(
+                      (acc, adjustment) =>
+                        adjustment.adjustmentType === "ADD"
+                          ? acc + adjustment.adjustedQuantity
+                          : acc - adjustment.adjustedQuantity,
+                      0,
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
                     {item.rejectedQuantity}
                   </TableCell>
                   <TableCell>{item.department}</TableCell>
+                  <TableCell>
+                    {item.qualityCheck
+                      ? item.qualityCheck === true
+                        ? "Passed"
+                        : "Failed"
+                      : "N/A"}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
