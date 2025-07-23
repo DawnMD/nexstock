@@ -1,5 +1,6 @@
 import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
 import { AdjustmentType } from "@prisma/client";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 export const adjustmentsRouter = createTRPCRouter({
@@ -114,9 +115,12 @@ export const adjustmentsRouter = createTRPCRouter({
         where: { orderNumber: input.orderNumber },
         select: {
           orderNumber: true,
+          createdAt: true,
+          businessUnit: true,
           vendor: {
             select: {
               name: true,
+              reference: true,
             },
           },
           items: {
@@ -127,6 +131,26 @@ export const adjustmentsRouter = createTRPCRouter({
           },
         },
       });
+
+      return order;
+    }),
+  checkOrder: privateProcedure
+    .input(z.object({ orderNumber: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const order = await ctx.db.order.findUnique({
+        where: { orderNumber: input.orderNumber },
+        select: {
+          id: true,
+          orderNumber: true,
+        },
+      });
+
+      if (!order) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Order not found",
+        });
+      }
 
       return order;
     }),
