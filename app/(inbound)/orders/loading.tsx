@@ -74,6 +74,7 @@ export default function OrdersLoading() {
                       <div className="flex items-center gap-2">
                         <Skeleton className="size-6 rounded" />
                         <Skeleton className="h-4 w-24" />
+                        <Skeleton className="size-6 rounded" />
                       </div>
                     </TableCell>
                     {/* Business Unit */}
