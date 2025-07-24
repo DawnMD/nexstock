@@ -23,10 +23,9 @@ import { Input } from "@/components/ui/input";
 import { api } from "@/trpc/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
 const formSchema = z.object({
   orderNumber: z.string().min(2, {
@@ -47,12 +46,14 @@ export function AddNewAdjustment() {
   const checkOrder = api.adjustments.checkOrder.useMutation({
     onSuccess: (data) => {
       router.push(`/adjustments/new/${data.orderNumber}`);
+      form.reset();
     },
     onError: (error) => {
-      toast.error(error.message);
-    },
-    onSettled: () => {
-      form.reset();
+      form.setError(
+        "orderNumber",
+        { message: error.message },
+        { shouldFocus: true },
+      );
     },
   });
 
