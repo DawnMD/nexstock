@@ -66,7 +66,7 @@ export default async function NewAdjustmentPage({
             </div>
           </CardContent>
         </Card>
-        <NewAdjustmentForm skus={order.items} />
+        <NewAdjustmentForm skus={order.items} orderNumber={orderNumber} />
       </main>
     </>
   );

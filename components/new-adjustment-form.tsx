@@ -25,11 +25,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { api } from "@/trpc/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AdjustmentType } from "@prisma/client";
 import { SlidersHorizontal, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 const adjustmentReasons = Object.values(AdjustmentType).map((reason) => {
@@ -57,9 +60,13 @@ type AdjustmentFormValues = z.infer<typeof AdjustmentFormSchema>;
 
 export function NewAdjustmentForm({
   skus,
+  orderNumber,
 }: {
   skus: { skuId: string; id: number }[];
+  orderNumber: string;
 }) {
+  const router = useRouter();
+
   const form = useForm<AdjustmentFormValues>({
     resolver: zodResolver(AdjustmentFormSchema),
     defaultValues: {
@@ -80,8 +87,28 @@ export function NewAdjustmentForm({
 
   const canAddMore = fields.length < skus.length;
 
+  const createAdjustment = api.adjustments.createAdjustmentBatch.useMutation({
+    onSuccess: () => {
+      toast.success("Adjustment created successfully");
+      form.reset();
+      router.push(`/adjustments`);
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
   const handleSubmit = (data: AdjustmentFormValues) => {
-    console.log(data);
+    createAdjustment.mutate({
+      adjustments: data.adjustments.map((adj) => ({
+        orderItemId: Number(adj.sku),
+        quantity: adj.quantity,
+        reason: adj.reason,
+        orderNumber,
+        notes: adj.notes,
+        adjustmentType: adj.reason === "ADDITION" ? "ADDITION" : "SUBTRACTION",
+      })),
+    });
   };
 
   return (
