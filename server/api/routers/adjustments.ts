@@ -76,37 +76,70 @@ export const adjustmentsRouter = createTRPCRouter({
         },
       };
     }),
-  createAdjustment: privateProcedure
+  createAdjustmentBatch: privateProcedure
     .input(
       z.object({
-        orderItemId: z.number(),
-        orderNumber: z.string(),
-        reason: z.string(),
-        adjustmentType: z.nativeEnum(AdjustmentType),
-        quantity: z.number(),
+        adjustments: z.array(
+          z.object({
+            orderItemId: z.number(),
+            quantity: z.number().int().positive(),
+            reason: z.string(),
+            orderNumber: z.string(),
+            notes: z.string().optional(),
+            adjustmentType: z.nativeEnum(AdjustmentType),
+          }),
+        ),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const adjustment = await ctx.db.adjustment.create({
+      const { adjustments } = input;
+      // const skuMap = await ctx.db.orderItem.findMany({
+      //   where: {
+      //     Sku: { sku: { in: adjustments.map((adj) => adj.sku) } },
+      //   },
+      //   select: {
+      //     id: true,
+      //     Sku: {
+      //       select: {
+      //         sku: true,
+      //       },
+      //     },
+      //     orderId: true,
+      //   },
+      // });
+
+      // const skuToItem = Object.fromEntries(
+      //   skuMap.map((item) => [item.Sku.sku, item]),
+      // );
+
+      const batch = await ctx.db.adjustmentBatch.create({
         data: {
           adjustedBy: ctx.userId,
-          adjustmentType: input.adjustmentType,
-          adjustedQuantity: input.quantity,
-          reason: input.reason,
-          order: {
-            connect: {
-              orderNumber: input.orderNumber,
-            },
-          },
-          orderItem: {
-            connect: {
-              id: input.orderItemId,
-            },
+          reference: `Batch - ${new Date().toISOString()}`,
+          adjustments: {
+            create: adjustments.map((adj) => {
+              return {
+                orderItem: {
+                  connect: {
+                    id: adj.orderItemId,
+                  },
+                },
+                order: {
+                  connect: {
+                    orderNumber: adj.orderNumber,
+                  },
+                },
+                reason: adj.reason,
+                adjustmentType: adj.adjustmentType,
+                adjustedQuantity: adj.quantity,
+                adjustedBy: ctx.userId,
+              };
+            }),
           },
         },
       });
 
-      return adjustment;
+      return { batchId: batch.id };
     }),
   getOrderInfo: privateProcedure
     .input(z.object({ orderNumber: z.string() }))
