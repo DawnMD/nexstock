@@ -243,20 +243,34 @@ model ReceiveItem {
     @@index([orderItemId, lpn, sku])
 }
 
-model Adjustment {
-    id               String         @id @unique @default(cuid())
-    orderItemId      Int
-    reason           String
-    adjustmentType   AdjustmentType
-    orderId          String
-    adjustedQuantity Int
-    adjustedBy       String
-    createdAt        DateTime       @default(now())
-    updatedAt        DateTime       @updatedAt
-    orderItem        OrderItem      @relation(fields: [orderItemId], references: [id])
-    order            Order          @relation(fields: [orderId], references: [orderNumber])
+model AdjustmentBatch {
+    id         String   @id @default(cuid())
+    reference  String?
+    adjustedBy String
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
 
-    @@index([orderItemId])
+    adjustments Adjustment[]
+
+    @@index([adjustedBy])
+}
+
+model Adjustment {
+    id                String          @id @unique @default(cuid())
+    orderItemId       Int
+    reason            String
+    adjustmentType    AdjustmentType
+    orderId           String
+    adjustedQuantity  Int
+    adjustedBy        String
+    createdAt         DateTime        @default(now())
+    updatedAt         DateTime        @updatedAt
+    orderItem         OrderItem       @relation(fields: [orderItemId], references: [id])
+    order             Order           @relation(fields: [orderId], references: [orderNumber])
+    adjustmentBatchId String
+    batch             AdjustmentBatch @relation(fields: [adjustmentBatchId], references: [id])
+
+    @@index([orderItemId, orderId, adjustmentBatchId])
 }
 
 model Location {
