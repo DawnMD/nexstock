@@ -28,7 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/trpc/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AdjustmentType } from "@prisma/client";
-import { SlidersHorizontal, Trash2 } from "lucide-react";
+import { SlidersVertical, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -66,6 +66,7 @@ export function NewAdjustmentForm({
   orderNumber: string;
 }) {
   const router = useRouter();
+  const apiUtils = api.useUtils();
 
   const form = useForm<AdjustmentFormValues>({
     resolver: zodResolver(AdjustmentFormSchema),
@@ -88,8 +89,12 @@ export function NewAdjustmentForm({
   const canAddMore = fields.length < skus.length;
 
   const createAdjustment = api.adjustments.createAdjustmentBatch.useMutation({
-    onSuccess: () => {
-      toast.success("Adjustment created successfully");
+    onSuccess: async () => {
+      toast.success(`Adjustment created successfully`);
+      await Promise.all([
+        apiUtils.order.getOrderDetailsByOrderNumber.invalidate(),
+        apiUtils.adjustments.getAdjustments.invalidate(),
+      ]);
       form.reset();
       router.push(`/adjustments`);
     },
@@ -103,7 +108,6 @@ export function NewAdjustmentForm({
       adjustments: data.adjustments.map((adj) => ({
         orderItemId: Number(adj.sku),
         quantity: adj.quantity,
-        reason: adj.reason,
         orderNumber,
         notes: adj.notes,
         adjustmentType: adj.reason === "ADDITION" ? "ADDITION" : "SUBTRACTION",
@@ -115,7 +119,7 @@ export function NewAdjustmentForm({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <SlidersHorizontal className="h-5 w-5" />
+          <SlidersVertical className="h-5 w-5" />
           Adjustment Details
         </CardTitle>
         <CardDescription>
