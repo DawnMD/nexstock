@@ -2,19 +2,25 @@ import { SearchForm } from "@/components/order-search-form";
 import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
 import { AddNewAdjustment } from "@/components/add-new-adjustment";
+import { AdjustmentListTable } from "@/components/adjustment-list-table";
 
 export default async function AdjustmentsPage({
   searchParams,
 }: {
   searchParams: Promise<{
     query?: string | null;
+    page?: string | null;
+    limit?: string | null;
   }>;
 }) {
-  const { query } = await searchParams;
+  const { query, page, limit } = await searchParams;
+
+  const searchLimit = limit ? parseInt(limit) : 20;
+  const searchPage = page ? parseInt(page) : 0;
 
   void api.adjustments.getAdjustments.prefetch({
-    limit: 20,
-    pageIndex: 0,
+    limit: searchLimit,
+    pageIndex: searchPage,
     search: query,
   });
 
@@ -29,7 +35,11 @@ export default async function AdjustmentsPage({
           </div>
 
           <HydrateClient>
-            <div>hello</div>
+            <AdjustmentListTable
+              query={query}
+              limit={searchLimit}
+              page={searchPage}
+            />
           </HydrateClient>
         </div>
       </main>
