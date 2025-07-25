@@ -19,17 +19,30 @@ export const adjustmentsRouter = createTRPCRouter({
         ctx.db.adjustment.findMany({
           take: input.limit, // Number of items per page
           skip: input.limit * input.pageIndex, // Skip items for pagination
-          // Search filter - match SKU or order number if search term provided
+          // Search filter - match SKU, order number, or adjustment ID if search term provided
           where: input.search
             ? {
                 OR: [
-                  { orderItem: { Sku: { sku: { contains: input.search } } } },
-                  { order: { orderNumber: { contains: input.search } } },
+                  {
+                    orderItem: { Sku: { sku: { contains: input.search } } },
+                  },
+                  {
+                    order: { orderNumber: { contains: input.search } },
+                  },
+                  {
+                    id: {
+                      contains: input.search,
+                    },
+                  },
                 ],
               }
             : undefined,
-          // Select only needed fields
           select: {
+            id: true,
+            createdAt: true,
+            adjustedQuantity: true,
+            adjustmentType: true,
+            reason: true,
             orderItem: {
               select: {
                 Sku: {
@@ -37,6 +50,7 @@ export const adjustmentsRouter = createTRPCRouter({
                     sku: true,
                   },
                 },
+                description: true,
               },
             },
             order: {
@@ -45,13 +59,11 @@ export const adjustmentsRouter = createTRPCRouter({
                 vendor: {
                   select: {
                     name: true,
+                    reference: true,
                   },
                 },
               },
             },
-            adjustedQuantity: true,
-            reason: true,
-            adjustmentType: true,
           },
         }),
         // Get total count with same search filter for pagination
@@ -59,20 +71,39 @@ export const adjustmentsRouter = createTRPCRouter({
           where: input.search
             ? {
                 OR: [
-                  { orderItem: { Sku: { sku: { contains: input.search } } } },
-                  { order: { orderNumber: { contains: input.search } } },
+                  {
+                    orderItem: { Sku: { sku: { contains: input.search } } },
+                  },
+                  {
+                    order: { orderNumber: { contains: input.search } },
+                  },
+                  {
+                    id: {
+                      contains: input.search,
+                    },
+                  },
                 ],
               }
             : undefined,
         }),
       ]);
 
+      // Calculate pagination metadata
+      const hasNextPage = input.pageIndex < Math.ceil(count / input.limit) - 1;
+      const hasPreviousPage = input.pageIndex > 0;
+      const currentPage = input.pageIndex + 1;
+
       // Return paginated results with pagination metadata
       return {
         items: adjustments,
         pagination: {
+          hasNextPage,
+          hasPreviousPage,
           totalCount: count,
+          currentPage,
           totalPages: Math.ceil(count / input.limit),
+          limit: input.limit,
+          pageIndex: input.pageIndex,
         },
       };
     }),
@@ -83,63 +114,26 @@ export const adjustmentsRouter = createTRPCRouter({
           z.object({
             orderItemId: z.number(),
             quantity: z.number().int().positive(),
-            reason: z.string(),
-            orderNumber: z.string(),
             notes: z.string().optional(),
+            orderNumber: z.string(),
             adjustmentType: z.nativeEnum(AdjustmentType),
           }),
         ),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { adjustments } = input;
-      // const skuMap = await ctx.db.orderItem.findMany({
-      //   where: {
-      //     Sku: { sku: { in: adjustments.map((adj) => adj.sku) } },
-      //   },
-      //   select: {
-      //     id: true,
-      //     Sku: {
-      //       select: {
-      //         sku: true,
-      //       },
-      //     },
-      //     orderId: true,
-      //   },
-      // });
-
-      // const skuToItem = Object.fromEntries(
-      //   skuMap.map((item) => [item.Sku.sku, item]),
-      // );
-
-      const batch = await ctx.db.adjustmentBatch.create({
-        data: {
+      await ctx.db.adjustment.createMany({
+        data: input.adjustments.map((adj) => ({
           adjustedBy: ctx.userId,
-          reference: `Batch - ${new Date().toISOString()}`,
-          adjustments: {
-            create: adjustments.map((adj) => {
-              return {
-                orderItem: {
-                  connect: {
-                    id: adj.orderItemId,
-                  },
-                },
-                order: {
-                  connect: {
-                    orderNumber: adj.orderNumber,
-                  },
-                },
-                reason: adj.reason,
-                adjustmentType: adj.adjustmentType,
-                adjustedQuantity: adj.quantity,
-                adjustedBy: ctx.userId,
-              };
-            }),
-          },
-        },
+          adjustmentType: adj.adjustmentType,
+          adjustedQuantity: adj.quantity,
+          reason: adj.notes,
+          orderId: adj.orderNumber,
+          orderItemId: adj.orderItemId,
+        })),
       });
 
-      return { batchId: batch.id };
+      return null;
     }),
   getOrderInfo: privateProcedure
     .input(z.object({ orderNumber: z.string() }))
@@ -162,6 +156,11 @@ export const adjustmentsRouter = createTRPCRouter({
               skuId: true,
             },
           },
+          adjustments: {
+            select: {
+              id: true,
+            },
+          },
         },
       });
 
@@ -175,9 +174,15 @@ export const adjustmentsRouter = createTRPCRouter({
         select: {
           id: true,
           orderNumber: true,
+          adjustments: {
+            select: {
+              id: true,
+            },
+          },
         },
       });
 
+      // Check if order exists
       if (!order) {
         throw new TRPCError({
           code: "NOT_FOUND",
@@ -185,6 +190,42 @@ export const adjustmentsRouter = createTRPCRouter({
         });
       }
 
+      // Check if order has adjustments
+      if (order.adjustments.length > 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Order has adjustments",
+        });
+      }
+
       return order;
+    }),
+  getAdjustmentInfo: privateProcedure
+    .input(z.object({ adjustmentId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const adjustment = await ctx.db.adjustment.findUnique({
+        where: { id: input.adjustmentId },
+        include: {
+          order: {
+            select: {
+              orderNumber: true,
+              vendor: {
+                select: {
+                  name: true,
+                  reference: true,
+                },
+              },
+              businessUnit: true,
+            },
+          },
+          orderItem: {
+            select: {
+              skuId: true,
+            },
+          },
+        },
+      });
+
+      return adjustment;
     }),
 });
