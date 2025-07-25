@@ -16,6 +16,7 @@ import {
   XCircleIcon,
 } from "lucide-react";
 import { getStatusVariant, formatStatusDisplay } from "@/lib/order-utils";
+import type { AdjustmentType } from "@prisma/client";
 
 interface LineItem {
   id: number;
@@ -28,7 +29,7 @@ interface LineItem {
   department: string;
   adjustments: {
     adjustedQuantity: number;
-    adjustmentType: string;
+    adjustmentType: AdjustmentType;
   }[];
   qualityCheck?: boolean;
 }
@@ -101,7 +102,7 @@ export function OrderLineItems({ lineItems }: OrderLineItemsProps) {
                     {item.orderedQuantity +
                       item.adjustments.reduce(
                         (acc, adjustment) =>
-                          adjustment.adjustmentType === "ADD"
+                          adjustment.adjustmentType === "ADDITION"
                             ? acc + adjustment.adjustedQuantity
                             : acc - adjustment.adjustedQuantity,
                         0,
@@ -113,7 +114,7 @@ export function OrderLineItems({ lineItems }: OrderLineItemsProps) {
                   <TableCell className="text-right">
                     {item.adjustments.reduce(
                       (acc, adjustment) =>
-                        adjustment.adjustmentType === "ADD"
+                        adjustment.adjustmentType === "ADDITION"
                           ? acc + adjustment.adjustedQuantity
                           : acc - adjustment.adjustedQuantity,
                       0,
