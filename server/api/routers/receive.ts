@@ -117,35 +117,11 @@ export const receiveRouter = createTRPCRouter({
         },
         select: {
           id: true,
-          receivedQuantity: true,
-          receivedBy: true,
-          receivedAt: true,
-          sku: true,
-          receivedNotes: true,
-          location: true,
           lpn: true,
-          lot: true,
-          manufacturedDate: true,
+          sku: true,
+          location: true,
+          receivedQuantity: true,
           uom: true,
-          lotExpiryDate: true,
-          vehicleNumber: true,
-          orderItem: {
-            select: {
-              description: true,
-              department: true,
-              orderedQuantity: true,
-              Order: {
-                select: {
-                  orderNumber: true,
-                  vendor: {
-                    select: {
-                      name: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
         },
         orderBy: {
           receivedAt: "desc",
