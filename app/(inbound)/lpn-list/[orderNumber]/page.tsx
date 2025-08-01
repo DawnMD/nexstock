@@ -1,6 +1,5 @@
 import { LpnList } from "@/components/lpn-list";
 import { SiteHeader } from "@/components/site-header";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -14,18 +13,18 @@ import { format } from "date-fns";
 import { PackageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 
-export default async function ReceivedItemsOrderPage({
+export default async function LpnListOrderPage({
   params,
 }: {
   params: Promise<{ orderNumber: string }>;
 }) {
   const { orderNumber } = await params;
 
-  const [order, receivedItems] = await Promise.all([
+  const [order] = await Promise.all([
     api.receive.getOrderItems({
       orderNumber,
     }),
-    api.receive.getReceivedItemsByOrder({
+    api.receive.getReceivedItemsByOrder.prefetch({
       orderNumber,
     }),
   ]);
@@ -78,14 +77,6 @@ export default async function ReceivedItemsOrderPage({
           </CardContent>
         </Card>
         <HydrateClient>
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold">LPNs</h2>
-            </div>
-            <Badge variant="secondary" className="text-xs">
-              {receivedItems?.length ?? 0} LPNs
-            </Badge>
-          </div>
           <LpnList orderNumber={orderNumber} />
         </HydrateClient>
       </main>

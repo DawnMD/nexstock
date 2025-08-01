@@ -36,7 +36,7 @@ export function LpnListOrderSearch() {
               <div className="flex flex-col">
                 <span className="font-mono">{order.orderNumber}</span>
                 <span className="text-muted-foreground text-xs">
-                  {order.vendor.name} • {order._count.items} items
+                  {order._count.items} items
                 </span>
               </div>
             </CommandItem>

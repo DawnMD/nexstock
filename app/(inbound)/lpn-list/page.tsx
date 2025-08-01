@@ -3,7 +3,7 @@ import { api, HydrateClient } from "@/trpc/server";
 import { SiteHeader } from "@/components/site-header";
 import { LpnListOrderSearch } from "@/components/lpn-list-order-search";
 
-export default function ReceivedItemsPage() {
+export default function LpnListPage() {
   void api.receive.getAllOrderNumbers.prefetch();
 
   return (
