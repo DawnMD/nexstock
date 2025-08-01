@@ -100,6 +100,60 @@ export const receiveRouter = createTRPCRouter({
       return dockBookings;
     }),
 
+  getReceivedItemsByOrder: privateProcedure
+    .input(
+      z.object({
+        orderNumber: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const receivedItems = await ctx.db.receiveItem.findMany({
+        where: {
+          orderItem: {
+            Order: {
+              orderNumber: input.orderNumber,
+            },
+          },
+        },
+        select: {
+          id: true,
+          receivedQuantity: true,
+          receivedBy: true,
+          receivedAt: true,
+          sku: true,
+          receivedNotes: true,
+          location: true,
+          lpn: true,
+          lot: true,
+          manufacturedDate: true,
+          uom: true,
+          lotExpiryDate: true,
+          vehicleNumber: true,
+          orderItem: {
+            select: {
+              description: true,
+              department: true,
+              orderedQuantity: true,
+              Order: {
+                select: {
+                  orderNumber: true,
+                  vendor: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          receivedAt: "desc",
+        },
+      });
+      return receivedItems;
+    }),
+
   updateReceiveStatus: privateProcedure
     .input(
       z.object({

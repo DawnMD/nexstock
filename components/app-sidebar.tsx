@@ -20,6 +20,7 @@ import {
   IconSearch,
   IconShoppingCart,
   IconAdjustments,
+  IconClipboardList,
 } from "@tabler/icons-react";
 import Link from "next/link";
 
@@ -54,6 +55,11 @@ export const data = {
       title: "Adjustments",
       url: "/adjustments",
       icon: IconAdjustments,
+    },
+    {
+      title: "LPN List",
+      url: "/lpn-list",
+      icon: IconClipboardList,
     },
   ],
 };
