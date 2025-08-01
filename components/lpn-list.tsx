@@ -60,7 +60,7 @@ export function LpnList({ orderNumber }: { orderNumber: string }) {
 
           {/* Mobile Layout */}
           <div className="space-y-3 md:hidden">
-            <div className="flex items-center justify-between">
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-muted-foreground text-xs tracking-wide uppercase">
                   LPN
@@ -75,7 +75,7 @@ export function LpnList({ orderNumber }: { orderNumber: string }) {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-muted-foreground text-xs tracking-wide uppercase">
                   Location
