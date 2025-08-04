@@ -32,11 +32,20 @@ export function PutawayProcess({ lpn }: PutawayProcessProps) {
   const [locations] = api.putaway.getLocations.useSuspenseQuery();
   const createPutaway = api.putaway.createPutaway.useMutation({
     onSuccess: () => {
-      toast.success("Putaway created successfully");
+      toast.success(
+        `Putaway created successfully! ${lpnDetails.receivedQuantity} units moved from ${lpnDetails.location} to ${toLocation}`,
+        {
+          description: `LPN: ${lpnDetails.lpn} | SKU: ${lpnDetails.sku}`,
+          duration: 5000,
+        },
+      );
       router.push("/putaway");
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error("Failed to create putaway", {
+        description: error.message,
+        duration: 5000,
+      });
     },
   });
 
