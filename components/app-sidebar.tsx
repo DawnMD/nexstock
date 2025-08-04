@@ -19,6 +19,7 @@ import {
   IconTruck,
   IconSearch,
   IconShoppingCart,
+  IconAdjustments,
 } from "@tabler/icons-react";
 import Link from "next/link";
 
@@ -48,6 +49,11 @@ export const data = {
       title: "Receive",
       url: "/receive",
       icon: IconShoppingCart,
+    },
+    {
+      title: "Adjustments",
+      url: "/adjustments",
+      icon: IconAdjustments,
     },
   ],
 };

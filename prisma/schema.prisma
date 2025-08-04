@@ -48,6 +48,11 @@ enum QualityCheckStatus {
     FAILED
 }
 
+enum AdjustmentType {
+    ADDITION
+    SUBTRACTION
+}
+
 model Vendor {
     id        Int      @id @default(autoincrement())
     name      String
@@ -79,6 +84,7 @@ model Order {
     vendor              Vendor        @relation(fields: [vendorReference], references: [reference]) // Link to Vendor
     items               OrderItem[]
     dockBookings        DockBooking[] // Establishes the one-to-many relationship with DockBooking
+    adjustments         Adjustment[] // Establishes the one-to-many relationship with Adjustment
 
     @@index([vendorReference, orderNumber, status])
 }
@@ -100,6 +106,7 @@ model OrderItem {
     skuId                String
     qualityCheck         QualityCheck?
     receiveItems         ReceiveItem[] // Updated to one-to-many
+    adjustments          Adjustment[]
 
     @@index([status, skuId, id])
 }
@@ -234,6 +241,22 @@ model ReceiveItem {
     updatedAt        DateTime  @updatedAt
 
     @@index([orderItemId, lpn, sku])
+}
+
+model Adjustment {
+    id               String         @id @unique @default(cuid())
+    orderItemId      Int
+    reason           String?
+    adjustmentType   AdjustmentType
+    orderId          String
+    adjustedQuantity Int
+    adjustedBy       String
+    createdAt        DateTime       @default(now())
+    updatedAt        DateTime       @updatedAt
+    orderItem        OrderItem      @relation(fields: [orderItemId], references: [id])
+    order            Order          @relation(fields: [orderId], references: [orderNumber])
+
+    @@index([orderItemId, orderId, id])
 }
 
 model Location {

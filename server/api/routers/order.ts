@@ -109,8 +109,18 @@ export const orderRouter = createTRPCRouter({
                 },
               },
               department: true,
-              qualityCheck: true,
+              qualityCheck: {
+                select: {
+                  qualityCheckStatus: true,
+                },
+              },
               orderedQuantity: true,
+              adjustments: {
+                select: {
+                  adjustedQuantity: true,
+                  adjustmentType: true,
+                },
+              },
             },
           },
         },

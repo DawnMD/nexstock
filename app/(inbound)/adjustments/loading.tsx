@@ -12,10 +12,10 @@ import {
 } from "@/components/ui/table";
 import { Search } from "lucide-react";
 
-export default function OrdersLoading() {
+export default function AdjustmentsLoading() {
   return (
     <>
-      <SiteHeader title="Orders" />
+      <SiteHeader title="Adjustments" />
       <div className="flex w-full flex-col justify-start gap-6 p-4">
         {/* Header with customize columns button */}
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
@@ -31,7 +31,7 @@ export default function OrdersLoading() {
               Search
             </Button>
           </div>
-          <Skeleton className="h-9 w-full lg:w-32" />
+          <Skeleton className="h-9 w-full lg:w-48" />
         </div>
 
         <div className="relative flex flex-col gap-4 overflow-auto">
@@ -64,6 +64,12 @@ export default function OrdersLoading() {
                   <TableHead>
                     <Skeleton className="h-4 w-18" />
                   </TableHead>
+                  <TableHead>
+                    <Skeleton className="h-4 w-18" />
+                  </TableHead>
+                  <TableHead>
+                    <Skeleton className="h-4 w-18" />
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -74,7 +80,6 @@ export default function OrdersLoading() {
                       <div className="flex items-center gap-2">
                         <Skeleton className="size-6 rounded" />
                         <Skeleton className="h-4 w-24" />
-                        <Skeleton className="size-6 rounded" />
                       </div>
                     </TableCell>
                     {/* Business Unit */}
@@ -83,11 +88,11 @@ export default function OrdersLoading() {
                     </TableCell>
                     {/* Order Type */}
                     <TableCell>
-                      <Skeleton className="h-6 w-24 rounded-full" />
+                      <Skeleton className="h-4 w-20" />
                     </TableCell>
                     {/* Status */}
                     <TableCell>
-                      <Skeleton className="h-6 w-20 rounded-full" />
+                      <Skeleton className="h-4 w-20" />
                     </TableCell>
                     {/* Order Date */}
                     <TableCell>
@@ -102,6 +107,14 @@ export default function OrdersLoading() {
                       <Skeleton className="h-4 w-28" />
                     </TableCell>
                     {/* Vendor Ref */}
+                    <TableCell>
+                      <Skeleton className="h-4 w-20" />
+                    </TableCell>
+                    {/* Adjustment Type */}
+                    <TableCell>
+                      <Skeleton className="h-4 w-20" />
+                    </TableCell>
+                    {/* Adjustment Date */}
                     <TableCell>
                       <Skeleton className="h-4 w-20" />
                     </TableCell>

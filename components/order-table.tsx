@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getStatusVariant } from "@/lib/utils";
 import type { AppRouter } from "@/server/api/root";
 import { api } from "@/trpc/react";
 import { OrderStatus } from "@prisma/client";
@@ -51,13 +52,14 @@ import {
   ChevronsRightIcon,
   ClockIcon,
   ColumnsIcon,
+  CopyIcon,
   ExternalLinkIcon,
   PlusCircleIcon,
   XCircleIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { getStatusVariant } from "@/lib/utils";
+import { toast } from "sonner";
 
 const getStatusIcon = (status: OrderStatus) => {
   switch (status) {
@@ -116,6 +118,17 @@ const columns: ColumnDef<
             </Link>
           </Button>
           <div className="font-medium">{row.original.orderNumber}</div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground hover:text-foreground size-6 cursor-pointer"
+            onClick={() => {
+              void navigator.clipboard.writeText(row.original.orderNumber);
+              toast.info("Order number copied to clipboard");
+            }}
+          >
+            <CopyIcon className="size-4" />
+          </Button>
         </div>
       );
     },
