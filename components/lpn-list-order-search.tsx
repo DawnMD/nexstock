@@ -11,10 +11,9 @@ import {
 } from "@/components/ui/command";
 import { api } from "@/trpc/react";
 import { PackageIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export function LpnListOrderSearch() {
-  const router = useRouter();
   const [orders] = api.receive.getAllOrderNumbers.useSuspenseQuery();
 
   return (
@@ -28,17 +27,17 @@ export function LpnListOrderSearch() {
             <CommandItem
               key={order.orderNumber}
               value={order.orderNumber}
-              onSelect={() => {
-                router.push(`/lpn-list/${order.orderNumber}`);
-              }}
+              asChild
             >
-              <PackageIcon className="mr-2 h-4 w-4" />
-              <div className="flex flex-col">
-                <span className="font-mono">{order.orderNumber}</span>
-                <span className="text-muted-foreground text-xs">
-                  {order._count.items} items
-                </span>
-              </div>
+              <Link href={`/lpn-list/${order.orderNumber}`}>
+                <PackageIcon className="mr-2 h-4 w-4" />
+                <div className="flex flex-col">
+                  <span className="font-mono">{order.orderNumber}</span>
+                  <span className="text-muted-foreground text-xs">
+                    {order._count.items} items
+                  </span>
+                </div>
+              </Link>
             </CommandItem>
           ))}
         </CommandGroup>
