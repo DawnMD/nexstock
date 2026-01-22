@@ -239,6 +239,7 @@ model ReceiveItem {
     vehicleNumber    String
     createdAt        DateTime  @default(now())
     updatedAt        DateTime  @updatedAt
+    putaways         Putaway[] // Track putaway operations for this LPN
 
     @@index([orderItemId, lpn, sku])
 }
@@ -281,18 +282,20 @@ model Location {
 }
 
 model Putaway {
-    id           Int      @id @default(autoincrement())
-    lpn          String
-    sku          String
-    quantity     Int
-    fromLocation String
-    toLocation   String
-    putawayBy    String
-    putawayAt    DateTime @default(now())
-    notes        String?
-    createdAt    DateTime @default(now())
-    updatedAt    DateTime @updatedAt
-    location     Location @relation(fields: [toLocation], references: [location])
+    id            Int          @id @default(autoincrement())
+    lpn           String
+    sku           String
+    quantity      Int
+    fromLocation  String
+    toLocation    String
+    putawayBy     String
+    putawayAt     DateTime     @default(now())
+    notes         String?
+    createdAt     DateTime     @default(now())
+    updatedAt     DateTime     @updatedAt
+    location      Location     @relation(fields: [toLocation], references: [location])
+    ReceiveItem   ReceiveItem? @relation(fields: [receiveItemId], references: [id])
+    receiveItemId Int?
 
     @@index([lpn, sku, fromLocation, toLocation])
 }
