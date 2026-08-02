@@ -2,6 +2,8 @@ import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+const SEARCH_RESULT_LIMIT = 50;
+
 export const putawayRouter = createTRPCRouter({
   getAllLPNs: privateProcedure.query(async ({ ctx }) => {
     const lpns = await ctx.db.receiveItem.findMany({
@@ -46,18 +48,29 @@ export const putawayRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
+      // `contains: undefined` makes Prisma drop the filter entirely, which would
+      // return every ReceiveItem ever created. Treat a blank search as no results.
+      const search = input.search?.trim();
+      if (!search) {
+        return [];
+      }
+
       const lpns = await ctx.db.receiveItem.findMany({
+        take: SEARCH_RESULT_LIMIT,
+        orderBy: {
+          receivedAt: "desc",
+        },
         where: {
           OR: [
             {
               lpn: {
-                contains: input.search,
+                contains: search,
                 mode: "insensitive",
               },
             },
             {
               sku: {
-                contains: input.search,
+                contains: search,
                 mode: "insensitive",
               },
             },
