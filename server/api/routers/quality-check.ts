@@ -75,15 +75,13 @@ export const qualityCheckRouter = createTRPCRouter({
           Order: {
             include: {
               dockBookings: {
-                include: {
+                select: {
+                  dockId: true,
                   activities: {
                     select: {
                       activityType: true,
                     },
                   },
-                },
-                select: {
-                  dockId: true,
                 },
               },
             },
