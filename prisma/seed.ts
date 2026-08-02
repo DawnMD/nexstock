@@ -1,5 +1,6 @@
 import type { Vendor } from "@prisma/client";
 import {
+  ActivityType,
   OrderItemStatus,
   OrderStatus,
   OrderType,
@@ -338,10 +339,15 @@ const consumables = [
 async function main() {
   console.log("Starting database seeding...");
 
-  // Delete existing data
+  // Delete existing data.
+  // Every relation in the schema uses Prisma's default `Restrict`, so these have
+  // to run children-first or re-seeding dies on a foreign-key violation.
+  await prisma.adjustment.deleteMany();
+  await prisma.putaway.deleteMany();
   await prisma.receiveItem.deleteMany();
   await prisma.qualityCheck.deleteMany();
   await prisma.orderItem.deleteMany();
+  await prisma.dockActivity.deleteMany();
   await prisma.dockBooking.deleteMany();
   await prisma.order.deleteMany();
   await prisma.sku.deleteMany();
@@ -532,6 +538,142 @@ async function main() {
     }),
   );
 
+  console.log(`Created ${orders.length} orders`);
+
+  // Book docks for the first 20 orders so the dock board, receive, quality
+  // check, LPN list and putaway screens all have something to work with.
+  // Each booking gets CHECK_IN + OPEN activities, which is what the quality
+  // check screens require before an item can be inspected.
+  console.log("Creating dock bookings and activities...");
+  const bookedOrders = orders.slice(0, 20);
+  const today = new Date();
+  const startOfToday = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
+
+  let dockActivityCount = 0;
+  const dockBookings = [];
+
+  for (const [index, order] of bookedOrders.entries()) {
+    const dock = docks[index % docks.length]!;
+    const vehicleType = vehicleTypes[index % vehicleTypes.length]!;
+
+    // First 10 bookings land today, the rest over the next few days.
+    const eta = new Date(startOfToday);
+    eta.setDate(eta.getDate() + Math.floor(index / 10));
+    eta.setHours(8 + (index % 10), 0, 0, 0);
+
+    const booking = await prisma.dockBooking.create({
+      data: {
+        dockId: dock.id,
+        vehicleTypeId: vehicleType.id,
+        vehicleNumber: `TRK-${String(index + 1).padStart(4, "0")}`,
+        weight: Math.floor(Math.random() * 8000) + 2000, // 2000-10000 kg
+        queue: (index % 5) + 1,
+        cbm: Math.floor(Math.random() * 40) + 10, // 10-50 cbm
+        driverName: getRandomElement(buyerNames),
+        driverPhone: `+1${Math.floor(Math.random() * 9000000000) + 1000000000}`,
+        eta,
+        orderId: order.orderNumber,
+        activities: {
+          create: [
+            {
+              activityType: ActivityType.CHECK_IN,
+              createdBy: "SYSTEM",
+              containerCondition: true,
+              notes: "Vehicle arrived on schedule",
+            },
+            {
+              activityType: ActivityType.OPEN,
+              createdBy: "SYSTEM",
+              containerCondition: true,
+              notes: "Container opened for unloading",
+            },
+          ],
+        },
+      },
+    });
+
+    dockBookings.push(booking);
+    dockActivityCount += 2;
+  }
+  console.log(
+    `Created ${dockBookings.length} dock bookings and ${dockActivityCount} activities`,
+  );
+
+  // Receive stock against the first 12 booked orders. Half the lines are
+  // received in full, half partially, so both RECEIVED and RECEIVING states
+  // (and the putaway worklist) have realistic data.
+  console.log("Creating receive items...");
+  const skusBySkuCode = new Map(skus.map((sku) => [sku.sku, sku]));
+  let receiveItemCount = 0;
+
+  for (const [orderIndex, booking] of dockBookings.slice(0, 12).entries()) {
+    const orderItems = await prisma.orderItem.findMany({
+      where: { orderId: booking.orderId },
+      orderBy: { id: "asc" },
+      take: 4,
+    });
+
+    for (const [itemIndex, orderItem] of orderItems.entries()) {
+      const sku = skusBySkuCode.get(orderItem.skuId);
+
+      if (!sku) {
+        throw new Error(`SKU not found for order item ${orderItem.id}`);
+      }
+
+      // Alternate between a full and a partial receipt.
+      const isFullReceipt = itemIndex % 2 === 0;
+      const receivedQuantity = isFullReceipt
+        ? orderItem.orderedQuantity
+        : Math.max(1, Math.floor(orderItem.orderedQuantity / 2));
+
+      const lotExpiryDate =
+        sku.hasShelfLife && sku.shelfLifeDays
+          ? new Date(
+              startOfToday.getTime() + sku.shelfLifeDays * 24 * 60 * 60 * 1000,
+            )
+          : null;
+
+      await prisma.receiveItem.create({
+        data: {
+          orderItemId: orderItem.id,
+          receivedQuantity,
+          receivedBy: "SYSTEM",
+          receivedAt: booking.eta ?? startOfToday,
+          sku: orderItem.skuId,
+          receivedNotes: "Seeded receipt",
+          location: "STAGE",
+          lpn: `LPN${String(orderIndex * 100 + itemIndex + 1).padStart(6, "0")}`,
+          lot: sku.hasShelfLife ? `LOT-${orderItem.skuId}-001` : null,
+          lotExpiryDate,
+          uom: sku.uom ?? "EA",
+          vehicleNumber: booking.vehicleNumber,
+        },
+      });
+
+      await prisma.orderItem.update({
+        where: { id: orderItem.id },
+        data: {
+          receivedQuantity,
+          status: isFullReceipt
+            ? OrderItemStatus.RECEIVED
+            : OrderItemStatus.RECEIVING,
+        },
+      });
+
+      receiveItemCount += 1;
+    }
+
+    await prisma.order.update({
+      where: { orderNumber: booking.orderId },
+      data: { status: OrderStatus.IN_PROGRESS },
+    });
+  }
+  console.log(`Created ${receiveItemCount} receive items`);
+
   console.log("\n=== SEEDING COMPLETE ===");
   console.log(`Vendors: ${vendors.length}`);
   console.log(`SKUs: ${skus.length}`);
@@ -539,6 +681,9 @@ async function main() {
   console.log(`Vehicle Types: ${vehicleTypes.length}`);
   console.log(`Locations: ${locations.length}`);
   console.log(`Orders: ${orders.length}`);
+  console.log(`Dock Bookings: ${dockBookings.length}`);
+  console.log(`Dock Activities: ${dockActivityCount}`);
+  console.log(`Receive Items: ${receiveItemCount}`);
   console.log("Database has been successfully seeded!");
 }
 
