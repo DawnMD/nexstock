@@ -125,11 +125,11 @@ export function OrderLineItems({ lineItems }: OrderLineItemsProps) {
                   </TableCell>
                   <TableCell>{item.department}</TableCell>
                   <TableCell>
-                    {item.qualityCheck
-                      ? item.qualityCheck === true
+                    {item.qualityCheck === undefined
+                      ? "N/A"
+                      : item.qualityCheck
                         ? "Passed"
-                        : "Failed"
-                      : "N/A"}
+                        : "Failed"}
                   </TableCell>
                 </TableRow>
               ))}

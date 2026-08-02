@@ -121,7 +121,7 @@ export function LpnList({ orderNumber }: { orderNumber: string }) {
     <>
       <LpnListHeader count={receivedItems?.length ?? 0} />
 
-      {!receivedItems || (receivedItems.length === 0 && <LpnListEmpty />)}
+      {(!receivedItems || receivedItems.length === 0) && <LpnListEmpty />}
 
       {receivedItems && receivedItems.length > 0 && (
         <div className="space-y-2">
