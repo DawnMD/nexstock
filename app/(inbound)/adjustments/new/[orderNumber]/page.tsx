@@ -1,4 +1,3 @@
-import { AdjustmentPresentPopup } from "@/components/adjustment-present-popup";
 import { NewAdjustmentForm } from "@/components/new-adjustment-form";
 import { SiteHeader } from "@/components/site-header";
 import {
@@ -24,11 +23,6 @@ export default async function NewAdjustmentPage({
 
   if (!order) {
     notFound();
-  }
-
-  // Check if order has adjustments
-  if (order.adjustments.length > 0) {
-    return <AdjustmentPresentPopup />;
   }
 
   return (

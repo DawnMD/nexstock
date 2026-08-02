@@ -165,7 +165,7 @@ model DockActivity {
     updatedBy          String?
     containerCondition Boolean      @default(false) //Good or Bad
     notes              String?
-    dockBooking        DockBooking  @relation(fields: [dockBookingId], references: [id])
+    dockBooking        DockBooking  @relation(fields: [dockBookingId], references: [id], onDelete: Cascade)
     dockBookingId      Int
 
     @@index([dockBookingId])
@@ -207,7 +207,7 @@ model Sku {
 
 model QualityCheck {
     id                  Int       @id @default(autoincrement())
-    orderItem           OrderItem @relation(fields: [orderItemId], references: [id])
+    orderItem           OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
     orderItemId         Int       @unique
     qualityCheckStatus  Boolean   @default(false)
     inspectedBy         String
@@ -223,15 +223,18 @@ model QualityCheck {
 
 model ReceiveItem {
     id               Int       @id @default(autoincrement())
-    orderItem        OrderItem @relation(fields: [orderItemId], references: [id])
+    orderItem        OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
     orderItemId      Int // Removed @unique constraint
     receivedQuantity Int       @default(0)
     receivedBy       String
     receivedAt       DateTime
     sku              String
     receivedNotes    String?
+    // An LPN is a physical pallet label, so it identifies exactly one receipt
+    // across the whole warehouse. Putaway looks receipts up by LPN alone.
     location         String
-    lpn              String
+    locationRef      Location  @relation("ReceiveItemLocation", fields: [location], references: [location], onDelete: Restrict)
+    lpn              String    @unique
     lot              String?
     manufacturedDate DateTime?
     uom              String
@@ -254,8 +257,8 @@ model Adjustment {
     adjustedBy       String
     createdAt        DateTime       @default(now())
     updatedAt        DateTime       @updatedAt
-    orderItem        OrderItem      @relation(fields: [orderItemId], references: [id])
-    order            Order          @relation(fields: [orderId], references: [orderNumber])
+    orderItem        OrderItem      @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+    order            Order          @relation(fields: [orderId], references: [orderNumber], onDelete: Restrict)
 
     @@index([orderItemId, orderId, id])
 }
@@ -276,7 +279,10 @@ model Location {
     updatedBy      String?
     createdAt      DateTime  @default(now())
     updatedAt      DateTime  @updatedAt
-    putaways       Putaway[] // Track putaways to this location
+
+    putawaysIn   Putaway[]     @relation("PutawayToLocation") // Track putaways into this location
+    putawaysOut  Putaway[]     @relation("PutawayFromLocation") // Track putaways out of this location
+    receiveItems ReceiveItem[] @relation("ReceiveItemLocation") // Stock received into this location
 
     @@index([location])
 }
@@ -293,8 +299,9 @@ model Putaway {
     notes         String?
     createdAt     DateTime     @default(now())
     updatedAt     DateTime     @updatedAt
-    location      Location     @relation(fields: [toLocation], references: [location])
-    ReceiveItem   ReceiveItem? @relation(fields: [receiveItemId], references: [id])
+    location      Location     @relation("PutawayToLocation", fields: [toLocation], references: [location], onDelete: Restrict)
+    fromLocationRef Location   @relation("PutawayFromLocation", fields: [fromLocation], references: [location], onDelete: Restrict)
+    ReceiveItem   ReceiveItem? @relation(fields: [receiveItemId], references: [id], onDelete: SetNull)
     receiveItemId Int?
 
     @@index([lpn, sku, fromLocation, toLocation])

@@ -10,6 +10,10 @@ import {
 
 const prisma = new PrismaClient();
 
+// Inbound staging bay. Receiving drops stock here and putaway moves it out, so
+// this location has to exist for the ReceiveItem.location foreign key to hold.
+const STAGING_LOCATION = "STAGE";
+
 // Helper functions for generating realistic data
 const businessUnits = [
   "Electronics Division",
@@ -391,7 +395,28 @@ async function main() {
   ]);
   console.log(`Created ${vehicleTypes.length} vehicle types`);
 
-  // Create 20 locations
+  // Create the staging bay. Goods are received into STAGE and putaway moves
+  // them out of it, so ReceiveItem.location and Putaway.fromLocation both
+  // point here — it has to exist before any receipt is written.
+  console.log("Creating staging location...");
+  const stagingLocation = await prisma.location.create({
+    data: {
+      location: STAGING_LOCATION,
+      status: true,
+      length: 2000,
+      width: 1000,
+      height: 400,
+      cbm: 800,
+      weightCapacity: 50000,
+      zone: "STAGE",
+      aisle: "0",
+      description: "Inbound staging bay - goods sit here until putaway",
+      createdBy: "SYSTEM",
+      updatedBy: "SYSTEM",
+    },
+  });
+
+  // Create 20 storage locations
   console.log("Creating 20 locations...");
   const locations = await Promise.all(
     Array.from({ length: 20 }, (_, i) => {
@@ -416,7 +441,9 @@ async function main() {
       });
     }),
   );
-  console.log(`Created ${locations.length} locations`);
+  console.log(
+    `Created ${locations.length} storage locations plus ${stagingLocation.location}`,
+  );
 
   // Create 50 vendors in batches
   console.log("Creating 50 vendors...");
@@ -645,7 +672,7 @@ async function main() {
           receivedAt: booking.eta ?? startOfToday,
           sku: orderItem.skuId,
           receivedNotes: "Seeded receipt",
-          location: "STAGE",
+          location: STAGING_LOCATION,
           lpn: `LPN${String(orderIndex * 100 + itemIndex + 1).padStart(6, "0")}`,
           lot: sku.hasShelfLife ? `LOT-${orderItem.skuId}-001` : null,
           lotExpiryDate,
@@ -679,7 +706,7 @@ async function main() {
   console.log(`SKUs: ${skus.length}`);
   console.log(`Docks: ${docks.length}`);
   console.log(`Vehicle Types: ${vehicleTypes.length}`);
-  console.log(`Locations: ${locations.length}`);
+  console.log(`Locations: ${locations.length + 1}`);
   console.log(`Orders: ${orders.length}`);
   console.log(`Dock Bookings: ${dockBookings.length}`);
   console.log(`Dock Activities: ${dockActivityCount}`);

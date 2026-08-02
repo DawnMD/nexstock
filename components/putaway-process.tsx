@@ -25,20 +25,28 @@ interface PutawayProcessProps {
 
 export function PutawayProcess({ lpn }: PutawayProcessProps) {
   const router = useRouter();
+  const apiUtils = api.useUtils();
   const [toLocation, setToLocation] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
 
   const [lpnDetails] = api.putaway.getLPNDetails.useSuspenseQuery({ lpn });
   const [locations] = api.putaway.getLocations.useSuspenseQuery();
   const createPutaway = api.putaway.createPutaway.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success(
-        `Putaway created successfully! ${lpnDetails.receivedQuantity} units moved from ${lpnDetails.location} to ${toLocation}`,
+        `Putaway created successfully! ${lpnDetails.remainingQuantity} units moved from ${lpnDetails.location} to ${toLocation}`,
         {
           description: `LPN: ${lpnDetails.lpn} | SKU: ${lpnDetails.sku}`,
           duration: 5000,
         },
       );
+      // The worklist is cached for 30s, so without this the LPN that was just
+      // moved is still sitting on /putaway when the redirect lands.
+      await Promise.all([
+        apiUtils.putaway.getAllLPNs.invalidate(),
+        apiUtils.putaway.getLPNDetails.invalidate({ lpn }),
+        apiUtils.putaway.searchLPNs.invalidate(),
+      ]);
       router.push("/putaway");
     },
     onError: (error) => {
@@ -60,7 +68,7 @@ export function PutawayProcess({ lpn }: PutawayProcessProps) {
     createPutaway.mutate({
       lpn: lpnDetails.lpn,
       sku: lpnDetails.sku,
-      quantity: lpnDetails.receivedQuantity,
+      quantity: lpnDetails.remainingQuantity,
       fromLocation: lpnDetails.location,
       toLocation,
       notes,
@@ -105,9 +113,15 @@ export function PutawayProcess({ lpn }: PutawayProcessProps) {
               </Label>
               <div className="flex items-center gap-2">
                 <span className="text-lg font-semibold">
-                  {lpnDetails.receivedQuantity}
+                  {lpnDetails.remainingQuantity}
                 </span>
                 <Badge variant="secondary">{lpnDetails.uom}</Badge>
+                {lpnDetails.putawayQuantity > 0 && (
+                  <span className="text-muted-foreground text-xs">
+                    {lpnDetails.putawayQuantity} of{" "}
+                    {lpnDetails.receivedQuantity} already put away
+                  </span>
+                )}
               </div>
             </div>
             <div className="space-y-2">
@@ -173,7 +187,7 @@ export function PutawayProcess({ lpn }: PutawayProcessProps) {
                 <Input
                   id="quantity"
                   type="number"
-                  value={lpnDetails.receivedQuantity}
+                  value={lpnDetails.remainingQuantity}
                   readOnly
                   className="bg-muted"
                 />
@@ -185,19 +199,26 @@ export function PutawayProcess({ lpn }: PutawayProcessProps) {
                     <SelectValue placeholder="Select location" />
                   </SelectTrigger>
                   <SelectContent>
-                    {locations.map((location) => (
-                      <SelectItem
-                        key={location.location}
-                        value={location.location}
-                      >
-                        <div className="flex w-full items-center justify-between space-x-4">
-                          <span className="font-mono">{location.location}</span>
-                          <span className="text-muted-foreground text-xs">
-                            {location.zone} - {location.aisle}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
+                    {/* Stock cannot be put away where it already is. */}
+                    {locations
+                      .filter(
+                        (location) => location.location !== lpnDetails.location,
+                      )
+                      .map((location) => (
+                        <SelectItem
+                          key={location.location}
+                          value={location.location}
+                        >
+                          <div className="flex w-full items-center justify-between space-x-4">
+                            <span className="font-mono">
+                              {location.location}
+                            </span>
+                            <span className="text-muted-foreground text-xs">
+                              {location.zone} - {location.aisle}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -217,10 +238,18 @@ export function PutawayProcess({ lpn }: PutawayProcessProps) {
             <div className="flex gap-2">
               <Button
                 type="submit"
-                disabled={createPutaway.isPending || !toLocation}
+                disabled={
+                  createPutaway.isPending ||
+                  !toLocation ||
+                  lpnDetails.remainingQuantity <= 0
+                }
                 className="flex-1"
               >
-                {createPutaway.isPending ? "Creating..." : "Create Putaway"}
+                {createPutaway.isPending
+                  ? "Creating..."
+                  : lpnDetails.remainingQuantity <= 0
+                    ? "Fully put away"
+                    : "Create Putaway"}
               </Button>
               <Button
                 type="button"

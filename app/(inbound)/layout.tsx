@@ -15,9 +15,12 @@ export default async function MainAppLayout({
     return <RedirectToSignIn />;
   }
 
+  // Clerk leaves fullName null for accounts created without a first/last name,
+  // so fall back through username and email before giving up.
+  const email = user.emailAddresses[0]?.emailAddress ?? "";
   const userData = {
-    name: user.fullName!,
-    email: user.emailAddresses[0]!.emailAddress,
+    name: user.fullName ?? user.username ?? email.split("@")[0] ?? "User",
+    email,
     avatar: user.imageUrl,
   };
 

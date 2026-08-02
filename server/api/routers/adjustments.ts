@@ -1,7 +1,37 @@
+import {
+  lockOrderItem,
+  receiveStatusFor,
+  syncOrderStatus,
+} from "@/server/api/order-status";
 import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
-import { AdjustmentType } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
+import { AdjustmentType, OrderItemStatus } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+
+/**
+ * Match an adjustment by SKU, order number, or adjustment id. `mode:
+ * "insensitive"` matters here: order numbers and cuid ids are stored in a
+ * fixed case, so a case-sensitive `contains` silently found nothing.
+ */
+const adjustmentSearchFilter = (
+  search: string | null | undefined,
+): Prisma.AdjustmentWhereInput | undefined => {
+  const term = search?.trim();
+  if (!term) return undefined;
+
+  return {
+    OR: [
+      {
+        orderItem: {
+          Sku: { sku: { contains: term, mode: "insensitive" } },
+        },
+      },
+      { order: { orderNumber: { contains: term, mode: "insensitive" } } },
+      { id: { contains: term, mode: "insensitive" } },
+    ],
+  };
+};
 
 export const adjustmentsRouter = createTRPCRouter({
   getAdjustments: privateProcedure
@@ -13,30 +43,19 @@ export const adjustmentsRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
+      const where = adjustmentSearchFilter(input.search);
+
       // Execute both queries in a transaction for consistency
       const [adjustments, count] = await ctx.db.$transaction([
         // Get paginated adjustments with search filter
         ctx.db.adjustment.findMany({
           take: input.limit, // Number of items per page
           skip: input.limit * input.pageIndex, // Skip items for pagination
-          // Search filter - match SKU, order number, or adjustment ID if search term provided
-          where: input.search
-            ? {
-                OR: [
-                  {
-                    orderItem: { Sku: { sku: { contains: input.search } } },
-                  },
-                  {
-                    order: { orderNumber: { contains: input.search } },
-                  },
-                  {
-                    id: {
-                      contains: input.search,
-                    },
-                  },
-                ],
-              }
-            : undefined,
+          // LIMIT/OFFSET without an ORDER BY lets Postgres return rows in any
+          // order, so the same row could show on two pages while another never
+          // appeared. `id` breaks ties between adjustments created together.
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          where,
           select: {
             id: true,
             createdAt: true,
@@ -67,25 +86,7 @@ export const adjustmentsRouter = createTRPCRouter({
           },
         }),
         // Get total count with same search filter for pagination
-        ctx.db.adjustment.count({
-          where: input.search
-            ? {
-                OR: [
-                  {
-                    orderItem: { Sku: { sku: { contains: input.search } } },
-                  },
-                  {
-                    order: { orderNumber: { contains: input.search } },
-                  },
-                  {
-                    id: {
-                      contains: input.search,
-                    },
-                  },
-                ],
-              }
-            : undefined,
-        }),
+        ctx.db.adjustment.count({ where }),
       ]);
 
       // Calculate pagination metadata
@@ -110,30 +111,116 @@ export const adjustmentsRouter = createTRPCRouter({
   createAdjustmentBatch: privateProcedure
     .input(
       z.object({
-        adjustments: z.array(
-          z.object({
-            orderItemId: z.number(),
-            quantity: z.number().int().positive(),
-            notes: z.string().optional(),
-            orderNumber: z.string(),
-            adjustmentType: z.nativeEnum(AdjustmentType),
-          }),
-        ),
+        adjustments: z
+          .array(
+            z.object({
+              orderItemId: z.number().int().positive(),
+              quantity: z.number().int().positive(),
+              notes: z.string().optional(),
+              orderNumber: z.string().min(1),
+              adjustmentType: z.nativeEnum(AdjustmentType),
+            }),
+          )
+          .min(1, "At least one adjustment is required")
+          .max(100),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.adjustment.createMany({
-        data: input.adjustments.map((adj) => ({
-          adjustedBy: ctx.userId,
-          adjustmentType: adj.adjustmentType,
-          adjustedQuantity: adj.quantity,
-          reason: adj.notes,
-          orderId: adj.orderNumber,
-          orderItemId: adj.orderItemId,
-        })),
-      });
+      return await ctx.db.$transaction(async (tx) => {
+        // Lock the lines in a stable order so two concurrent batches touching
+        // the same order can't deadlock against each other.
+        const adjustments = [...input.adjustments].sort(
+          (a, b) => a.orderItemId - b.orderItemId,
+        );
 
-      return null;
+        const created: { id: string; orderItemId: number }[] = [];
+        const touchedOrders = new Set<string>();
+
+        for (const adjustment of adjustments) {
+          await lockOrderItem(tx, adjustment.orderItemId);
+
+          const orderItem = await tx.orderItem.findUnique({
+            where: { id: adjustment.orderItemId },
+            select: {
+              orderId: true,
+              orderedQuantity: true,
+              receivedQuantity: true,
+              status: true,
+            },
+          });
+
+          if (!orderItem) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: `Order item ${adjustment.orderItemId} not found`,
+            });
+          }
+
+          // `orderItemId` and `orderNumber` arrive as independent client-supplied
+          // foreign keys. Without this check an adjustment shows up on one
+          // order's ledger while pointing at another order's line.
+          if (orderItem.orderId !== adjustment.orderNumber) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `Order item ${adjustment.orderItemId} belongs to order ${orderItem.orderId}, not ${adjustment.orderNumber}`,
+            });
+          }
+
+          const delta =
+            adjustment.adjustmentType === AdjustmentType.ADDITION
+              ? adjustment.quantity
+              : -adjustment.quantity;
+          const newReceivedQuantity = orderItem.receivedQuantity + delta;
+
+          // A shortage can only write off stock that is actually on hand.
+          if (newReceivedQuantity < 0) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `Cannot subtract ${adjustment.quantity} from order item ${adjustment.orderItemId}: only ${orderItem.receivedQuantity} received`,
+            });
+          }
+
+          const record = await tx.adjustment.create({
+            data: {
+              adjustedBy: ctx.userId,
+              adjustmentType: adjustment.adjustmentType,
+              adjustedQuantity: adjustment.quantity,
+              reason: adjustment.notes,
+              orderId: adjustment.orderNumber,
+              orderItemId: adjustment.orderItemId,
+            },
+            select: { id: true, orderItemId: true },
+          });
+
+          // The ledger row and the quantity move together, otherwise they are
+          // two competing answers to "how much came in".
+          await tx.orderItem.update({
+            where: { id: adjustment.orderItemId },
+            data: {
+              receivedQuantity: { increment: delta },
+              // A rejected line stays rejected; otherwise the receipt status
+              // follows the corrected quantity.
+              ...(orderItem.status === OrderItemStatus.REJECTED
+                ? {}
+                : {
+                    status: receiveStatusFor(
+                      newReceivedQuantity,
+                      orderItem.orderedQuantity,
+                    ),
+                  }),
+            },
+          });
+
+          created.push(record);
+          touchedOrders.add(orderItem.orderId);
+        }
+
+        for (const orderNumber of touchedOrders) {
+          await syncOrderStatus(tx, orderNumber);
+        }
+
+        return created;
+      });
     }),
   getOrderInfo: privateProcedure
     .input(z.object({ orderNumber: z.string() }))
@@ -166,35 +253,41 @@ export const adjustmentsRouter = createTRPCRouter({
 
       return order;
     }),
+  /**
+   * Pre-flight for the "add adjustment" dialog: does this order exist and does
+   * it have anything to adjust?
+   *
+   * This used to be a `.mutation` that rejected any order with an adjustment
+   * already on it, which permanently capped an order at a single correction —
+   * warehouses correct the same order repeatedly. It is a read, so it is a
+   * query; the invariants that actually matter (the line belongs to the order,
+   * the quantity stays non-negative) are enforced inside
+   * `createAdjustmentBatch`'s transaction, where a concurrent write can't slip
+   * between the check and the insert.
+   */
   checkOrder: privateProcedure
-    .input(z.object({ orderNumber: z.string() }))
-    .mutation(async ({ ctx, input }) => {
+    .input(z.object({ orderNumber: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
       const order = await ctx.db.order.findUnique({
         where: { orderNumber: input.orderNumber },
         select: {
           id: true,
           orderNumber: true,
-          adjustments: {
-            select: {
-              id: true,
-            },
-          },
+          _count: { select: { items: true } },
         },
       });
 
-      // Check if order exists
       if (!order) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Order not found",
+          message: `Order ${input.orderNumber} not found`,
         });
       }
 
-      // Check if order has adjustments
-      if (order.adjustments.length > 0) {
+      if (order._count.items === 0) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Order has adjustments",
+          message: "Order has no line items to adjust",
         });
       }
 
