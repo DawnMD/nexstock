@@ -24,6 +24,7 @@ import { api } from "@/trpc/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -43,22 +44,30 @@ export function AddNewAdjustment() {
     },
   });
 
-  const checkOrder = api.adjustments.checkOrder.useMutation({
-    onSuccess: (data) => {
-      router.push(`/adjustments/new/${data.orderNumber}`);
+  const apiUtils = api.useUtils();
+  const [isChecking, setIsChecking] = useState(false);
+
+  // checkOrder is a read, so it is a query fetched on demand rather than a
+  // mutation. The dialog is just a pre-flight: the real invariants live in
+  // createAdjustmentBatch.
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsChecking(true);
+    try {
+      const order = await apiUtils.adjustments.checkOrder.fetch(values);
+      router.push(`/adjustments/new/${order.orderNumber}`);
       form.reset();
-    },
-    onError: (error) => {
+    } catch (error) {
       form.setError(
         "orderNumber",
-        { message: error.message },
+        {
+          message:
+            error instanceof Error ? error.message : "Could not check order",
+        },
         { shouldFocus: true },
       );
-    },
-  });
-
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    checkOrder.mutate(values);
+    } finally {
+      setIsChecking(false);
+    }
   };
 
   return (
@@ -91,7 +100,7 @@ export function AddNewAdjustment() {
                     <Input
                       placeholder="1234567890"
                       {...field}
-                      disabled={checkOrder.isPending}
+                      disabled={isChecking}
                     />
                   </FormControl>
                   <FormDescription>
@@ -103,8 +112,8 @@ export function AddNewAdjustment() {
               )}
             />
             <DialogFooter>
-              <Button type="submit" disabled={checkOrder.isPending}>
-                {checkOrder.isPending ? "Checking..." : "Check Order"}
+              <Button type="submit" disabled={isChecking}>
+                {isChecking ? "Checking..." : "Check Order"}
               </Button>
             </DialogFooter>
           </form>

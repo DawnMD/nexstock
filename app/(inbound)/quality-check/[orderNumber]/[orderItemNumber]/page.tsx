@@ -38,7 +38,13 @@ export default async function OrderItemPage({
       ),
     );
 
-  if (!orderItem || !isAvailableForQualityCheck) {
+  // Inspection is bounded by what actually arrived, so there is nothing to
+  // check until something has been received against the line.
+  if (
+    !orderItem ||
+    !isAvailableForQualityCheck ||
+    !orderItem.receivedQuantity
+  ) {
     notFound();
   }
 
@@ -88,7 +94,7 @@ export default async function OrderItemPage({
           </CardContent>
         </Card>
         <QualityCheckProcess
-          orderedQuantity={orderItem.orderedQuantity}
+          receivedQuantity={orderItem.receivedQuantity}
           orderNumber={orderNumber}
           orderItemNumber={orderItemNumber}
         />

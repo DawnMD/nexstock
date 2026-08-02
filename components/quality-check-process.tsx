@@ -17,34 +17,61 @@ import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/trpc/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const QualityCheckFormSchema = z.object({
-  damagedQuantity: z.number().min(0),
-  qualityCheckPercentage: z.number().min(1).max(100),
-  qcNotes: z.string().optional(),
-});
-
 const qualityCheckPercentageValue = (
   qualityCheckPercentage: number,
-  orderedQuantity: number,
+  receivedQuantity: number,
 ) => {
-  return Math.round((qualityCheckPercentage / 100) * orderedQuantity);
+  return Math.round((qualityCheckPercentage / 100) * receivedQuantity);
 };
 
+// The damaged ceiling depends on how much of the receipt is being inspected, so
+// the schema is built per line rather than shared at module level. The server
+// enforces the same rule; this is what puts the message under the field.
+const buildQualityCheckFormSchema = (receivedQuantity: number) =>
+  z
+    .object({
+      damagedQuantity: z.number().int().min(0),
+      qualityCheckPercentage: z.number().int().min(1).max(100),
+      qcNotes: z.string().optional(),
+    })
+    .refine(
+      (data) =>
+        data.damagedQuantity <=
+        qualityCheckPercentageValue(
+          data.qualityCheckPercentage,
+          receivedQuantity,
+        ),
+      {
+        message: "Damaged quantity cannot exceed the inspected quantity",
+        path: ["damagedQuantity"],
+      },
+    );
+
+type QualityCheckFormValues = z.infer<
+  ReturnType<typeof buildQualityCheckFormSchema>
+>;
+
 export function QualityCheckProcess({
-  orderedQuantity,
+  receivedQuantity,
   orderNumber,
   orderItemNumber,
 }: {
-  orderedQuantity: number;
+  receivedQuantity: number;
   orderNumber: string;
   orderItemNumber: string;
 }) {
-  const form = useForm<z.infer<typeof QualityCheckFormSchema>>({
-    resolver: zodResolver(QualityCheckFormSchema),
+  const formSchema = useMemo(
+    () => buildQualityCheckFormSchema(receivedQuantity),
+    [receivedQuantity],
+  );
+
+  const form = useForm<QualityCheckFormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       damagedQuantity: 0,
       qualityCheckPercentage: 100,
@@ -64,19 +91,22 @@ export function QualityCheckProcess({
         toast.success("Quality check status updated");
         router.replace(`/quality-check/${orderNumber}`);
       },
-      onError: () => {
-        toast.error("Failed to update quality check status");
+      onError: (error) => {
+        toast.error("Failed to update quality check status", {
+          description: error.message,
+        });
       },
     });
 
-  const onSubmit = (data: z.infer<typeof QualityCheckFormSchema>) => {
+  const onSubmit = (data: QualityCheckFormValues) => {
     updateQualityCheckStatus({
       id: Number(orderItemNumber),
       rejectedQuantity: data.damagedQuantity,
       inspectedQuantity: qualityCheckPercentageValue(
         data.qualityCheckPercentage,
-        orderedQuantity,
+        receivedQuantity,
       ),
+      remarks: data.qcNotes ?? undefined,
     });
   };
 
@@ -94,15 +124,17 @@ export function QualityCheckProcess({
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-lg bg-blue-100 p-3 text-center dark:bg-blue-900/30">
                 <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                  {orderedQuantity}
+                  {receivedQuantity}
                 </p>
-                <p className="text-muted-foreground mt-1 text-xs">Total Qty</p>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Received Qty
+                </p>
               </div>
               <div className="rounded-lg bg-orange-100 p-3 text-center dark:bg-orange-900/30">
                 <p className="text-xl font-bold text-orange-600 dark:text-orange-400">
                   {qualityCheckPercentageValue(
                     form.watch("qualityCheckPercentage"),
-                    orderedQuantity,
+                    receivedQuantity,
                   )}
                 </p>
                 <p className="text-muted-foreground mt-1 text-xs">
@@ -113,7 +145,7 @@ export function QualityCheckProcess({
                 <p className="text-xl font-bold text-green-600 dark:text-green-400">
                   {qualityCheckPercentageValue(
                     form.watch("qualityCheckPercentage"),
-                    orderedQuantity,
+                    receivedQuantity,
                   ) - form.watch("damagedQuantity")}
                 </p>
                 <p className="text-muted-foreground mt-1 text-xs">Passed Qty</p>
@@ -175,9 +207,9 @@ export function QualityCheckProcess({
                         Inspecting{" "}
                         {qualityCheckPercentageValue(
                           field.value,
-                          orderedQuantity,
+                          receivedQuantity,
                         )}{" "}
-                        out of {orderedQuantity} units
+                        out of {receivedQuantity} units
                       </FormDescription>
                       <FormMessage />
                     </div>
@@ -205,7 +237,7 @@ export function QualityCheckProcess({
                         min={0}
                         max={qualityCheckPercentageValue(
                           form.getValues("qualityCheckPercentage"),
-                          orderedQuantity,
+                          receivedQuantity,
                         )}
                         onChange={(e) => {
                           field.onChange(Number(e.target.value));
@@ -216,7 +248,7 @@ export function QualityCheckProcess({
                       Maximum:{" "}
                       {qualityCheckPercentageValue(
                         form.getValues("qualityCheckPercentage"),
-                        orderedQuantity,
+                        receivedQuantity,
                       )}
                     </FormDescription>
                     <FormMessage />

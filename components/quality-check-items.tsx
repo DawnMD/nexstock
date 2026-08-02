@@ -26,6 +26,25 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+type QualityCheckSummary = { qualityCheckStatus: boolean } | null;
+
+/**
+ * `qualityCheckStatus` is the pass/fail verdict. Whether a check happened at
+ * all is carried by the presence of the record, so a failed inspection has to
+ * read differently from one that never ran.
+ */
+function qcStatusLabel(qualityCheck: QualityCheckSummary) {
+  if (!qualityCheck) return "Not Done";
+  return qualityCheck.qualityCheckStatus ? "Passed" : "Failed";
+}
+
+function qcBadgeVariant(qualityCheck: QualityCheckSummary) {
+  if (!qualityCheck) return "blue" as const;
+  return qualityCheck.qualityCheckStatus
+    ? ("green" as const)
+    : ("red" as const);
+}
+
 export function QualityCheckItems({ orderNumber }: { orderNumber: string }) {
   const [orderItems] = api.qualityCheck.getOrderItems.useSuspenseQuery({
     orderNumber,
@@ -79,12 +98,10 @@ export function QualityCheckItems({ orderNumber }: { orderNumber: string }) {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">QC status:</span>
                 <Badge
-                  variant={
-                    item.qualityCheck?.qualityCheckStatus ? "green" : "blue"
-                  }
+                  variant={qcBadgeVariant(item.qualityCheck)}
                   className="text-xs"
                 >
-                  {item.qualityCheck?.qualityCheckStatus ? "Done" : "Not Done"}
+                  {qcStatusLabel(item.qualityCheck)}
                 </Badge>
               </div>
               <div className="flex justify-between">
@@ -97,19 +114,37 @@ export function QualityCheckItems({ orderNumber }: { orderNumber: string }) {
                 <span className="text-muted-foreground">Ordered:</span>
                 <span className="font-medium">{item.orderedQuantity}</span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Received:</span>
+                <span className="font-medium">{item.receivedQuantity}</span>
+              </div>
             </div>
             {/* Action Button */}
             {isAvailableForQualityCheck ? (
               <div className="pt-2">
-                {!item.qualityCheck?.qualityCheckStatus && (
-                  <Button size="sm" className="w-full cursor-pointer" asChild>
-                    <Link href={`/quality-check/${orderNumber}/${item.id}`}>
-                      <ClipboardCheckIcon className="mr-2 h-3 w-3" />
-                      Start QC
-                    </Link>
+                {/* A QC has happened when the record exists — the boolean on it
+                    is the pass/fail verdict, not "was it checked". */}
+                {!item.qualityCheck && (
+                  <Button
+                    size="sm"
+                    className="w-full cursor-pointer"
+                    asChild={item.receivedQuantity > 0}
+                    disabled={item.receivedQuantity === 0}
+                  >
+                    {item.receivedQuantity > 0 ? (
+                      <Link href={`/quality-check/${orderNumber}/${item.id}`}>
+                        <ClipboardCheckIcon className="mr-2 h-3 w-3" />
+                        Start QC
+                      </Link>
+                    ) : (
+                      <>
+                        <ClipboardCheckIcon className="mr-2 h-3 w-3" />
+                        Nothing received yet
+                      </>
+                    )}
                   </Button>
                 )}
-                {item.qualityCheck?.qualityCheckStatus && (
+                {item.qualityCheck && (
                   <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
                     <Button
                       size="sm"

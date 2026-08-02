@@ -118,60 +118,119 @@ export const putawayRouter = createTRPCRouter({
   createPutaway: privateProcedure
     .input(
       z.object({
-        lpn: z.string(),
-        sku: z.string(),
+        lpn: z.string().min(1),
+        sku: z.string().min(1),
         quantity: z.number().int().positive(),
-        fromLocation: z.string(),
-        toLocation: z.string(),
+        fromLocation: z.string().min(1),
+        toLocation: z.string().min(1),
         notes: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Verify the location exists
-      const location = await ctx.db.location.findUnique({
-        where: { location: input.toLocation },
-      });
+      return await ctx.db.$transaction(async (tx) => {
+        // Serialise putaways against this LPN. Without the lock two requests
+        // both read the same putaway history and both pass the remaining
+        // quantity check below, moving more units than were received.
+        await tx.$queryRaw`SELECT id FROM "ReceiveItem" WHERE lpn = ${input.lpn} FOR UPDATE`;
 
-      if (!location) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invalid destination location",
+        // findUnique, not findFirst: `lpn` is unique now, so this is guaranteed
+        // to be the same row the operator was shown by getLPNDetails.
+        const receiveItem = await tx.receiveItem.findUnique({
+          where: { lpn: input.lpn },
+          select: {
+            id: true,
+            sku: true,
+            location: true,
+            receivedQuantity: true,
+            putaways: { select: { quantity: true } },
+          },
         });
-      }
 
-      // Find the receive item for this LPN
-      const receiveItem = await ctx.db.receiveItem.findFirst({
-        where: { lpn: input.lpn },
-      });
+        if (!receiveItem) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Receive item not found for this LPN",
+          });
+        }
 
-      if (!receiveItem) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Receive item not found for this LPN",
+        if (receiveItem.sku !== input.sku) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `LPN ${input.lpn} holds ${receiveItem.sku}, not ${input.sku}`,
+          });
+        }
+
+        // Stock can only leave where it actually is. This also keeps the
+        // Putaway.fromLocation foreign key satisfied.
+        if (receiveItem.location !== input.fromLocation) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `LPN ${input.lpn} is in ${receiveItem.location}, not ${input.fromLocation}`,
+          });
+        }
+
+        if (input.toLocation === input.fromLocation) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Destination location must differ from the source",
+          });
+        }
+
+        // Verify the destination location exists and is active
+        const location = await tx.location.findUnique({
+          where: { location: input.toLocation },
+          select: { status: true },
         });
-      }
 
-      // Create the putaway record
-      const putaway = await ctx.db.putaway.create({
-        data: {
-          lpn: input.lpn,
-          sku: input.sku,
-          quantity: input.quantity,
-          fromLocation: input.fromLocation,
-          toLocation: input.toLocation,
-          putawayBy: ctx.userId,
-          notes: input.notes,
-          receiveItemId: receiveItem.id,
-        },
+        if (!location) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid destination location",
+          });
+        }
+
+        if (!location.status) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Location ${input.toLocation} is not active`,
+          });
+        }
+
+        const alreadyPutAway = receiveItem.putaways.reduce(
+          (sum, putaway) => sum + putaway.quantity,
+          0,
+        );
+        const remainingQuantity = receiveItem.receivedQuantity - alreadyPutAway;
+
+        if (input.quantity > remainingQuantity) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Cannot put away more than remains on this LPN. Received: ${receiveItem.receivedQuantity}, already put away: ${alreadyPutAway}, attempting: ${input.quantity}`,
+          });
+        }
+
+        // Create the putaway record
+        const putaway = await tx.putaway.create({
+          data: {
+            lpn: input.lpn,
+            sku: input.sku,
+            quantity: input.quantity,
+            fromLocation: input.fromLocation,
+            toLocation: input.toLocation,
+            putawayBy: ctx.userId,
+            notes: input.notes,
+            receiveItemId: receiveItem.id,
+          },
+        });
+
+        return putaway;
       });
-
-      return putaway;
     }),
 
   getLPNDetails: privateProcedure
-    .input(z.object({ lpn: z.string() }))
+    .input(z.object({ lpn: z.string().min(1) }))
     .query(async ({ ctx, input }) => {
-      const lpnDetails = await ctx.db.receiveItem.findFirst({
+      const lpnDetails = await ctx.db.receiveItem.findUnique({
         where: { lpn: input.lpn },
         select: {
           lpn: true,
@@ -193,6 +252,9 @@ export const putawayRouter = createTRPCRouter({
               },
             },
           },
+          putaways: {
+            select: { quantity: true },
+          },
         },
       });
 
@@ -203,6 +265,17 @@ export const putawayRouter = createTRPCRouter({
         });
       }
 
-      return lpnDetails;
+      // An LPN can be put away across several moves, so the form needs what is
+      // still in staging rather than the full received quantity.
+      const putawayQuantity = lpnDetails.putaways.reduce(
+        (sum, putaway) => sum + putaway.quantity,
+        0,
+      );
+
+      return {
+        ...lpnDetails,
+        putawayQuantity,
+        remainingQuantity: lpnDetails.receivedQuantity - putawayQuantity,
+      };
     }),
 });
