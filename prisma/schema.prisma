@@ -53,6 +53,27 @@ enum AdjustmentType {
     SUBTRACTION
 }
 
+/// Why stock moved. Every InventoryMovement carries one, so the ledger explains
+/// itself without joining back to the originating record.
+enum MovementReason {
+    RECEIPT
+    QC_REJECT
+    ADJUSTMENT_ADD
+    ADJUSTMENT_SUB
+    PUTAWAY_OUT
+    PUTAWAY_IN
+    TRANSFER
+}
+
+/// Which table `InventoryMovement.refId` points at. The referenced ids are a mix
+/// of Int and cuid, so `refId` is a string and this enum says how to read it.
+enum MovementRefType {
+    RECEIVE_ITEM
+    PUTAWAY
+    ADJUSTMENT
+    QUALITY_CHECK
+}
+
 model Vendor {
     id        Int      @id @default(autoincrement())
     name      String
@@ -202,6 +223,9 @@ model Sku {
     lotExpiryDate DateTime?
     OrderItem     OrderItem[]
 
+    inventoryMovements InventoryMovement[]
+    inventoryBalances  InventoryBalance[]
+
     @@index([sku])
 }
 
@@ -284,6 +308,9 @@ model Location {
     putawaysOut  Putaway[]     @relation("PutawayFromLocation") // Track putaways out of this location
     receiveItems ReceiveItem[] @relation("ReceiveItemLocation") // Stock received into this location
 
+    inventoryMovements InventoryMovement[] @relation("InventoryMovementLocation")
+    inventoryBalances  InventoryBalance[]  @relation("InventoryBalanceLocation")
+
     @@index([location])
 }
 
@@ -305,4 +332,76 @@ model Putaway {
     receiveItemId Int?
 
     @@index([lpn, sku, fromLocation, toLocation])
+}
+
+/// Append-only stock ledger: one row per movement of stock, signed so that
+/// summing them for a key reproduces the on-hand balance exactly.
+///
+/// Rows are never updated or deleted. `InventoryBalance` is the materialised
+/// running total, written in the same transaction, and the two are expected to
+/// agree — that equality is the invariant the whole inventory core rests on.
+model InventoryMovement {
+    id Int @id @default(autoincrement())
+
+    sku    String
+    skuRef Sku    @relation(fields: [sku], references: [sku], onDelete: Restrict)
+
+    /// The pallet label the stock moved on. Every unit enters the warehouse on
+    /// a receipt, and a receipt always carries an LPN, so this is never blank.
+    lpn String
+
+    /// Empty string rather than NULL for un-lotted stock: this column is part of
+    /// `InventoryBalance`'s unique key, and Postgres treats NULLs as distinct,
+    /// which would let a fresh balance row be created on every movement.
+    lot String @default("")
+
+    location    String
+    locationRef Location @relation("InventoryMovementLocation", fields: [location], references: [location], onDelete: Restrict)
+
+    /// Signed: positive puts stock in, negative takes it out. A putaway is a
+    /// pair of rows (negative out, positive in) that nets to zero.
+    quantity Int
+
+    reason MovementReason
+
+    /// Back-pointer to the record that caused the movement, so any balance can
+    /// be traced to the receipt, putaway, adjustment, or QC that produced it.
+    refType MovementRefType
+    refId   String
+
+    notes     String?
+    createdBy String
+    createdAt DateTime @default(now())
+
+    @@index([sku, location, lot, lpn])
+    @@index([refType, refId])
+    @@index([createdAt])
+}
+
+/// Materialised stock on hand for one (sku, location, lot, lpn) key.
+///
+/// Maintained with atomic `increment`/`decrement` in the same transaction as the
+/// `InventoryMovement` insert, so it can never drift from the ledger. Rows are
+/// left in place at quantity 0 rather than deleted, which keeps the upsert cheap
+/// and preserves the fact that stock was once there.
+model InventoryBalance {
+    id Int @id @default(autoincrement())
+
+    sku    String
+    skuRef Sku    @relation(fields: [sku], references: [sku], onDelete: Restrict)
+
+    location    String
+    locationRef Location @relation("InventoryBalanceLocation", fields: [location], references: [location], onDelete: Restrict)
+
+    /// See the note on `InventoryMovement.lot` — "" means un-lotted.
+    lot String @default("")
+    lpn String
+
+    quantity  Int      @default(0)
+    updatedAt DateTime @updatedAt
+
+    @@unique([sku, location, lot, lpn])
+    @@index([sku])
+    @@index([location])
+    @@index([lpn])
 }

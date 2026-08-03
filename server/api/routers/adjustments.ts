@@ -1,11 +1,7 @@
-import {
-  lockOrderItem,
-  receiveStatusFor,
-  syncOrderStatus,
-} from "@/server/api/order-status";
 import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
+import { applyAdjustmentBatch } from "@/server/services/adjustments";
 import type { Prisma } from "@prisma/client";
-import { AdjustmentType, OrderItemStatus } from "@prisma/client";
+import { AdjustmentType } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -126,101 +122,12 @@ export const adjustmentsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.db.$transaction(async (tx) => {
-        // Lock the lines in a stable order so two concurrent batches touching
-        // the same order can't deadlock against each other.
-        const adjustments = [...input.adjustments].sort(
-          (a, b) => a.orderItemId - b.orderItemId,
-        );
-
-        const created: { id: string; orderItemId: number }[] = [];
-        const touchedOrders = new Set<string>();
-
-        for (const adjustment of adjustments) {
-          await lockOrderItem(tx, adjustment.orderItemId);
-
-          const orderItem = await tx.orderItem.findUnique({
-            where: { id: adjustment.orderItemId },
-            select: {
-              orderId: true,
-              orderedQuantity: true,
-              receivedQuantity: true,
-              status: true,
-            },
-          });
-
-          if (!orderItem) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: `Order item ${adjustment.orderItemId} not found`,
-            });
-          }
-
-          // `orderItemId` and `orderNumber` arrive as independent client-supplied
-          // foreign keys. Without this check an adjustment shows up on one
-          // order's ledger while pointing at another order's line.
-          if (orderItem.orderId !== adjustment.orderNumber) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: `Order item ${adjustment.orderItemId} belongs to order ${orderItem.orderId}, not ${adjustment.orderNumber}`,
-            });
-          }
-
-          const delta =
-            adjustment.adjustmentType === AdjustmentType.ADDITION
-              ? adjustment.quantity
-              : -adjustment.quantity;
-          const newReceivedQuantity = orderItem.receivedQuantity + delta;
-
-          // A shortage can only write off stock that is actually on hand.
-          if (newReceivedQuantity < 0) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: `Cannot subtract ${adjustment.quantity} from order item ${adjustment.orderItemId}: only ${orderItem.receivedQuantity} received`,
-            });
-          }
-
-          const record = await tx.adjustment.create({
-            data: {
-              adjustedBy: ctx.userId,
-              adjustmentType: adjustment.adjustmentType,
-              adjustedQuantity: adjustment.quantity,
-              reason: adjustment.notes,
-              orderId: adjustment.orderNumber,
-              orderItemId: adjustment.orderItemId,
-            },
-            select: { id: true, orderItemId: true },
-          });
-
-          // The ledger row and the quantity move together, otherwise they are
-          // two competing answers to "how much came in".
-          await tx.orderItem.update({
-            where: { id: adjustment.orderItemId },
-            data: {
-              receivedQuantity: { increment: delta },
-              // A rejected line stays rejected; otherwise the receipt status
-              // follows the corrected quantity.
-              ...(orderItem.status === OrderItemStatus.REJECTED
-                ? {}
-                : {
-                    status: receiveStatusFor(
-                      newReceivedQuantity,
-                      orderItem.orderedQuantity,
-                    ),
-                  }),
-            },
-          });
-
-          created.push(record);
-          touchedOrders.add(orderItem.orderId);
-        }
-
-        for (const orderNumber of touchedOrders) {
-          await syncOrderStatus(tx, orderNumber);
-        }
-
-        return created;
-      });
+      return await ctx.db.$transaction((tx) =>
+        applyAdjustmentBatch(tx, {
+          adjustments: input.adjustments,
+          adjustedBy: ctx.userId,
+        }),
+      );
     }),
   getOrderInfo: privateProcedure
     .input(z.object({ orderNumber: z.string() }))
