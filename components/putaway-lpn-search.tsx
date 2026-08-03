@@ -36,8 +36,10 @@ export function PutawayLPNSearch() {
               <div className="flex flex-col">
                 <span className="font-mono">{lpn.lpn}</span>
                 <span className="text-muted-foreground text-xs">
-                  {lpn.sku} • Qty: {lpn.receivedQuantity} • Location:{" "}
-                  {lpn.location}
+                  {/* Remaining, not received: a partially put-away or partially
+                      rejected pallet has less left to move than it arrived with. */}
+                  {lpn.sku} • To put away: {lpn.remainingQuantity} of{" "}
+                  {lpn.receivedQuantity} • Location: {lpn.location}
                 </span>
               </div>
             </CommandItem>
