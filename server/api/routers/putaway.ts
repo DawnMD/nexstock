@@ -1,44 +1,53 @@
 import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
+import { balancesForLpn, getBalance } from "@/server/services/inventory";
+import { createPutaway } from "@/server/services/putaway";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 const SEARCH_RESULT_LIMIT = 50;
+const WORKLIST_LIMIT = 200;
+
+/**
+ * A pallet needs putting away while stock is still sitting in the location it
+ * was received into. Asking the ledger rather than summing past putaways means
+ * QC rejections and shortage adjustments also take it off the worklist.
+ */
+interface WorklistRow {
+  lpn: string;
+  sku: string;
+  description: string;
+  receivedQuantity: number;
+  remainingQuantity: number;
+  location: string;
+  vehicleNumber: string;
+  receivedAt: Date;
+}
 
 export const putawayRouter = createTRPCRouter({
   getAllLPNs: privateProcedure.query(async ({ ctx }) => {
-    const lpns = await ctx.db.receiveItem.findMany({
-      select: {
-        lpn: true,
-        sku: true,
-        receivedQuantity: true,
-        location: true,
-        vehicleNumber: true,
-        receivedAt: true,
-        orderItem: {
-          select: {
-            Sku: {
-              select: {
-                description: true,
-              },
-            },
-          },
-        },
-        putaways: {
-          select: {
-            quantity: true,
-          },
-        },
-      },
-    });
-
-    // Filter out LPNs that have been fully putaway
-    return lpns.filter((lpn) => {
-      const totalPutawayQuantity = lpn.putaways.reduce(
-        (sum, putaway) => sum + putaway.quantity,
-        0,
-      );
-      return totalPutawayQuantity < lpn.receivedQuantity;
-    });
+    // Raw SQL because the filter correlates two columns across tables
+    // (a balance sitting at *its own receipt's* location), which Prisma's query
+    // API can't express. Doing it here rather than in JS keeps the row count
+    // bounded instead of loading every receipt ever made.
+    return await ctx.db.$queryRaw<WorklistRow[]>`
+      SELECT ri."lpn",
+             ri."sku",
+             s."description",
+             ri."receivedQuantity",
+             ib."quantity" AS "remainingQuantity",
+             ri."location",
+             ri."vehicleNumber",
+             ri."receivedAt"
+      FROM "ReceiveItem" ri
+      JOIN "InventoryBalance" ib
+        ON ib."lpn" = ri."lpn"
+       AND ib."sku" = ri."sku"
+       AND ib."location" = ri."location"
+      JOIN "Sku" s ON s."sku" = ri."sku"
+      WHERE ib."quantity" > 0
+      ORDER BY ri."receivedAt" DESC
+      LIMIT ${WORKLIST_LIMIT}
+    `;
   }),
 
   searchLPNs: privateProcedure
@@ -107,12 +116,42 @@ export const putawayRouter = createTRPCRouter({
         zone: true,
         aisle: true,
         description: true,
+        cbm: true,
+        weightCapacity: true,
       },
       orderBy: {
         location: "asc",
       },
     });
-    return locations;
+
+    // Putaway enforces these ratings, so the picker has to show what is left in
+    // each rack — otherwise the operator picks blind and the move is refused
+    // only after they submit it.
+    const used = await ctx.db.$queryRaw<
+      { location: string; usedCbm: number; usedWeight: number }[]
+    >`
+      SELECT b."location",
+             COALESCE(SUM(b."quantity" * s."cbm"), 0)::float    AS "usedCbm",
+             COALESCE(SUM(b."quantity" * s."weight"), 0)::float AS "usedWeight"
+      FROM "InventoryBalance" b
+      JOIN "Sku" s ON s."sku" = b."sku"
+      WHERE b."quantity" > 0
+      GROUP BY b."location"
+    `;
+    const byLocation = new Map(used.map((row) => [row.location, row]));
+
+    return locations.map((location) => {
+      const occupied = byLocation.get(location.location);
+      return {
+        ...location,
+        freeCbm:
+          location.cbm == null ? null : location.cbm - (occupied?.usedCbm ?? 0),
+        freeWeight:
+          location.weightCapacity == null
+            ? null
+            : location.weightCapacity - (occupied?.usedWeight ?? 0),
+      };
+    });
   }),
 
   createPutaway: privateProcedure
@@ -127,104 +166,9 @@ export const putawayRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.db.$transaction(async (tx) => {
-        // Serialise putaways against this LPN. Without the lock two requests
-        // both read the same putaway history and both pass the remaining
-        // quantity check below, moving more units than were received.
-        await tx.$queryRaw`SELECT id FROM "ReceiveItem" WHERE lpn = ${input.lpn} FOR UPDATE`;
-
-        // findUnique, not findFirst: `lpn` is unique now, so this is guaranteed
-        // to be the same row the operator was shown by getLPNDetails.
-        const receiveItem = await tx.receiveItem.findUnique({
-          where: { lpn: input.lpn },
-          select: {
-            id: true,
-            sku: true,
-            location: true,
-            receivedQuantity: true,
-            putaways: { select: { quantity: true } },
-          },
-        });
-
-        if (!receiveItem) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Receive item not found for this LPN",
-          });
-        }
-
-        if (receiveItem.sku !== input.sku) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: `LPN ${input.lpn} holds ${receiveItem.sku}, not ${input.sku}`,
-          });
-        }
-
-        // Stock can only leave where it actually is. This also keeps the
-        // Putaway.fromLocation foreign key satisfied.
-        if (receiveItem.location !== input.fromLocation) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: `LPN ${input.lpn} is in ${receiveItem.location}, not ${input.fromLocation}`,
-          });
-        }
-
-        if (input.toLocation === input.fromLocation) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Destination location must differ from the source",
-          });
-        }
-
-        // Verify the destination location exists and is active
-        const location = await tx.location.findUnique({
-          where: { location: input.toLocation },
-          select: { status: true },
-        });
-
-        if (!location) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Invalid destination location",
-          });
-        }
-
-        if (!location.status) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: `Location ${input.toLocation} is not active`,
-          });
-        }
-
-        const alreadyPutAway = receiveItem.putaways.reduce(
-          (sum, putaway) => sum + putaway.quantity,
-          0,
-        );
-        const remainingQuantity = receiveItem.receivedQuantity - alreadyPutAway;
-
-        if (input.quantity > remainingQuantity) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: `Cannot put away more than remains on this LPN. Received: ${receiveItem.receivedQuantity}, already put away: ${alreadyPutAway}, attempting: ${input.quantity}`,
-          });
-        }
-
-        // Create the putaway record
-        const putaway = await tx.putaway.create({
-          data: {
-            lpn: input.lpn,
-            sku: input.sku,
-            quantity: input.quantity,
-            fromLocation: input.fromLocation,
-            toLocation: input.toLocation,
-            putawayBy: ctx.userId,
-            notes: input.notes,
-            receiveItemId: receiveItem.id,
-          },
-        });
-
-        return putaway;
-      });
+      return await ctx.db.$transaction((tx) =>
+        createPutaway(tx, { ...input, putawayBy: ctx.userId }),
+      );
     }),
 
   getLPNDetails: privateProcedure
@@ -265,8 +209,22 @@ export const putawayRouter = createTRPCRouter({
         });
       }
 
-      // An LPN can be put away across several moves, so the form needs what is
-      // still in staging rather than the full received quantity.
+      // What is still in the receiving location is what there is left to put
+      // away — this comes from the ledger, so rejected and written-off units are
+      // already gone rather than being offered up for putaway.
+      const [remainingQuantity, currentLocations] = await Promise.all([
+        getBalance(ctx.db, {
+          sku: lpnDetails.sku,
+          location: lpnDetails.location,
+          lot: lpnDetails.lot,
+          lpn: lpnDetails.lpn,
+        }),
+        balancesForLpn(ctx.db, lpnDetails.lpn),
+      ]);
+
+      // Summed from the putaway records rather than derived from the remaining
+      // balance: a QC rejection also drops the balance, and calling those units
+      // "put away" would be a lie.
       const putawayQuantity = lpnDetails.putaways.reduce(
         (sum, putaway) => sum + putaway.quantity,
         0,
@@ -274,8 +232,12 @@ export const putawayRouter = createTRPCRouter({
 
       return {
         ...lpnDetails,
+        remainingQuantity,
         putawayQuantity,
-        remainingQuantity: lpnDetails.receivedQuantity - putawayQuantity,
+        // Where this pallet's stock actually sits now. `location` above is the
+        // bay it was received into and never changes; this is the answer to
+        // "where is it?", which used to be wrong the moment anything moved.
+        currentLocations,
       };
     }),
 });

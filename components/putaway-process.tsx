@@ -215,6 +215,10 @@ export function PutawayProcess({ lpn }: PutawayProcessProps) {
                             </span>
                             <span className="text-muted-foreground text-xs">
                               {location.zone} - {location.aisle}
+                              {/* Putaway is refused if the pallet doesn't fit,
+                                  so show what's left before it's chosen. */}
+                              {location.freeCbm != null &&
+                                ` · ${location.freeCbm.toFixed(2)} cbm free`}
                             </span>
                           </div>
                         </SelectItem>

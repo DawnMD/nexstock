@@ -11,6 +11,7 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { db } from "@/server/db";
+import { ServiceError } from "@/server/services/errors";
 import { auth } from "@clerk/nextjs/server";
 
 /**
@@ -101,6 +102,28 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
 });
 
 /**
+ * Translate service-layer errors into transport errors.
+ *
+ * The modules under `server/services/` know nothing about tRPC — they throw
+ * `ServiceError`, and this is the one place that maps it onto the wire. When the
+ * transport is swapped for oRPC in Phase 5 this middleware is what gets
+ * rewritten, and the business logic underneath doesn't move.
+ */
+const serviceErrorMiddleware = t.middleware(async ({ next }) => {
+  const result = await next();
+
+  if (!result.ok && result.error.cause instanceof ServiceError) {
+    throw new TRPCError({
+      code: result.error.cause.code,
+      message: result.error.cause.message,
+      cause: result.error.cause,
+    });
+  }
+
+  return result;
+});
+
+/**
  * Middleware for checking if the user is authenticated
  */
 const isAuthenticatedMiddleware = t.middleware(async ({ next, ctx }) => {
@@ -120,7 +143,9 @@ const isAuthenticatedMiddleware = t.middleware(async ({ next, ctx }) => {
  * guarantee that a user querying is authorized, but you can still access user session data if they
  * are logged in.
  */
-export const publicProcedure = t.procedure.use(timingMiddleware);
+export const publicProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(serviceErrorMiddleware);
 
 /**
  * Private (authenticated) procedure

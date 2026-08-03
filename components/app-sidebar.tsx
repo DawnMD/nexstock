@@ -20,8 +20,11 @@ import {
   IconSearch,
   IconShoppingCart,
   IconAdjustments,
+  IconBuildingWarehouse,
   IconClipboardList,
   IconMapPin,
+  IconRuler,
+  IconTag,
 } from "@tabler/icons-react";
 import Link from "next/link";
 
@@ -58,6 +61,11 @@ export const data = {
       icon: IconMapPin,
     },
     {
+      title: "Inventory",
+      url: "/inventory",
+      icon: IconBuildingWarehouse,
+    },
+    {
       title: "Adjustments",
       url: "/adjustments",
       icon: IconAdjustments,
@@ -66,6 +74,16 @@ export const data = {
       title: "LPN List",
       url: "/lpn-list",
       icon: IconClipboardList,
+    },
+    {
+      title: "SKUs",
+      url: "/skus",
+      icon: IconTag,
+    },
+    {
+      title: "Locations",
+      url: "/locations",
+      icon: IconRuler,
     },
   ],
 };

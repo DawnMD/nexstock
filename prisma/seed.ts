@@ -1,3 +1,8 @@
+import {
+  MovementReason,
+  MovementRefType,
+  recordMovement,
+} from "../server/services/inventory";
 import type { Vendor } from "@prisma/client";
 import {
   ActivityType,
@@ -346,6 +351,9 @@ async function main() {
   // Delete existing data.
   // Every relation in the schema uses Prisma's default `Restrict`, so these have
   // to run children-first or re-seeding dies on a foreign-key violation.
+  // The inventory tables reference Sku and Location, so they go first of all.
+  await prisma.inventoryBalance.deleteMany();
+  await prisma.inventoryMovement.deleteMany();
   await prisma.adjustment.deleteMany();
   await prisma.putaway.deleteMany();
   await prisma.receiveItem.deleteMany();
@@ -664,21 +672,40 @@ async function main() {
             )
           : null;
 
-      await prisma.receiveItem.create({
+      const lpn = `LPN${String(orderIndex * 100 + itemIndex + 1).padStart(6, "0")}`;
+      const lot = sku.hasShelfLife ? `LOT-${orderItem.skuId}-001` : null;
+      const receivedAt = booking.eta ?? startOfToday;
+
+      const receiveItem = await prisma.receiveItem.create({
         data: {
           orderItemId: orderItem.id,
           receivedQuantity,
           receivedBy: "SYSTEM",
-          receivedAt: booking.eta ?? startOfToday,
+          receivedAt,
           sku: orderItem.skuId,
           receivedNotes: "Seeded receipt",
           location: STAGING_LOCATION,
-          lpn: `LPN${String(orderIndex * 100 + itemIndex + 1).padStart(6, "0")}`,
-          lot: sku.hasShelfLife ? `LOT-${orderItem.skuId}-001` : null,
+          lpn,
+          lot,
           lotExpiryDate,
           uom: sku.uom ?? "EA",
           vehicleNumber: booking.vehicleNumber,
         },
+      });
+
+      // Seeded receipts go through the ledger too, otherwise a fresh database
+      // has pallets with no stock behind them and the putaway worklist — which
+      // reads balances now — comes up empty.
+      await recordMovement(prisma, {
+        sku: orderItem.skuId,
+        lpn,
+        lot,
+        location: STAGING_LOCATION,
+        quantity: receivedQuantity,
+        reason: MovementReason.RECEIPT,
+        ref: { type: MovementRefType.RECEIVE_ITEM, id: receiveItem.id },
+        createdBy: "SYSTEM",
+        notes: "Seeded receipt",
       });
 
       await prisma.orderItem.update({
@@ -711,6 +738,9 @@ async function main() {
   console.log(`Dock Bookings: ${dockBookings.length}`);
   console.log(`Dock Activities: ${dockActivityCount}`);
   console.log(`Receive Items: ${receiveItemCount}`);
+  console.log(
+    `Inventory: ${await prisma.inventoryMovement.count()} movements across ${await prisma.inventoryBalance.count()} balances`,
+  );
   console.log("Database has been successfully seeded!");
 }
 
