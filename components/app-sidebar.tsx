@@ -23,6 +23,8 @@ import {
   IconBuildingWarehouse,
   IconClipboardList,
   IconMapPin,
+  IconRuler,
+  IconTag,
 } from "@tabler/icons-react";
 import Link from "next/link";
 
@@ -72,6 +74,16 @@ export const data = {
       title: "LPN List",
       url: "/lpn-list",
       icon: IconClipboardList,
+    },
+    {
+      title: "SKUs",
+      url: "/skus",
+      icon: IconTag,
+    },
+    {
+      title: "Locations",
+      url: "/locations",
+      icon: IconRuler,
     },
   ],
 };
