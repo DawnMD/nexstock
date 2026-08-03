@@ -20,6 +20,7 @@ import {
   IconSearch,
   IconShoppingCart,
   IconAdjustments,
+  IconBuildingWarehouse,
   IconClipboardList,
   IconMapPin,
 } from "@tabler/icons-react";
@@ -56,6 +57,11 @@ export const data = {
       title: "Putaway",
       url: "/putaway",
       icon: IconMapPin,
+    },
+    {
+      title: "Inventory",
+      url: "/inventory",
+      icon: IconBuildingWarehouse,
     },
     {
       title: "Adjustments",
