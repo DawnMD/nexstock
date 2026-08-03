@@ -116,12 +116,42 @@ export const putawayRouter = createTRPCRouter({
         zone: true,
         aisle: true,
         description: true,
+        cbm: true,
+        weightCapacity: true,
       },
       orderBy: {
         location: "asc",
       },
     });
-    return locations;
+
+    // Putaway enforces these ratings, so the picker has to show what is left in
+    // each rack — otherwise the operator picks blind and the move is refused
+    // only after they submit it.
+    const used = await ctx.db.$queryRaw<
+      { location: string; usedCbm: number; usedWeight: number }[]
+    >`
+      SELECT b."location",
+             COALESCE(SUM(b."quantity" * s."cbm"), 0)::float    AS "usedCbm",
+             COALESCE(SUM(b."quantity" * s."weight"), 0)::float AS "usedWeight"
+      FROM "InventoryBalance" b
+      JOIN "Sku" s ON s."sku" = b."sku"
+      WHERE b."quantity" > 0
+      GROUP BY b."location"
+    `;
+    const byLocation = new Map(used.map((row) => [row.location, row]));
+
+    return locations.map((location) => {
+      const occupied = byLocation.get(location.location);
+      return {
+        ...location,
+        freeCbm:
+          location.cbm == null ? null : location.cbm - (occupied?.usedCbm ?? 0),
+        freeWeight:
+          location.weightCapacity == null
+            ? null
+            : location.weightCapacity - (occupied?.usedWeight ?? 0),
+      };
+    });
   }),
 
   createPutaway: privateProcedure
