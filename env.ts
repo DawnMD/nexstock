@@ -10,7 +10,7 @@ export const env = createEnv({
     /** Neon pooled connection string (host contains `-pooler`). */
     DATABASE_URL: z.string().url(),
     /** Neon direct connection string, used by the Prisma CLI for migrations. */
-    DIRECT_URL: z.string().url().optional(),
+    DATABASE_URL_UNPOOLED: z.string().url().optional(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -35,7 +35,7 @@ export const env = createEnv({
    */
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
-    DIRECT_URL: process.env.DIRECT_URL,
+    DATABASE_URL_UNPOOLED: process.env.DATABASE_URL_UNPOOLED,
     NODE_ENV: process.env.NODE_ENV,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,

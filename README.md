@@ -49,7 +49,7 @@ cp .env.example .env
 | Variable                            | Description                                                                                                                          |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `DATABASE_URL`                      | Neon **pooled** connection string — the host contains `-pooler`. Used by Prisma Client at runtime.                                   |
-| `DIRECT_URL`                        | Neon **direct** connection string (same host without `-pooler`). Used by the Prisma CLI for migrations and by the `prisma/` scripts. |
+| `DATABASE_URL_UNPOOLED`                        | Neon **direct** connection string (same host without `-pooler`). Used by the Prisma CLI for migrations and by the `prisma/` scripts. |
 | `BETTER_AUTH_SECRET`                | 32+ character random string that signs session cookies. Generate one with `npx auth@latest secret`.                                  |
 | `BETTER_AUTH_URL`                   | Public origin of the deployment (`http://localhost:3000` locally). Optional in development, required in production.                  |
 
@@ -65,7 +65,7 @@ bypass that (useful for Docker builds).
 Prisma 7 no longer loads `.env` implicitly, so `prisma.config.ts` does it
 explicitly, reading `.env.local` first and then `.env` (Next.js' precedence).
 Create one of those before `pnpm install`, since the postinstall
-`prisma generate` needs `DIRECT_URL`.
+`prisma generate` needs `DATABASE_URL_UNPOOLED`.
 
 ### Setup
 
