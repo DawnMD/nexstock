@@ -1,5 +1,9 @@
-/* eslint-disable import/no-anonymous-default-export */
-/** @type {import('prettier').Config & import('prettier-plugin-tailwindcss').PluginOptions} */
-export default {
+import type { Config } from "prettier";
+import type { PluginOptions } from "prettier-plugin-tailwindcss";
+
+const config: Config & PluginOptions = {
+  singleQuote: false,
   plugins: ["prettier-plugin-tailwindcss"],
 };
+
+export default config;

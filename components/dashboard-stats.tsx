@@ -66,7 +66,10 @@ export function DashboardStats({ initialDate }: DashboardStatsProps) {
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger
               render={
-                <Button variant="outline" className="justify-start font-normal" />
+                <Button
+                  variant="outline"
+                  className="justify-start font-normal"
+                />
               }
             >
               <CalendarIcon className="mr-2 h-4 w-4" />

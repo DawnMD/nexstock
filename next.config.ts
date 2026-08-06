@@ -8,5 +8,5 @@ import "./env";
 const nextConfig: NextConfig = {
   /** ... */
 };
- 
+
 export default nextConfig;

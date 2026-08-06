@@ -27,7 +27,7 @@ function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {
     <SheetPrimitive.Backdrop
       data-slot="sheet-overlay"
       className={cn(
-        "fixed inset-0 z-50 bg-black/50 transition-opacity duration-300 data-starting-style:opacity-0 data-ending-style:opacity-0",
+        "fixed inset-0 z-50 bg-black/50 transition-opacity duration-300 data-ending-style:opacity-0 data-starting-style:opacity-0",
         className,
       )}
       {...props}
@@ -52,13 +52,13 @@ function SheetContent({
         className={cn(
           "bg-background fixed z-50 flex flex-col gap-4 shadow-lg transition duration-500 ease-in-out data-ending-style:duration-300",
           side === "right" &&
-            "inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm data-starting-style:translate-x-full data-ending-style:translate-x-full",
+            "inset-y-0 right-0 h-full w-3/4 border-l data-ending-style:translate-x-full data-starting-style:translate-x-full sm:max-w-sm",
           side === "left" &&
-            "inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm data-starting-style:-translate-x-full data-ending-style:-translate-x-full",
+            "inset-y-0 left-0 h-full w-3/4 border-r data-ending-style:-translate-x-full data-starting-style:-translate-x-full sm:max-w-sm",
           side === "top" &&
-            "inset-x-0 top-0 h-auto border-b data-starting-style:-translate-y-full data-ending-style:-translate-y-full",
+            "inset-x-0 top-0 h-auto border-b data-ending-style:-translate-y-full data-starting-style:-translate-y-full",
           side === "bottom" &&
-            "inset-x-0 bottom-0 h-auto border-t data-starting-style:translate-y-full data-ending-style:translate-y-full",
+            "inset-x-0 bottom-0 h-auto border-t data-ending-style:translate-y-full data-starting-style:translate-y-full",
           className,
         )}
         {...props}
