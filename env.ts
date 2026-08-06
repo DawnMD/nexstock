@@ -1,5 +1,6 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import * as z from "zod";
+import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 
 export const env = createEnv({
   /**
@@ -17,7 +18,6 @@ export const env = createEnv({
     /** 32+ char random string signing session cookies. `npx auth@latest secret` generates one. */
     BETTER_AUTH_SECRET: z.string().min(32),
     /** Public origin of this deployment. Optional locally; required in production. */
-    BETTER_AUTH_URL: z.string().url().optional(),
   },
 
   /**
@@ -38,7 +38,6 @@ export const env = createEnv({
     DATABASE_URL_UNPOOLED: process.env.DATABASE_URL_UNPOOLED,
     NODE_ENV: process.env.NODE_ENV,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
-    BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**
@@ -51,4 +50,5 @@ export const env = createEnv({
    * `SOME_VAR=''` will throw an error.
    */
   emptyStringAsUndefined: true,
+  extends:[vercel()]
 });

@@ -51,7 +51,6 @@ cp .env.example .env
 | `DATABASE_URL`                      | Neon **pooled** connection string — the host contains `-pooler`. Used by Prisma Client at runtime.                                   |
 | `DATABASE_URL_UNPOOLED`                        | Neon **direct** connection string (same host without `-pooler`). Used by the Prisma CLI for migrations and by the `prisma/` scripts. |
 | `BETTER_AUTH_SECRET`                | 32+ character random string that signs session cookies. Generate one with `npx auth@latest secret`.                                  |
-| `BETTER_AUTH_URL`                   | Public origin of the deployment (`http://localhost:3000` locally). Optional in development, required in production.                  |
 
 Both connection strings are on the Neon dashboard under **Connect** — toggle
 _Connection pooling_ to switch between them. Keep `?sslmode=require`; if a query
