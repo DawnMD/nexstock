@@ -3,7 +3,7 @@ import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 
 // `DATABASE_URL` must be Neon's *pooled* connection string (the host contains
-// `-pooler`). Migrations run against `DIRECT_URL` instead — see prisma.config.ts.
+// `-pooler`). Migrations run against `DATABASE_URL_UNPOOLED` instead — see prisma.config.ts.
 const createPrismaClient = () =>
   new PrismaClient({
     adapter: new PrismaNeon({ connectionString: env.DATABASE_URL }),

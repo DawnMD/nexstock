@@ -1,7 +1,7 @@
 import { OrderTable } from "@/components/order-table";
 import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
-import { auth } from "@clerk/nextjs/server";
+import { requireSession } from "@/lib/session";
 
 export default async function Page({
   searchParams,
@@ -10,7 +10,7 @@ export default async function Page({
     query?: string | null;
   }>;
 }) {
-  await auth.protect();
+  await requireSession();
 
   const { query } = await searchParams;
   void api.order.getPaginatedOrders.prefetch({

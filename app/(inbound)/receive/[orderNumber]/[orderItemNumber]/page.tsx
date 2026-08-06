@@ -12,14 +12,14 @@ import { api } from "@/trpc/server";
 import { PackageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { ReceiveSkuProcess } from "@/components/receive-sku-process";
-import { auth } from "@clerk/nextjs/server";
+import { requireSession } from "@/lib/session";
 
 export default async function ReceiveItemPage({
   params,
 }: {
   params: Promise<{ orderItemNumber: string; orderNumber: string }>;
 }) {
-  await auth.protect();
+  await requireSession();
 
   const { orderItemNumber, orderNumber } = await params;
 

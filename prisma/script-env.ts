@@ -12,16 +12,16 @@ import { config as loadEnv } from "dotenv";
  * The connection string these scripts should use.
  *
  * They run long, interactive transactions, which Neon's pooled endpoint
- * (PgBouncer in transaction mode) handles poorly, so prefer `DIRECT_URL` and
+ * (PgBouncer in transaction mode) handles poorly, so prefer `DATABASE_URL_UNPOOLED` and
  * fall back to `DATABASE_URL` for non-Neon databases where only one is set.
  */
 export function loadDirectUrl(): string {
   loadEnv({ path: [".env.local", ".env"], quiet: true });
 
-  const url = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
+  const url = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
   if (!url) {
     throw new Error(
-      "Neither DIRECT_URL nor DATABASE_URL is set. Add them to .env.local before running this script.",
+      "Neither DATABASE_URL_UNPOOLED nor DATABASE_URL is set. Add them to .env.local before running this script.",
     );
   }
   return url;

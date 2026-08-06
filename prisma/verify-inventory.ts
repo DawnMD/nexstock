@@ -17,9 +17,39 @@ import { receiveStock } from "../server/services/receiving";
 const prisma = new PrismaClient({
   adapter: new PrismaNeon({ connectionString: loadDirectUrl() }),
 });
-const USER = "VERIFY";
-
 let failures = 0;
+
+/**
+ * Who the receipts, QC results, adjustments and putaways written below are
+ * attributed to.
+ *
+ * Those columns are foreign keys onto `User` now, so this script can no longer
+ * stamp a literal string. Resolution mirrors `seed.ts`: `--user-id=<id>` or
+ * `SEED_USER_ID`, else the synthetic `SYSTEM` user that the
+ * `link_audit_columns_to_user` migration guarantees exists.
+ */
+async function resolveActor(): Promise<string> {
+  const flag = process.argv
+    .find((arg) => arg.startsWith("--user-id="))
+    ?.slice("--user-id=".length);
+  const requested = flag ?? process.env.SEED_USER_ID;
+
+  if (requested) {
+    const user = await prisma.user.findUnique({ where: { id: requested } });
+    if (!user) throw new Error(`No user with id "${requested}".`);
+    return user.id;
+  }
+
+  const fallback =
+    (await prisma.user.findUnique({ where: { id: "SYSTEM" } })) ??
+    (await prisma.user.findFirst());
+  if (!fallback) {
+    throw new Error(
+      'No users exist. Run `pnpm user:create you@example.com "Your Name" "your-password"` first.',
+    );
+  }
+  return fallback.id;
+}
 
 function check(label: string, actual: unknown, expected: unknown) {
   const ok = JSON.stringify(actual) === JSON.stringify(expected);
@@ -58,6 +88,8 @@ async function onHandFor(orderItemId: number) {
 }
 
 async function main() {
+  const USER = await resolveActor();
+
   // A line nothing has been received against yet, so the arithmetic starts at 0.
   const orderItem = await prisma.orderItem.findFirst({
     where: { receivedQuantity: 0, orderedQuantity: { gte: 20 } },

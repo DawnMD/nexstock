@@ -10,9 +10,9 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
+import { auth } from "@/lib/auth";
 import { db } from "@/server/db";
 import { ServiceError } from "@/server/services/errors";
-import { auth } from "@clerk/nextjs/server";
 
 /**
  * 1. CONTEXT
@@ -27,11 +27,15 @@ import { auth } from "@clerk/nextjs/server";
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
-  const { userId } = await auth();
+  const session = await auth.api.getSession({ headers: opts.headers });
 
   return {
     db,
-    userId,
+    session,
+    // Kept as `string | null` deliberately: `isAuthenticatedMiddleware` narrows it
+    // to `string`, and that narrowing is what lets every router write
+    // `createdBy: ctx.userId` without a null check.
+    userId: session?.user.id ?? null,
     ...opts,
   };
 };

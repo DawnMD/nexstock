@@ -2,10 +2,10 @@ import { QualityCheckOrderSearch } from "@/components/quality-check-order-search
 import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
 import { SearchIcon } from "lucide-react";
-import { auth } from "@clerk/nextjs/server";
+import { requireSession } from "@/lib/session";
 
 export default async function QualityCheckPage() {
-  await auth.protect();
+  await requireSession();
 
   void api.qualityCheck.getAllOrderNumbers.prefetch();
 

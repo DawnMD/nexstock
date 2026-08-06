@@ -3,7 +3,7 @@ import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
 import { AddNewAdjustment } from "@/components/add-new-adjustment";
 import { AdjustmentListTable } from "@/components/adjustment-list-table";
-import { auth } from "@clerk/nextjs/server";
+import { requireSession } from "@/lib/session";
 
 export default async function AdjustmentsPage({
   searchParams,
@@ -14,7 +14,7 @@ export default async function AdjustmentsPage({
     limit?: string | null;
   }>;
 }) {
-  await auth.protect();
+  await requireSession();
 
   const { query, page, limit } = await searchParams;
 

@@ -107,19 +107,6 @@ const buyerNames = [
   "Diana Santos",
 ];
 
-const userNames = [
-  "John Admin",
-  "Sarah Manager",
-  "Mike Supervisor",
-  "Lisa Coordinator",
-  "Tom Assistant",
-  "Emma Clerk",
-  "Alex Handler",
-  "Nina Processor",
-  "Chris Operator",
-  "Maria Controller",
-];
-
 const notes = [
   "Priority order for summer collection",
   "Electronics inventory restock",
@@ -349,10 +336,61 @@ const consumables = [
   },
 ];
 
+/**
+ * Whose id gets stamped into every `createdBy` / `receivedBy` / … column.
+ *
+ * Pass `--user-id=<id>` (or set `SEED_USER_ID`) to attribute the seed data to a
+ * real account, so the demo rows look like you created them. With neither, the
+ * seed falls back to a synthetic `SYSTEM` user that has no Account row and
+ * therefore can never sign in — that keeps `prisma migrate reset` and CI working
+ * with no arguments.
+ */
+async function resolveSeedActor(): Promise<string> {
+  const flag = process.argv
+    .find((arg) => arg.startsWith("--user-id="))
+    ?.slice("--user-id=".length);
+  const requested = flag ?? process.env.SEED_USER_ID;
+
+  if (!requested) {
+    const system = await prisma.user.upsert({
+      where: { id: "SYSTEM" },
+      update: {},
+      create: {
+        id: "SYSTEM",
+        name: "System",
+        email: "system@nexstock.local",
+        emailVerified: true,
+      },
+    });
+    console.log(
+      `Seeding as ${system.name} (${system.id}) — pass --user-id=<id> to override.`,
+    );
+    return system.id;
+  }
+
+  // Fail loudly rather than inventing a User row: a placeholder id with no
+  // Account would look like a real account in Studio but could never sign in.
+  const user = await prisma.user.findUnique({ where: { id: requested } });
+  if (!user) {
+    throw new Error(
+      `No user with id "${requested}". Create one first:\n` +
+        `  pnpm user:create you@example.com "Your Name" "your-password"`,
+    );
+  }
+
+  console.log(`Seeding as ${user.name} (${user.id}).`);
+  return user.id;
+}
+
 async function main() {
   console.log("Starting database seeding...");
 
+  const actorId = await resolveSeedActor();
+
   // Delete existing data.
+  // Note the absence of User/Session/Account: this block truncates only the 14
+  // warehouse tables, so re-seeding never destroys accounts or logs you out.
+  // That is load-bearing now that the audit columns are foreign keys onto User.
   // Every relation in the schema uses Prisma's default `Restrict`, so these have
   // to run children-first or re-seeding dies on a foreign-key violation.
   // The inventory tables reference Sku and Location, so they go first of all.
@@ -423,8 +461,8 @@ async function main() {
       zone: "STAGE",
       aisle: "0",
       description: "Inbound staging bay - goods sit here until putaway",
-      createdBy: "SYSTEM",
-      updatedBy: "SYSTEM",
+      createdBy: actorId,
+      updatedBy: actorId,
     },
   });
 
@@ -447,8 +485,8 @@ async function main() {
           zone: zone,
           aisle: aisle,
           description: `Storage location in Zone ${zone}, Aisle ${aisle}`,
-          createdBy: "SYSTEM",
-          updatedBy: "SYSTEM",
+          createdBy: actorId,
+          updatedBy: actorId,
         },
       });
     }),
@@ -497,8 +535,8 @@ async function main() {
       prisma.sku.create({
         data: {
           ...sku,
-          createdBy: "SYSTEM",
-          updatedBy: "SYSTEM",
+          createdBy: actorId,
+          updatedBy: actorId,
         },
       }),
     ),
@@ -506,8 +544,8 @@ async function main() {
       prisma.sku.create({
         data: {
           ...sku,
-          createdBy: "SYSTEM",
-          updatedBy: "SYSTEM",
+          createdBy: actorId,
+          updatedBy: actorId,
         },
       }),
     ),
@@ -540,8 +578,8 @@ async function main() {
           status: OrderStatus.NEW,
           vendorReference: vendor.reference,
           paymentStatus: getRandomElement(paymentStatuses),
-          createdBy: getRandomElement(userNames),
-          updatedBy: getRandomElement(userNames),
+          createdBy: actorId,
+          updatedBy: actorId,
           notes: getRandomElement(notes),
           buyerName: getRandomElement(buyerNames),
           buyerCity: getRandomElement(cities),
@@ -620,13 +658,13 @@ async function main() {
           create: [
             {
               activityType: ActivityType.CHECK_IN,
-              createdBy: "SYSTEM",
+              createdBy: actorId,
               containerCondition: true,
               notes: "Vehicle arrived on schedule",
             },
             {
               activityType: ActivityType.OPEN,
-              createdBy: "SYSTEM",
+              createdBy: actorId,
               containerCondition: true,
               notes: "Container opened for unloading",
             },
@@ -684,7 +722,7 @@ async function main() {
         data: {
           orderItemId: orderItem.id,
           receivedQuantity,
-          receivedBy: "SYSTEM",
+          receivedBy: actorId,
           receivedAt,
           sku: orderItem.skuId,
           receivedNotes: "Seeded receipt",
@@ -708,7 +746,7 @@ async function main() {
         quantity: receivedQuantity,
         reason: MovementReason.RECEIPT,
         ref: { type: MovementRefType.RECEIVE_ITEM, id: receiveItem.id },
-        createdBy: "SYSTEM",
+        createdBy: actorId,
         notes: "Seeded receipt",
       });
 

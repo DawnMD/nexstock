@@ -14,14 +14,14 @@ import { Badge } from "@/components/ui/badge";
 import { api } from "@/trpc/server";
 import { PackageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
+import { requireSession } from "@/lib/session";
 
 export default async function OrderItemPage({
   params,
 }: {
   params: Promise<{ orderItemNumber: string; orderNumber: string }>;
 }) {
-  await auth.protect();
+  await requireSession();
 
   const { orderItemNumber, orderNumber } = await params;
 

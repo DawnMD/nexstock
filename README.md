@@ -27,8 +27,8 @@ Orders → Dock booking → Quality check → Receive → Putaway → Adjustment
 - [Next.js 15](https://nextjs.org) (App Router, React 19, Turbopack in dev)
 - [tRPC 11](https://trpc.io) + [TanStack Query](https://tanstack.com/query)
 - [Prisma 7](https://prisma.io) on [Neon](https://neon.tech) Postgres (via the `@prisma/adapter-neon` driver adapter)
-- [Clerk](https://clerk.com) for authentication
-- [Tailwind CSS 4](https://tailwindcss.com) + [shadcn/ui](https://ui.shadcn.com) (Radix primitives)
+- [Better Auth](https://better-auth.com) for authentication (self-hosted sessions, email + password)
+- [Tailwind CSS 4](https://tailwindcss.com) + [shadcn/ui](https://ui.shadcn.com) (Base UI primitives)
 
 ## Getting started
 
@@ -37,7 +37,6 @@ Orders → Dock booking → Quality check → Receive → Putaway → Adjustment
 - Node.js 22+ (the Neon serverless driver needs a global `WebSocket`)
 - pnpm 9 (`corepack enable`)
 - A [Neon](https://console.neon.tech) project (free tier is fine)
-- A [Clerk](https://dashboard.clerk.com) application (free tier is fine)
 
 ### Environment variables
 
@@ -50,9 +49,9 @@ cp .env.example .env
 | Variable                            | Description                                                                                                                          |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `DATABASE_URL`                      | Neon **pooled** connection string — the host contains `-pooler`. Used by Prisma Client at runtime.                                   |
-| `DIRECT_URL`                        | Neon **direct** connection string (same host without `-pooler`). Used by the Prisma CLI for migrations and by the `prisma/` scripts. |
-| `CLERK_SECRET_KEY`                  | Clerk secret key (`sk_test_…`), from the Clerk dashboard → API Keys.                                                                 |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key (`pk_test_…`), same page.                                                                                      |
+| `DATABASE_URL_UNPOOLED`                        | Neon **direct** connection string (same host without `-pooler`). Used by the Prisma CLI for migrations and by the `prisma/` scripts. |
+| `BETTER_AUTH_SECRET`                | 32+ character random string that signs session cookies. Generate one with `npx auth@latest secret`.                                  |
+| `BETTER_AUTH_URL`                   | Public origin of the deployment (`http://localhost:3000` locally). Optional in development, required in production.                  |
 
 Both connection strings are on the Neon dashboard under **Connect** — toggle
 _Connection pooling_ to switch between them. Keep `?sslmode=require`; if a query
@@ -66,22 +65,44 @@ bypass that (useful for Docker builds).
 Prisma 7 no longer loads `.env` implicitly, so `prisma.config.ts` does it
 explicitly, reading `.env.local` first and then `.env` (Next.js' precedence).
 Create one of those before `pnpm install`, since the postinstall
-`prisma generate` needs `DIRECT_URL`.
+`prisma generate` needs `DATABASE_URL_UNPOOLED`.
 
 ### Setup
 
 ```bash
 pnpm install        # also runs `prisma generate`
-pnpm db:push        # push the Prisma schema to your database
-pnpm db:seed        # load sample vendors, SKUs, orders, docks and receipts
-pnpm dev            # http://localhost:3000
+pnpm db:migrate     # apply migrations to your database
+
+# Public sign-up is disabled, so create your account out of band. Prints the id.
+pnpm user:create you@example.com "Your Name" "your-password"
+
+pnpm db:seed:as --user-id=<the id it printed>   # sample data attributed to you
+pnpm dev            # http://localhost:3000 → redirects to /sign-in
 ```
 
-The seed is destructive and re-runnable: it clears every table before inserting,
-so you can run it as often as you like to get back to a known state. It creates
-50 vendors, 10 SKUs, 20 locations, 10 docks, 50 orders (10 line items each),
-dock bookings with check-in/open activities for the first 20 orders, and
-receipts against the first 12 — enough that every screen has data on first load.
+The seed is destructive and re-runnable: it clears the 14 warehouse tables
+before inserting, so you can run it as often as you like to get back to a known
+state. It deliberately leaves `User`, `Session` and `Account` alone, so
+re-seeding never destroys accounts or logs you out. It creates 50 vendors, 10
+SKUs, 20 locations, 10 docks, 50 orders (10 line items each), dock bookings with
+check-in/open activities for the first 20 orders, and receipts against the first
+12 — enough that every screen has data on first load.
+
+Every audit column (`createdBy`, `receivedBy`, `putawayBy`, …) is a foreign key
+onto `User`, so the seed needs a real account to attribute its rows to. Bare
+`pnpm db:seed` falls back to a synthetic `SYSTEM` user that has no password and
+can never sign in, which keeps CI and `prisma migrate reset` working with no
+arguments. `SEED_USER_ID=<id> pnpm db:seed` is equivalent to the `--user-id`
+flag and is the only form that survives paths which cannot forward CLI args.
+
+### Authentication
+
+Email and password only — no social providers, and no email verification (no
+mail provider is wired). **Public sign-up is disabled**: `POST
+/api/auth/sign-up/email` is closed and there is no `/sign-up` page, so every
+account is minted with `pnpm user:create`. Sign in at `/sign-in`; every page
+under `app/(inbound)/` calls `requireSession()` and every mutating tRPC
+procedure is a `privateProcedure`.
 
 ## Scripts
 
@@ -97,7 +118,10 @@ receipts against the first 12 — enough that every screen has data on first loa
 | `pnpm db:push`      | Push schema without a migration (dev), then regenerate the client.               |
 | `pnpm db:generate`  | Create and apply a migration (`prisma migrate dev`), then regenerate the client. |
 | `pnpm db:migrate`   | Apply migrations (`prisma migrate deploy`).                                      |
-| `pnpm db:seed`      | Reset and seed the database.                                                     |
+| `pnpm db:seed`      | Reset and seed the warehouse tables (as the synthetic `SYSTEM` user).            |
+| `pnpm db:seed:as`   | Same, but forwards `--user-id=<id>` so the data is attributed to a real account. |
+| `pnpm db:reset`     | Drop the database and replay every migration. **Destroys all data.**             |
+| `pnpm user:create`  | Create an account: `pnpm user:create <email> "<name>" "<password>"`.             |
 | `pnpm db:studio`    | Prisma Studio.                                                                   |
 
 CI (`.github/workflows/ci.yaml`) runs lint, Prettier, typecheck and build on
@@ -117,11 +141,11 @@ lib/            shared helpers
 
 ## Known limitations
 
-- **No authorization.** Clerk authenticates users, but there is no role, org or
-  tenant model. `privateProcedure` only checks that a user is signed in, so any
-  signed-in user can read every order and mutate any booking, receipt, quality
-  check, adjustment or putaway. Fine for a single-operator hobby deployment;
-  this is the first thing to build before it goes multi-user.
+- **No authorization.** Better Auth authenticates users, but there is no role,
+  org or tenant model. `privateProcedure` only checks that a user is signed in,
+  so any signed-in user can read every order and mutate any booking, receipt,
+  quality check, adjustment or putaway. Fine for a single-operator hobby
+  deployment; this is the first thing to build before it goes multi-user.
 - **No inventory model.** There is no stock-on-hand table. Received, rejected
   and put-away quantities live in separate tables that are not reconciled, so
   quantities can drift between screens.

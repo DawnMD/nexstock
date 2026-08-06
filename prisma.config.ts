@@ -16,6 +16,6 @@ export default defineConfig({
   datasource: {
     // Migrations and introspection go over Neon's direct (non-pooled)
     // connection; PgBouncer can't run the DDL and advisory locks they need.
-    url: env("DIRECT_URL"),
+    url: env("DATABASE_URL_UNPOOLED"),
   },
 });
