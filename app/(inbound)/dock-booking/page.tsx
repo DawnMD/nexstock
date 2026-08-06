@@ -3,6 +3,7 @@ import { DockDateSearch } from "@/components/dock-date-search";
 import { SearchForm } from "@/components/order-search-form";
 import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function Page({
   searchParams,
@@ -12,6 +13,8 @@ export default async function Page({
     date?: string | null;
   }>;
 }) {
+  await auth.protect();
+
   const { query, date } = await searchParams;
 
   void api.order.getTodayDockSchedule.prefetch({

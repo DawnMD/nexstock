@@ -13,12 +13,15 @@ import { Label } from "@/components/ui/label";
 import { api, HydrateClient } from "@/trpc/server";
 import { PackageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function QualityCheckOrderPage({
   params,
 }: {
   params: Promise<{ orderNumber: string }>;
 }) {
+  await auth.protect();
+
   const { orderNumber } = await params;
 
   //direct call wont add to the cache, so we need to prefetch again

@@ -12,12 +12,15 @@ import { api, HydrateClient } from "@/trpc/server";
 import { format } from "date-fns";
 import { PackageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function LpnListOrderPage({
   params,
 }: {
   params: Promise<{ orderNumber: string }>;
 }) {
+  await auth.protect();
+
   const { orderNumber } = await params;
 
   const [order] = await Promise.all([

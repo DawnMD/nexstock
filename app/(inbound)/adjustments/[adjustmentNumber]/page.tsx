@@ -12,12 +12,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/trpc/server";
 import { PackageIcon, SlidersVertical } from "lucide-react";
 import { notFound } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function ViewAdjustmentPage({
   params,
 }: {
   params: Promise<{ adjustmentNumber: string }>;
 }) {
+  await auth.protect();
+
   const { adjustmentNumber } = await params;
 
   const adjustment = await api.adjustments.getAdjustmentInfo({

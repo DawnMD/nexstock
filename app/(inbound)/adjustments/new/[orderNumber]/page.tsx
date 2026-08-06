@@ -11,12 +11,15 @@ import { Label } from "@/components/ui/label";
 import { api } from "@/trpc/server";
 import { PackageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function NewAdjustmentPage({
   params,
 }: {
   params: Promise<{ orderNumber: string }>;
 }) {
+  await auth.protect();
+
   const { orderNumber } = await params;
 
   const order = await api.adjustments.getOrderInfo({ orderNumber });

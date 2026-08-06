@@ -14,12 +14,15 @@ import { Badge } from "@/components/ui/badge";
 import { api } from "@/trpc/server";
 import { PackageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function OrderItemPage({
   params,
 }: {
   params: Promise<{ orderItemNumber: string; orderNumber: string }>;
 }) {
+  await auth.protect();
+
   const { orderItemNumber, orderNumber } = await params;
 
   const orderItem = await api.qualityCheck.getQualityCheckItems({

@@ -3,12 +3,15 @@ import { VehicleActivityContainer } from "@/components/vehicle-activity-containn
 import { VehicleActivityForm } from "@/components/vehicle-activity-form";
 import { api, HydrateClient } from "@/trpc/server";
 import { notFound } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function OpenPage({
   params,
 }: {
   params: Promise<{ orderNumber: string; vehicleNumber: string }>;
 }) {
+  await auth.protect();
+
   const { orderNumber, vehicleNumber } = await params;
 
   const dockBookingDetails =

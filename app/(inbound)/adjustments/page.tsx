@@ -3,6 +3,7 @@ import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
 import { AddNewAdjustment } from "@/components/add-new-adjustment";
 import { AdjustmentListTable } from "@/components/adjustment-list-table";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function AdjustmentsPage({
   searchParams,
@@ -13,6 +14,8 @@ export default async function AdjustmentsPage({
     limit?: string | null;
   }>;
 }) {
+  await auth.protect();
+
   const { query, page, limit } = await searchParams;
 
   const searchLimit = limit ? parseInt(limit) : 20;

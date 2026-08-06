@@ -2,8 +2,11 @@ import { SearchIcon } from "lucide-react";
 import { api, HydrateClient } from "@/trpc/server";
 import { SiteHeader } from "@/components/site-header";
 import { PutawayLPNSearch } from "@/components/putaway-lpn-search";
+import { auth } from "@clerk/nextjs/server";
 
-export default function PutawayPage() {
+export default async function PutawayPage() {
+  await auth.protect();
+
   void api.putaway.getAllLPNs.prefetch();
 
   return (

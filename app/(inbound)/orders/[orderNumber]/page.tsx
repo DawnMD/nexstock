@@ -1,12 +1,15 @@
 import { OrderDetail } from "@/components/order-detail";
 import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function OrderDetailsPage({
   params,
 }: {
   params: Promise<{ orderNumber: string }>;
 }) {
+  await auth.protect();
+
   const { orderNumber } = await params;
 
   if (!orderNumber) {

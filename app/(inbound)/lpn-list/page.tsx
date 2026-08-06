@@ -2,8 +2,11 @@ import { SearchIcon } from "lucide-react";
 import { api, HydrateClient } from "@/trpc/server";
 import { SiteHeader } from "@/components/site-header";
 import { LpnListOrderSearch } from "@/components/lpn-list-order-search";
+import { auth } from "@clerk/nextjs/server";
 
-export default function LpnListPage() {
+export default async function LpnListPage() {
+  await auth.protect();
+
   void api.receive.getAllOrderNumbers.prefetch();
 
   return (

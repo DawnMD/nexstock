@@ -1,12 +1,15 @@
 import { api, HydrateClient } from "@/trpc/server";
 import { SiteHeader } from "@/components/site-header";
 import { PutawayProcess } from "@/components/putaway-process";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function PutawayLPNPage({
   params,
 }: {
   params: Promise<{ lpn: string }>;
 }) {
+  await auth.protect();
+
   const { lpn } = await params;
 
   await Promise.all([
