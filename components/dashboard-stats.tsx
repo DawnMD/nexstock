@@ -64,13 +64,15 @@ export function DashboardStats({ initialDate }: DashboardStatsProps) {
       <div className="flex flex-col space-y-2">
         <div className="flex justify-end">
           <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="justify-start font-normal">
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {initialDate
-                  ? format(new Date(initialDate), "PPP")
-                  : format(new Date(), "PPP")}
-              </Button>
+            <PopoverTrigger
+              render={
+                <Button variant="outline" className="justify-start font-normal" />
+              }
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {initialDate
+                ? format(new Date(initialDate), "PPP")
+                : format(new Date(), "PPP")}
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar

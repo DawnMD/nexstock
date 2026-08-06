@@ -145,6 +145,12 @@ export function NewAdjustmentForm({
                       <FormItem>
                         <FormLabel>SKU</FormLabel>
                         <Select
+                          // Base UI's SelectValue renders the raw value unless
+                          // Root knows the value -> label mapping.
+                          items={skus.map((sku) => ({
+                            value: sku.id.toString(),
+                            label: sku.skuId,
+                          }))}
                           onValueChange={field.onChange}
                           value={field.value}
                           disabled={skus.length === 0}
@@ -196,6 +202,10 @@ export function NewAdjustmentForm({
                             <FormItem>
                               <FormLabel>Reason</FormLabel>
                               <Select
+                                items={adjustmentReasons.map((reason) => ({
+                                  value: reason.value,
+                                  label: reason.label,
+                                }))}
                                 onValueChange={field.onChange}
                                 value={field.value}
                               >

@@ -147,8 +147,13 @@ export function VehicleActivityForm({
           </CardContent>
         </Card>
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-end">
-          <Button asChild type="button" variant="outline">
-            <Link href={"/dock-booking"}>Cancel</Link>
+          <Button
+            render={<Link href={"/dock-booking"} />}
+            nativeButton={false}
+            type="button"
+            variant="outline"
+          >
+            Cancel
           </Button>
           <Button
             disabled={

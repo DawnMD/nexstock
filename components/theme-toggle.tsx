@@ -28,18 +28,22 @@ export function ThemeToggle({
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
-              <SidebarMenuButton asChild>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="w-full justify-between"
-                  >
-                    <span>Theme</span>
-                    <Sun className="size-4 scale-100 rotate-0 transition-all dark:hidden dark:scale-0 dark:-rotate-90" />
-                    <Moon className="size-4 scale-0 rotate-90 transition-all not-dark:hidden dark:scale-100 dark:rotate-0" />
-                  </Button>
-                </DropdownMenuTrigger>
+              <SidebarMenuButton
+                render={
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="w-full justify-between"
+                      />
+                    }
+                  />
+                }
+              >
+                <span>Theme</span>
+                <Sun className="size-4 scale-100 rotate-0 transition-all dark:hidden dark:scale-0 dark:-rotate-90" />
+                <Moon className="size-4 scale-0 rotate-90 transition-all not-dark:hidden dark:scale-100 dark:rotate-0" />
               </SidebarMenuButton>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setTheme("light")}>

@@ -72,11 +72,9 @@ export function AddNewAdjustment() {
 
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <Button>
-          <PlusIcon className="mr-2 h-4 w-4" />
-          Add New Adjustment
-        </Button>
+      <DialogTrigger render={<Button />}>
+        <PlusIcon className="mr-2 h-4 w-4" />
+        Add New Adjustment
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

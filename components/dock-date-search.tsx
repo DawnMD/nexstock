@@ -37,15 +37,17 @@ export function DockDateSearch({ date }: { date?: string | null }) {
   return (
     <div className="flex flex-col gap-3">
       <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            id="date"
-            className="justify-between font-normal"
-          >
-            {format(date ? new Date(date) : new Date(), "dd MMM yyyy")}
-            <ChevronDownIcon />
-          </Button>
+        <PopoverTrigger
+          render={
+            <Button
+              variant="outline"
+              id="date"
+              className="justify-between font-normal"
+            />
+          }
+        >
+          {format(date ? new Date(date) : new Date(), "dd MMM yyyy")}
+          <ChevronDownIcon />
         </PopoverTrigger>
         <PopoverContent className="w-auto overflow-hidden p-0" align="start">
           <Calendar

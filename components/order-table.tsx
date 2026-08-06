@@ -110,12 +110,11 @@ const columns: ColumnDef<
             variant="ghost"
             size="icon"
             className="text-muted-foreground hover:text-foreground size-6 cursor-pointer"
-            asChild
+            render={<Link href={`/orders/${row.original.orderNumber}`} />}
+            nativeButton={false}
           >
-            <Link href={`/orders/${row.original.orderNumber}`}>
-              <ExternalLinkIcon className="size-4" />
-              <span className="sr-only">View order details</span>
-            </Link>
+            <ExternalLinkIcon className="size-4" />
+            <span className="sr-only">View order details</span>
           </Button>
           <div className="font-medium">{row.original.orderNumber}</div>
           <Button
@@ -245,13 +244,11 @@ export function OrderTable({ query }: { query?: string | null }) {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <SearchForm query={query} action="/orders" />
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              <ColumnsIcon />
-              <span className="hidden lg:inline">Customize Columns</span>
-              <span className="lg:hidden">Columns</span>
-              <ChevronDownIcon />
-            </Button>
+          <DropdownMenuTrigger render={<Button variant="outline" size="sm" />}>
+            <ColumnsIcon />
+            <span className="hidden lg:inline">Customize Columns</span>
+            <span className="lg:hidden">Columns</span>
+            <ChevronDownIcon />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             {table

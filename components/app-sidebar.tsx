@@ -100,13 +100,11 @@ export function AppSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              asChild
+              render={<Link href="/dashboard" />}
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <Link href="/dashboard">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Shelf Sync</span>
-              </Link>
+              <IconInnerShadowTop className="!size-5" />
+              <span className="text-base font-semibold">Shelf Sync</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

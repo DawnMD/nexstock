@@ -56,12 +56,11 @@ const columns: ColumnDef<
             variant="ghost"
             size="icon"
             className="text-muted-foreground hover:text-foreground size-6 cursor-pointer"
-            asChild
+            render={<Link href={`/adjustments/${row.original.id}`} />}
+            nativeButton={false}
           >
-            <Link href={`/adjustments/${row.original.id}`}>
-              <ExternalLinkIcon className="size-4" />
-              <span className="sr-only">View adjustment details</span>
-            </Link>
+            <ExternalLinkIcon className="size-4" />
+            <span className="sr-only">View adjustment details</span>
           </Button>
           <div className="font-medium">{row.original.id}</div>
         </div>

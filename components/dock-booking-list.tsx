@@ -185,24 +185,34 @@ export function DockBookingList({
                   <div className="flex gap-2 pt-2">
                     {/* If no activity, show check in button */}
                     {booking.activities.length === 0 && (
-                      <Button size="sm" className="flex-1" asChild>
-                        <Link
-                          href={`/dock-booking/${booking.orderId}/${booking.vehicleNumber}/check-in`}
-                        >
-                          <LogInIcon className="mr-1 h-3 w-3" />
-                          Check In
-                        </Link>
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        render={
+                          <Link
+                            href={`/dock-booking/${booking.orderId}/${booking.vehicleNumber}/check-in`}
+                          />
+                        }
+                        nativeButton={false}
+                      >
+                        <LogInIcon className="mr-1 h-3 w-3" />
+                        Check In
                       </Button>
                     )}
                     {/* If checked in, show open button */}
                     {isCheckIn && !isOpen && (
-                      <Button size="sm" className="flex-1" asChild>
-                        <Link
-                          href={`/dock-booking/${booking.orderId}/${booking.vehicleNumber}/open`}
-                        >
-                          <UnlockIcon className="mr-1 h-3 w-3" />
-                          Open
-                        </Link>
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        render={
+                          <Link
+                            href={`/dock-booking/${booking.orderId}/${booking.vehicleNumber}/open`}
+                          />
+                        }
+                        nativeButton={false}
+                      >
+                        <UnlockIcon className="mr-1 h-3 w-3" />
+                        Open
                       </Button>
                     )}
                     {/* If open, show close button */}
@@ -211,14 +221,15 @@ export function DockBookingList({
                         size="sm"
                         variant="outline"
                         className="flex-1 bg-transparent"
-                        asChild
+                        render={
+                          <Link
+                            href={`/dock-booking/${booking.orderId}/${booking.vehicleNumber}/close`}
+                          />
+                        }
+                        nativeButton={false}
                       >
-                        <Link
-                          href={`/dock-booking/${booking.orderId}/${booking.vehicleNumber}/close`}
-                        >
-                          <LockIcon className="mr-1 h-3 w-3" />
-                          Close
-                        </Link>
+                        <LockIcon className="mr-1 h-3 w-3" />
+                        Close
                       </Button>
                     )}
                     {/* If closed, show check out button */}
@@ -227,14 +238,15 @@ export function DockBookingList({
                         size="sm"
                         variant="outline"
                         className="flex-1 bg-transparent"
-                        asChild
+                        render={
+                          <Link
+                            href={`/dock-booking/${booking.orderId}/${booking.vehicleNumber}/check-out`}
+                          />
+                        }
+                        nativeButton={false}
                       >
-                        <Link
-                          href={`/dock-booking/${booking.orderId}/${booking.vehicleNumber}/check-out`}
-                        >
-                          <LogOutIcon className="mr-1 h-3 w-3" />
-                          Check Out
-                        </Link>
+                        <LogOutIcon className="mr-1 h-3 w-3" />
+                        Check Out
                       </Button>
                     )}
                     {/* If checked out, show complete badge */}

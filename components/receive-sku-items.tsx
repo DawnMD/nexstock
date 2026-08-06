@@ -85,11 +85,14 @@ export function ReceiveSkuItems({ orderNumber }: { orderNumber: string }) {
                   Received
                 </Button>
               ) : (
-                <Button size="sm" className="w-full cursor-pointer" asChild>
-                  <Link href={`/receive/${orderNumber}/${sku.id}`}>
-                    <ClipboardCheckIcon className="mr-2 h-3 w-3" />
-                    Receive SKU
-                  </Link>
+                <Button
+                  size="sm"
+                  className="w-full cursor-pointer"
+                  render={<Link href={`/receive/${orderNumber}/${sku.id}`} />}
+                  nativeButton={false}
+                >
+                  <ClipboardCheckIcon className="mr-2 h-3 w-3" />
+                  Receive SKU
                 </Button>
               )}
             </div>

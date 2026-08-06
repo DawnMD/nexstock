@@ -57,11 +57,14 @@ export function ErrorState({
               <RotateCcwIcon className="mr-2 h-4 w-4" />
               Try again
             </Button>
-            <Button variant="outline" className="h-11 flex-1" asChild>
-              <Link href="/dashboard">
-                <HomeIcon className="mr-2 h-4 w-4" />
-                Back to dashboard
-              </Link>
+            <Button
+              variant="outline"
+              className="h-11 flex-1"
+              render={<Link href="/dashboard" />}
+              nativeButton={false}
+            >
+              <HomeIcon className="mr-2 h-4 w-4" />
+              Back to dashboard
             </Button>
           </div>
         </CardContent>

@@ -255,27 +255,29 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
             }
           }}
         >
-          <SheetTrigger asChild>
-            <Button
-              className="cursor-pointer bg-black text-white hover:bg-black/90"
-              onClick={() => {
-                setEditingBooking(null);
-                form.reset({
-                  dockId: "",
-                  vehicleTypeId: "",
-                  vehicleNumber: "",
-                  weight: "",
-                  queue: "",
-                  cbm: "",
-                  driverName: "",
-                  driverPhone: "",
-                  eta: undefined,
-                });
-              }}
-            >
-              <PlusIcon className="mr-2 h-4 w-4" />
-              Create Booking
-            </Button>
+          <SheetTrigger
+            render={
+              <Button
+                className="cursor-pointer bg-black text-white hover:bg-black/90"
+                onClick={() => {
+                  setEditingBooking(null);
+                  form.reset({
+                    dockId: "",
+                    vehicleTypeId: "",
+                    vehicleNumber: "",
+                    weight: "",
+                    queue: "",
+                    cbm: "",
+                    driverName: "",
+                    driverPhone: "",
+                    eta: undefined,
+                  });
+                }}
+              />
+            }
+          >
+            <PlusIcon className="mr-2 h-4 w-4" />
+            Create Booking
           </SheetTrigger>
           <SheetContent className="overflow-y-auto sm:max-w-[500px]">
             <SheetHeader>
@@ -296,6 +298,12 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
                       <FormItem>
                         <FormLabel>Dock *</FormLabel>
                         <Select
+                          // Base UI's SelectValue renders the raw value unless
+                          // Root knows the value -> label mapping.
+                          items={availableDocks.map((dock) => ({
+                            value: dock.id.toString(),
+                            label: dock.name,
+                          }))}
                           onValueChange={field.onChange}
                           defaultValue={field.value}
                         >
@@ -326,6 +334,10 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
                       <FormItem>
                         <FormLabel>Vehicle Type *</FormLabel>
                         <Select
+                          items={vehicleTypes.map((vehicleType) => ({
+                            value: vehicleType.id.toString(),
+                            label: vehicleType.type,
+                          }))}
                           onValueChange={(value) => {
                             field.onChange(value);
                             // Generate random CBM when vehicle type is selected
@@ -459,23 +471,25 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
                       <FormItem className="flex flex-col">
                         <FormLabel>ETA</FormLabel>
                         <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground",
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP")
-                                ) : (
-                                  <span>Pick a ETA</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
+                          <PopoverTrigger
+                            render={
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground",
+                                  )}
+                                />
+                              </FormControl>
+                            }
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a ETA</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0" align="center">
                             <Calendar
@@ -608,15 +622,17 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 cursor-pointer"
-                          >
-                            <MoreVerticalIcon className="h-4 w-4" />
-                            <span className="sr-only">Open menu</span>
-                          </Button>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 cursor-pointer"
+                            />
+                          }
+                        >
+                          <MoreVerticalIcon className="h-4 w-4" />
+                          <span className="sr-only">Open menu</span>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
                           <DropdownMenuItem

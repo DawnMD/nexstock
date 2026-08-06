@@ -128,20 +128,20 @@ export function QualityCheckItems({ orderNumber }: { orderNumber: string }) {
                   <Button
                     size="sm"
                     className="w-full cursor-pointer"
-                    asChild={item.receivedQuantity > 0}
+                    render={
+                      item.receivedQuantity > 0 ? (
+                        <Link
+                          href={`/quality-check/${orderNumber}/${item.id}`}
+                        />
+                      ) : undefined
+                    }
+                    nativeButton={item.receivedQuantity === 0}
                     disabled={item.receivedQuantity === 0}
                   >
-                    {item.receivedQuantity > 0 ? (
-                      <Link href={`/quality-check/${orderNumber}/${item.id}`}>
-                        <ClipboardCheckIcon className="mr-2 h-3 w-3" />
-                        Start QC
-                      </Link>
-                    ) : (
-                      <>
-                        <ClipboardCheckIcon className="mr-2 h-3 w-3" />
-                        Nothing received yet
-                      </>
-                    )}
+                    <ClipboardCheckIcon className="mr-2 h-3 w-3" />
+                    {item.receivedQuantity > 0
+                      ? "Start QC"
+                      : "Nothing received yet"}
                   </Button>
                 )}
                 {item.qualityCheck && (
@@ -168,11 +168,13 @@ export function QualityCheckItems({ orderNumber }: { orderNumber: string }) {
               </div>
             ) : (
               <Dialog>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="mt-2 w-full cursor-pointer">
-                    <ClipboardCheckIcon className="mr-2 h-3 w-3" />
-                    Start QC
-                  </Button>
+                <DialogTrigger
+                  render={
+                    <Button size="sm" className="mt-2 w-full cursor-pointer" />
+                  }
+                >
+                  <ClipboardCheckIcon className="mr-2 h-3 w-3" />
+                  Start QC
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>

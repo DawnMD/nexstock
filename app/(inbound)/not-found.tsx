@@ -27,8 +27,12 @@ export default function InboundNotFound() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="h-11 w-full sm:w-auto" asChild>
-              <Link href="/dashboard">Back to dashboard</Link>
+            <Button
+              className="h-11 w-full sm:w-auto"
+              render={<Link href="/dashboard" />}
+              nativeButton={false}
+            >
+              Back to dashboard
             </Button>
           </CardContent>
         </Card>

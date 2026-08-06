@@ -194,7 +194,10 @@ export function PutawayProcess({ lpn }: PutawayProcessProps) {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="toLocation">Destination Location</Label>
-                <Select value={toLocation} onValueChange={setToLocation}>
+                <Select
+                  value={toLocation}
+                  onValueChange={(value) => setToLocation(value ?? "")}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select location" />
                   </SelectTrigger>

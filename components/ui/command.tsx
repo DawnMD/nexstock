@@ -36,11 +36,14 @@ function CommandDialog({
   className,
   showCloseButton = true,
   ...props
-}: React.ComponentProps<typeof Dialog> & {
+}: Omit<React.ComponentProps<typeof Dialog>, "children"> & {
   title?: string;
   description?: string;
   className?: string;
   showCloseButton?: boolean;
+  // Base UI's Dialog.Root children can be a payload render function; cmdk's
+  // Command only takes nodes, so narrow it back here.
+  children?: React.ReactNode;
 }) {
   return (
     <Dialog {...props}>

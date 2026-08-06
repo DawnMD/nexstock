@@ -230,23 +230,25 @@ export function ReceiveSkuProcess({
               <FormItem className="flex flex-col">
                 <FormLabel>Manufactured Date (Optional)</FormLabel>
                 <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground",
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
+                  <PopoverTrigger
+                    render={
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground",
+                          )}
+                        />
+                      </FormControl>
+                    }
+                  >
+                    {field.value ? (
+                      format(field.value, "PPP")
+                    ) : (
+                      <span>Pick a date</span>
+                    )}
+                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
@@ -272,23 +274,25 @@ export function ReceiveSkuProcess({
               <FormItem className="flex flex-col">
                 <FormLabel>Lot Expiry Date (Optional)</FormLabel>
                 <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground",
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
+                  <PopoverTrigger
+                    render={
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground",
+                          )}
+                        />
+                      </FormControl>
+                    }
+                  >
+                    {field.value ? (
+                      format(field.value, "PPP")
+                    ) : (
+                      <span>Pick a date</span>
+                    )}
+                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
