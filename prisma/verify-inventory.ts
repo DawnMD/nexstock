@@ -7,15 +7,15 @@
  */
 import { PrismaClient } from "../generated/prisma/client";
 import { AdjustmentType } from "../generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { loadDatabaseUrl } from "./script-env";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { loadDirectUrl } from "./script-env";
 import { applyAdjustmentBatch } from "../server/services/adjustments";
 import { createPutaway } from "../server/services/putaway";
 import { recordQualityCheck } from "../server/services/quality";
 import { receiveStock } from "../server/services/receiving";
 
 const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: loadDatabaseUrl() }),
+  adapter: new PrismaNeon({ connectionString: loadDirectUrl() }),
 });
 const USER = "VERIFY";
 

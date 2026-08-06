@@ -14,6 +14,8 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: env("DATABASE_URL"),
+    // Migrations and introspection go over Neon's direct (non-pooled)
+    // connection; PgBouncer can't run the DDL and advisory locks they need.
+    url: env("DIRECT_URL"),
   },
 });

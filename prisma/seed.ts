@@ -12,11 +12,11 @@ import {
   PaymentStatus,
   PrismaClient,
 } from "../generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { loadDatabaseUrl } from "./script-env";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { loadDirectUrl } from "./script-env";
 
 const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: loadDatabaseUrl() }),
+  adapter: new PrismaNeon({ connectionString: loadDirectUrl() }),
 });
 
 // Inbound staging bay. Receiving drops stock here and putaway moves it out, so

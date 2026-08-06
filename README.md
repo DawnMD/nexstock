@@ -11,22 +11,22 @@ storage location, and any discrepancies are corrected with adjustments.
 Orders → Dock booking → Quality check → Receive → Putaway → Adjustments
 ```
 
-| Step              | Route                                     | What happens                                                                                            |
-| ----------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Orders**        | `/orders`, `/orders/[orderNumber]`        | Purchase orders from vendors, each with line items (SKU + ordered quantity).                              |
-| **Dock booking**  | `/dock-booking`                           | Book a vehicle onto a dock for an order. Activities track the vehicle: `CHECK_IN` → `OPEN` → `CLOSE` → `CHECK_OUT`. |
-| **Quality check** | `/quality-check`                          | Inspect a line item once its container has been opened; record inspected and rejected quantities.          |
-| **Receive**       | `/receive`                                | Receive stock against an order line. Each receipt creates a `ReceiveItem` with an LPN (pallet label), lot, UOM and a staging location. |
-| **LPN list**      | `/lpn-list`                               | Browse what has been received, by order.                                                                  |
-| **Putaway**       | `/putaway`, `/putaway/[lpn]`              | Move a received LPN from staging into a storage `Location`.                                               |
-| **Adjustments**   | `/adjustments`                            | Record additions/subtractions against an order line to correct quantities.                                |
-| **Dashboard**     | `/dashboard`                              | Order stats and today's dock schedule.                                                                    |
+| Step              | Route                              | What happens                                                                                                                           |
+| ----------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Orders**        | `/orders`, `/orders/[orderNumber]` | Purchase orders from vendors, each with line items (SKU + ordered quantity).                                                           |
+| **Dock booking**  | `/dock-booking`                    | Book a vehicle onto a dock for an order. Activities track the vehicle: `CHECK_IN` → `OPEN` → `CLOSE` → `CHECK_OUT`.                    |
+| **Quality check** | `/quality-check`                   | Inspect a line item once its container has been opened; record inspected and rejected quantities.                                      |
+| **Receive**       | `/receive`                         | Receive stock against an order line. Each receipt creates a `ReceiveItem` with an LPN (pallet label), lot, UOM and a staging location. |
+| **LPN list**      | `/lpn-list`                        | Browse what has been received, by order.                                                                                               |
+| **Putaway**       | `/putaway`, `/putaway/[lpn]`       | Move a received LPN from staging into a storage `Location`.                                                                            |
+| **Adjustments**   | `/adjustments`                     | Record additions/subtractions against an order line to correct quantities.                                                             |
+| **Dashboard**     | `/dashboard`                       | Order stats and today's dock schedule.                                                                                                 |
 
 ## Stack
 
 - [Next.js 15](https://nextjs.org) (App Router, React 19, Turbopack in dev)
 - [tRPC 11](https://trpc.io) + [TanStack Query](https://tanstack.com/query)
-- [Prisma 7](https://prisma.io) on PostgreSQL (via the `@prisma/adapter-pg` driver adapter)
+- [Prisma 7](https://prisma.io) on [Neon](https://neon.tech) Postgres (via the `@prisma/adapter-neon` driver adapter)
 - [Clerk](https://clerk.com) for authentication
 - [Tailwind CSS 4](https://tailwindcss.com) + [shadcn/ui](https://ui.shadcn.com) (Radix primitives)
 
@@ -34,9 +34,9 @@ Orders → Dock booking → Quality check → Receive → Putaway → Adjustment
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22+ (the Neon serverless driver needs a global `WebSocket`)
 - pnpm 9 (`corepack enable`)
-- A PostgreSQL database
+- A [Neon](https://console.neon.tech) project (free tier is fine)
 - A [Clerk](https://dashboard.clerk.com) application (free tier is fine)
 
 ### Environment variables
@@ -47,11 +47,16 @@ Copy the example file and fill in real values:
 cp .env.example .env
 ```
 
-| Variable                            | Description                                                          |
-| ----------------------------------- | -------------------------------------------------------------------- |
-| `DATABASE_URL`                      | PostgreSQL connection string, e.g. `postgresql://user:pass@localhost:5432/shelf_sync`. |
-| `CLERK_SECRET_KEY`                  | Clerk secret key (`sk_test_…`), from the Clerk dashboard → API Keys.  |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key (`pk_test_…`), same page.                       |
+| Variable                            | Description                                                                                                                          |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `DATABASE_URL`                      | Neon **pooled** connection string — the host contains `-pooler`. Used by Prisma Client at runtime.                                   |
+| `DIRECT_URL`                        | Neon **direct** connection string (same host without `-pooler`). Used by the Prisma CLI for migrations and by the `prisma/` scripts. |
+| `CLERK_SECRET_KEY`                  | Clerk secret key (`sk_test_…`), from the Clerk dashboard → API Keys.                                                                 |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key (`pk_test_…`), same page.                                                                                      |
+
+Both connection strings are on the Neon dashboard under **Connect** — toggle
+_Connection pooling_ to switch between them. Keep `?sslmode=require`; if a query
+times out while the compute is waking from idle, append `&connect_timeout=10`.
 
 The values shipped in `.env.example` are well-formed placeholders so that
 `pnpm build` succeeds in CI; they will not authenticate against anything real.
@@ -61,7 +66,7 @@ bypass that (useful for Docker builds).
 Prisma 7 no longer loads `.env` implicitly, so `prisma.config.ts` does it
 explicitly, reading `.env.local` first and then `.env` (Next.js' precedence).
 Create one of those before `pnpm install`, since the postinstall
-`prisma generate` needs `DATABASE_URL`.
+`prisma generate` needs `DIRECT_URL`.
 
 ### Setup
 
@@ -80,20 +85,20 @@ receipts against the first 12 — enough that every screen has data on first loa
 
 ## Scripts
 
-| Script               | Description                                     |
-| -------------------- | ----------------------------------------------- |
-| `pnpm dev`           | Dev server with Turbopack.                       |
-| `pnpm build`         | Production build (typechecks and lints).         |
-| `pnpm start`         | Serve the production build.                      |
-| `pnpm typecheck`     | `tsc --noEmit`.                                  |
-| `pnpm lint`          | ESLint via `next lint`.                          |
-| `pnpm format:check`  | Prettier check.                                  |
-| `pnpm format:write`  | Prettier write.                                  |
-| `pnpm db:push`       | Push schema without a migration (dev), then regenerate the client. |
-| `pnpm db:generate`   | Create and apply a migration (`prisma migrate dev`), then regenerate the client. |
-| `pnpm db:migrate`    | Apply migrations (`prisma migrate deploy`).      |
-| `pnpm db:seed`       | Reset and seed the database.                     |
-| `pnpm db:studio`     | Prisma Studio.                                   |
+| Script              | Description                                                                      |
+| ------------------- | -------------------------------------------------------------------------------- |
+| `pnpm dev`          | Dev server with Turbopack.                                                       |
+| `pnpm build`        | Production build (typechecks and lints).                                         |
+| `pnpm start`        | Serve the production build.                                                      |
+| `pnpm typecheck`    | `tsc --noEmit`.                                                                  |
+| `pnpm lint`         | ESLint via `next lint`.                                                          |
+| `pnpm format:check` | Prettier check.                                                                  |
+| `pnpm format:write` | Prettier write.                                                                  |
+| `pnpm db:push`      | Push schema without a migration (dev), then regenerate the client.               |
+| `pnpm db:generate`  | Create and apply a migration (`prisma migrate dev`), then regenerate the client. |
+| `pnpm db:migrate`   | Apply migrations (`prisma migrate deploy`).                                      |
+| `pnpm db:seed`      | Reset and seed the database.                                                     |
+| `pnpm db:studio`    | Prisma Studio.                                                                   |
 
 CI (`.github/workflows/ci.yaml`) runs lint, Prettier, typecheck and build on
 every pull request.
