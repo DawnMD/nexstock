@@ -1,13 +1,7 @@
-// Import required ESLint utilities
-// FlatCompat helps migrate from the old ESLint config format to the new flat config format
-import { FlatCompat } from '@eslint/eslintrc';
+// Next.js ships native flat configs as of v16, so no FlatCompat shim is needed.
+import nextVitals from 'eslint-config-next/core-web-vitals';
 // Import TypeScript ESLint utilities for TypeScript-specific linting
 import tseslint from 'typescript-eslint';
-
-// Initialize FlatCompat with the current directory as base
-const compat = new FlatCompat({
-  baseDirectory: import.meta.dirname,
-});
 
 // Export the ESLint configuration using the new flat config format
 export default tseslint.config(
@@ -17,7 +11,7 @@ export default tseslint.config(
     ignores: ['.next'],
   },
   // Extend Next.js recommended ESLint configuration for core web vitals
-  ...compat.extends('next/core-web-vitals'),
+  ...nextVitals,
   // TypeScript-specific configuration
   {
     // Apply these rules only to TypeScript and TSX files
