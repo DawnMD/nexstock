@@ -44,7 +44,7 @@ const adjustmentReasons = Object.values(AdjustmentType).map((reason) => {
 
 const AdjustmentSectionSchema = z.object({
   sku: z.string().min(1, "SKU is required"),
-  quantity: z.coerce.number().min(1, "Quantity is required"),
+  quantity: z.number().min(1, "Quantity is required"),
   reason: z.string().min(1, "Reason is required"),
   notes: z.string().optional(),
 });
