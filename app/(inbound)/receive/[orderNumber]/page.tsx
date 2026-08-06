@@ -13,14 +13,14 @@ import { api, HydrateClient } from "@/trpc/server";
 import { format } from "date-fns";
 import { PackageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
+import { requireSession } from "@/lib/session";
 
 export default async function ReceiveSkuOrderPage({
   params,
 }: {
   params: Promise<{ orderNumber: string }>;
 }) {
-  await auth.protect();
+  await requireSession();
 
   const { orderNumber } = await params;
 

@@ -2,14 +2,14 @@ import { LocationMaster } from "@/components/location-master";
 import { SearchForm } from "@/components/order-search-form";
 import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
-import { auth } from "@clerk/nextjs/server";
+import { requireSession } from "@/lib/session";
 
 export default async function LocationsPage({
   searchParams,
 }: {
   searchParams: Promise<{ query?: string | null }>;
 }) {
-  await auth.protect();
+  await requireSession();
 
   const { query } = await searchParams;
 

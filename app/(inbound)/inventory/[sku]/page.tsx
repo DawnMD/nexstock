@@ -2,14 +2,14 @@ import { InventoryMovements } from "@/components/inventory-movements";
 import { InventorySkuBalances } from "@/components/inventory-sku-balances";
 import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
-import { auth } from "@clerk/nextjs/server";
+import { requireSession } from "@/lib/session";
 
 export default async function InventorySkuPage({
   params,
 }: {
   params: Promise<{ sku: string }>;
 }) {
-  await auth.protect();
+  await requireSession();
 
   const { sku } = await params;
 

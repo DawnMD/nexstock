@@ -3,14 +3,14 @@ import { VehicleActivityContainer } from "@/components/vehicle-activity-containn
 import { VehicleActivityForm } from "@/components/vehicle-activity-form";
 import { api, HydrateClient } from "@/trpc/server";
 import { notFound } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
+import { requireSession } from "@/lib/session";
 
 export default async function CheckInPage({
   params,
 }: {
   params: Promise<{ orderNumber: string; vehicleNumber: string }>;
 }) {
-  await auth.protect();
+  await requireSession();
 
   const { orderNumber, vehicleNumber } = await params;
 

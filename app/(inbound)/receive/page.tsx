@@ -2,10 +2,10 @@ import { SearchIcon } from "lucide-react";
 import { api, HydrateClient } from "@/trpc/server";
 import { SiteHeader } from "@/components/site-header";
 import { ReceiveSkuOrderSearch } from "@/components/receive-sku-order-search";
-import { auth } from "@clerk/nextjs/server";
+import { requireSession } from "@/lib/session";
 
 export default async function ReceivePage() {
-  await auth.protect();
+  await requireSession();
 
   void api.receive.getAllOrderNumbers.prefetch();
 
