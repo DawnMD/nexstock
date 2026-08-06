@@ -27,7 +27,7 @@ importers:
         specifier: ^5.1.1
         version: 5.1.1(react-hook-form@7.58.1(react@19.2.8))
       '@prisma/adapter-neon':
-        specifier: 7.9.1
+        specifier: ^7.9.1
         version: 7.9.1
       '@prisma/client':
         specifier: ^7.9.1
