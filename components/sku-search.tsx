@@ -29,10 +29,19 @@ export function SkuSearch({ orderNumber }: { orderNumber: string }) {
 
   return (
     <>
+      {/* Opens on click, not focus: the dialog restores focus here on close,
+          which would immediately reopen it. */}
       <Input
         placeholder="Search for SKUs..."
-        onFocus={() => {
+        readOnly
+        onClick={() => {
           setOpen(true);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setOpen(true);
+          }
         }}
       />
       <CommandDialog open={open} onOpenChange={setOpen}>
@@ -47,6 +56,7 @@ export function SkuSearch({ orderNumber }: { orderNumber: string }) {
                 key={order.Sku.sku}
                 value={order.Sku.sku}
                 onSelect={() => {
+                  setOpen(false);
                   router.push(`/quality-check/${orderNumber}/${order.id}`);
                 }}
               >
