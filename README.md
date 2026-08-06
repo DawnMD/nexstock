@@ -26,7 +26,7 @@ Orders → Dock booking → Quality check → Receive → Putaway → Adjustment
 
 - [Next.js 15](https://nextjs.org) (App Router, React 19, Turbopack in dev)
 - [tRPC 11](https://trpc.io) + [TanStack Query](https://tanstack.com/query)
-- [Prisma 6](https://prisma.io) on PostgreSQL
+- [Prisma 7](https://prisma.io) on PostgreSQL (via the `@prisma/adapter-pg` driver adapter)
 - [Clerk](https://clerk.com) for authentication
 - [Tailwind CSS 4](https://tailwindcss.com) + [shadcn/ui](https://ui.shadcn.com) (Radix primitives)
 
@@ -58,6 +58,11 @@ The values shipped in `.env.example` are well-formed placeholders so that
 Env vars are validated at startup by `env.js` — set `SKIP_ENV_VALIDATION=1` to
 bypass that (useful for Docker builds).
 
+Prisma 7 no longer loads `.env` implicitly, so `prisma.config.ts` does it
+explicitly, reading `.env.local` first and then `.env` (Next.js' precedence).
+Create one of those before `pnpm install`, since the postinstall
+`prisma generate` needs `DATABASE_URL`.
+
 ### Setup
 
 ```bash
@@ -84,8 +89,8 @@ receipts against the first 12 — enough that every screen has data on first loa
 | `pnpm lint`          | ESLint via `next lint`.                          |
 | `pnpm format:check`  | Prettier check.                                  |
 | `pnpm format:write`  | Prettier write.                                  |
-| `pnpm db:push`       | Push schema without a migration (dev).           |
-| `pnpm db:generate`   | Create and apply a migration (`prisma migrate dev`). |
+| `pnpm db:push`       | Push schema without a migration (dev), then regenerate the client. |
+| `pnpm db:generate`   | Create and apply a migration (`prisma migrate dev`), then regenerate the client. |
 | `pnpm db:migrate`    | Apply migrations (`prisma migrate deploy`).      |
 | `pnpm db:seed`       | Reset and seed the database.                     |
 | `pnpm db:studio`     | Prisma Studio.                                   |
@@ -101,6 +106,7 @@ components/     React components; components/ui/ is shadcn
 server/api/     tRPC routers (order, receive, quality-check, putaway, adjustments)
 trpc/           tRPC client/server wiring and the React Query client
 prisma/         schema.prisma, migrations, seed.ts
+generated/      Prisma Client, generated from the schema (gitignored)
 lib/            shared helpers
 ```
 

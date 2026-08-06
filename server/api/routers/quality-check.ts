@@ -1,6 +1,6 @@
 import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
 import { recordQualityCheck } from "@/server/services/quality";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus } from "@/generated/prisma/client";
 import { z } from "zod";
 
 export const qualityCheckRouter = createTRPCRouter({

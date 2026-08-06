@@ -5,8 +5,8 @@
  * trail and the quantity as two competing answers. It now moves
  * `OrderItem.receivedQuantity` and the inventory ledger in the same transaction.
  */
-import type { Prisma } from "@prisma/client";
-import { AdjustmentType, OrderItemStatus } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
+import { AdjustmentType, OrderItemStatus } from "@/generated/prisma/client";
 import { badRequest, notFound } from "@/server/services/errors";
 import {
   addToOrderItem,

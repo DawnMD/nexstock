@@ -28,7 +28,7 @@ import {
 import { getStatusVariant } from "@/lib/utils";
 import type { AppRouter } from "@/server/api/root";
 import { api } from "@/trpc/react";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus } from "@/generated/prisma/enums";
 import {
   type ColumnDef,
   type ColumnFiltersState,

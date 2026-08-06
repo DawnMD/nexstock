@@ -5,8 +5,8 @@
  * nothing else moved, so rejected units stayed putaway-able and on-hand was
  * overstated. It now draws the units out of the ledger as well.
  */
-import type { Prisma } from "@prisma/client";
-import { OrderItemStatus } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
+import { OrderItemStatus } from "@/generated/prisma/client";
 import { badRequest, notFound } from "@/server/services/errors";
 import {
   consumeFromOrderItem,

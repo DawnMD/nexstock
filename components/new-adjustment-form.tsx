@@ -27,7 +27,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/trpc/react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AdjustmentType } from "@prisma/client";
+import { AdjustmentType } from "@/generated/prisma/enums";
 import { SlidersVertical, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";

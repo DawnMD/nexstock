@@ -4,7 +4,7 @@
  * A receipt is the only way stock enters the warehouse, so this is where the
  * inventory ledger gets its first entry for every unit.
  */
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { badRequest, notFound } from "@/server/services/errors";
 import {
   MovementReason,

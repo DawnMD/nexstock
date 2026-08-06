@@ -6,7 +6,7 @@
  * read by the putaway capacity check in `locations.ts`, and `qualityCheck`
  * drives whether a line needs inspecting, so they are worth being able to edit.
  */
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { badRequest, conflict, notFound } from "@/server/services/errors";
 
 export interface SkuInput {

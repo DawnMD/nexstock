@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { getActivityType } from "@/lib/order-utils";
 import { api } from "@/trpc/react";
-import { ActivityType } from "@prisma/client";
+import { ActivityType } from "@/generated/prisma/enums";
 import { format } from "date-fns";
 import {
   CheckCircleIcon,

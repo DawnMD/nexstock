@@ -1,7 +1,7 @@
 import { calculateOrderStats } from "@/lib/order-utils";
 import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
-import type { Prisma } from "@prisma/client";
-import { ActivityType } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
+import { ActivityType } from "@/generated/prisma/client";
 import { TRPCError } from "@trpc/server";
 import { endOfDay, startOfDay } from "date-fns";
 import { z } from "zod";

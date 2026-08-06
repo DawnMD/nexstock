@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import type { PaymentStatus } from "@prisma/client";
+import type { PaymentStatus } from "@/generated/prisma/enums";
 import { TagIcon, BuildingIcon, CreditCardIcon } from "lucide-react";
 
 interface OrderDetailHeaderProps {

@@ -7,7 +7,7 @@
  * `receivedQuantity` minus past putaways, which means QC rejections and
  * shortage adjustments correctly reduce what can be moved.
  */
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { badRequest, notFound } from "@/server/services/errors";
 import {
   getBalance,

@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { MovementReason } from "@prisma/client";
+import type { MovementReason } from "@/generated/prisma/enums";
 
 /**
  * Reasons read better as prose than as enum members, and the receipt/issue

@@ -7,8 +7,8 @@ import tseslint from 'typescript-eslint';
 export default tseslint.config(
   // Base configuration that applies to all files
   {
-    // Ignore the .next directory which contains Next.js build output
-    ignores: ['.next'],
+    // Ignore build output: .next, and the Prisma client generated into generated/
+    ignores: ['.next', 'generated'],
   },
   // Extend Next.js recommended ESLint configuration for core web vitals
   ...nextVitals,

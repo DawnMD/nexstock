@@ -1,5 +1,5 @@
 import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
 
 const PAGE_LIMIT = 50;

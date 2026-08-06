@@ -5,14 +5,18 @@
  * Run with `pnpm tsx prisma/verify-inventory.ts` after a seed. It works on a
  * fresh order line, so it is safe to re-run.
  */
-import { PrismaClient } from "@prisma/client";
-import { AdjustmentType } from "@prisma/client";
+import { PrismaClient } from "../generated/prisma/client";
+import { AdjustmentType } from "../generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { loadDatabaseUrl } from "./script-env";
 import { applyAdjustmentBatch } from "../server/services/adjustments";
 import { createPutaway } from "../server/services/putaway";
 import { recordQualityCheck } from "../server/services/quality";
 import { receiveStock } from "../server/services/receiving";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: loadDatabaseUrl() }),
+});
 const USER = "VERIFY";
 
 let failures = 0;

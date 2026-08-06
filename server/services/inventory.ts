@@ -14,8 +14,8 @@
  * adjustments move `receivedQuantity`, QC rejections move `rejectedQuantity`,
  * and a putaway is a net-zero pair, so the two sides stay in step.
  */
-import type { Prisma } from "@prisma/client";
-import { MovementReason, MovementRefType } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
+import { MovementReason, MovementRefType } from "@/generated/prisma/client";
 import { badRequest } from "@/server/services/errors";
 
 /**

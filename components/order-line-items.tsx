@@ -16,7 +16,7 @@ import {
   XCircleIcon,
 } from "lucide-react";
 import { getStatusVariant, formatStatusDisplay } from "@/lib/order-utils";
-import type { AdjustmentType } from "@prisma/client";
+import type { AdjustmentType } from "@/generated/prisma/enums";
 
 interface LineItem {
   id: number;

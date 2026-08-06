@@ -1,5 +1,5 @@
-import type { Prisma } from "@prisma/client";
-import { OrderItemStatus, OrderStatus } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
+import { OrderItemStatus, OrderStatus } from "@/generated/prisma/client";
 
 const RESOLVED_ITEM_STATUSES: OrderItemStatus[] = [
   OrderItemStatus.RECEIVED,

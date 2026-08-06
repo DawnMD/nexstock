@@ -1,7 +1,7 @@
 import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
 import { applyAdjustmentBatch } from "@/server/services/adjustments";
-import type { Prisma } from "@prisma/client";
-import { AdjustmentType } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
+import { AdjustmentType } from "@/generated/prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 

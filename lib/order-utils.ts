@@ -1,4 +1,4 @@
-import type { ActivityType } from "@prisma/client";
+import type { ActivityType } from "@/generated/prisma/enums";
 
 export interface OrderStats {
   STANDARD: number;

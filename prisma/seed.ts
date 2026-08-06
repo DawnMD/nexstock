@@ -3,7 +3,7 @@ import {
   MovementRefType,
   recordMovement,
 } from "../server/services/inventory";
-import type { Vendor } from "@prisma/client";
+import type { Vendor } from "../generated/prisma/client";
 import {
   ActivityType,
   OrderItemStatus,
@@ -11,9 +11,13 @@ import {
   OrderType,
   PaymentStatus,
   PrismaClient,
-} from "@prisma/client";
+} from "../generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { loadDatabaseUrl } from "./script-env";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: loadDatabaseUrl() }),
+});
 
 // Inbound staging bay. Receiving drops stock here and putaway moves it out, so
 // this location has to exist for the ReceiveItem.location foreign key to hold.
