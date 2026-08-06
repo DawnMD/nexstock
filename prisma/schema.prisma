@@ -88,6 +88,23 @@ model User {
 
     sessions Session[]
     accounts Account[]
+
+    // Audit back-relations. Every `createdBy`/`updatedBy`/… column in the warehouse
+    // schema is a real foreign key onto this table, so a user with history cannot
+    // be deleted (the required sides are `onDelete: Restrict`).
+    ordersCreated         Order[]             @relation("OrderCreatedBy")
+    ordersUpdated         Order[]             @relation("OrderUpdatedBy")
+    dockActivitiesCreated DockActivity[]      @relation("DockActivityCreatedBy")
+    dockActivitiesUpdated DockActivity[]      @relation("DockActivityUpdatedBy")
+    skusCreated           Sku[]               @relation("SkuCreatedBy")
+    skusUpdated           Sku[]               @relation("SkuUpdatedBy")
+    locationsCreated      Location[]          @relation("LocationCreatedBy")
+    locationsUpdated      Location[]          @relation("LocationUpdatedBy")
+    qualityChecks         QualityCheck[]      @relation("QualityCheckInspectedBy")
+    receiveItems          ReceiveItem[]       @relation("ReceiveItemReceivedBy")
+    adjustments           Adjustment[]        @relation("AdjustmentAdjustedBy")
+    putaways              Putaway[]           @relation("PutawayPutawayBy")
+    inventoryMovements    InventoryMovement[] @relation("InventoryMovementCreatedBy")
 }
 
 model Session {
@@ -162,8 +179,10 @@ model Order {
     buyerCity           String?
     createdAt           DateTime      @default(now())
     createdBy           String
+    createdByUser       User          @relation("OrderCreatedBy", fields: [createdBy], references: [id], onDelete: Restrict)
     updatedAt           DateTime      @updatedAt
     updatedBy           String
+    updatedByUser       User          @relation("OrderUpdatedBy", fields: [updatedBy], references: [id], onDelete: Restrict)
     paymentStatus       PaymentStatus @default(NOT_PAID)
     vendor              Vendor        @relation(fields: [vendorReference], references: [reference]) // Link to Vendor
     items               OrderItem[]
@@ -171,6 +190,8 @@ model Order {
     adjustments         Adjustment[] // Establishes the one-to-many relationship with Adjustment
 
     @@index([vendorReference, orderNumber, status])
+    @@index([createdBy])
+    @@index([updatedBy])
 }
 
 model OrderItem {
@@ -246,13 +267,17 @@ model DockActivity {
     createdAt          DateTime     @default(now())
     updatedAt          DateTime     @updatedAt
     createdBy          String
+    createdByUser      User         @relation("DockActivityCreatedBy", fields: [createdBy], references: [id], onDelete: Restrict)
     updatedBy          String?
+    updatedByUser      User?        @relation("DockActivityUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
     containerCondition Boolean      @default(false) //Good or Bad
     notes              String?
     dockBooking        DockBooking  @relation(fields: [dockBookingId], references: [id], onDelete: Cascade)
     dockBookingId      Int
 
     @@index([dockBookingId])
+    @@index([createdBy])
+    @@index([updatedBy])
 }
 
 model Sku {
@@ -280,7 +305,9 @@ model Sku {
     createdAt     DateTime    @default(now())
     updatedAt     DateTime    @updatedAt
     createdBy     String
+    createdByUser User        @relation("SkuCreatedBy", fields: [createdBy], references: [id], onDelete: Restrict)
     updatedBy     String
+    updatedByUser User        @relation("SkuUpdatedBy", fields: [updatedBy], references: [id], onDelete: Restrict)
     //Lot attributes
     lot           String?
     lotExpiryDate DateTime?
@@ -290,6 +317,8 @@ model Sku {
     inventoryBalances  InventoryBalance[]
 
     @@index([sku])
+    @@index([createdBy])
+    @@index([updatedBy])
 }
 
 model QualityCheck {
@@ -298,6 +327,7 @@ model QualityCheck {
     orderItemId         Int       @unique
     qualityCheckStatus  Boolean   @default(false)
     inspectedBy         String
+    inspectedByUser     User      @relation("QualityCheckInspectedBy", fields: [inspectedBy], references: [id], onDelete: Restrict)
     inspectedAt         DateTime  @default(now())
     remarks             String?
     inspectedQuantity   Int       @default(0)
@@ -306,6 +336,7 @@ model QualityCheck {
     updatedAt           DateTime  @updatedAt
 
     @@index([qualityCheckStatus, orderItemId])
+    @@index([inspectedBy])
 }
 
 model ReceiveItem {
@@ -314,6 +345,7 @@ model ReceiveItem {
     orderItemId      Int // Removed @unique constraint
     receivedQuantity Int       @default(0)
     receivedBy       String
+    receivedByUser   User      @relation("ReceiveItemReceivedBy", fields: [receivedBy], references: [id], onDelete: Restrict)
     receivedAt       DateTime
     sku              String
     receivedNotes    String?
@@ -332,6 +364,7 @@ model ReceiveItem {
     putaways         Putaway[] // Track putaway operations for this LPN
 
     @@index([orderItemId, lpn, sku])
+    @@index([receivedBy])
 }
 
 model Adjustment {
@@ -342,18 +375,20 @@ model Adjustment {
     orderId          String
     adjustedQuantity Int
     adjustedBy       String
+    adjustedByUser   User           @relation("AdjustmentAdjustedBy", fields: [adjustedBy], references: [id], onDelete: Restrict)
     createdAt        DateTime       @default(now())
     updatedAt        DateTime       @updatedAt
     orderItem        OrderItem      @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
     order            Order          @relation(fields: [orderId], references: [orderNumber], onDelete: Restrict)
 
     @@index([orderItemId, orderId, id])
+    @@index([adjustedBy])
 }
 
 model Location {
-    id             Int       @id @default(autoincrement())
-    location       String    @unique
-    status         Boolean   @default(true)
+    id             Int      @id @default(autoincrement())
+    location       String   @unique
+    status         Boolean  @default(true)
     length         Int
     width          Int
     height         Int
@@ -363,9 +398,11 @@ model Location {
     aisle          String
     description    String?
     createdBy      String
+    createdByUser  User     @relation("LocationCreatedBy", fields: [createdBy], references: [id], onDelete: Restrict)
     updatedBy      String?
-    createdAt      DateTime  @default(now())
-    updatedAt      DateTime  @updatedAt
+    updatedByUser  User?    @relation("LocationUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt
 
     putawaysIn   Putaway[]     @relation("PutawayToLocation") // Track putaways into this location
     putawaysOut  Putaway[]     @relation("PutawayFromLocation") // Track putaways out of this location
@@ -375,26 +412,30 @@ model Location {
     inventoryBalances  InventoryBalance[]  @relation("InventoryBalanceLocation")
 
     @@index([location])
+    @@index([createdBy])
+    @@index([updatedBy])
 }
 
 model Putaway {
-    id            Int          @id @default(autoincrement())
-    lpn           String
-    sku           String
-    quantity      Int
-    fromLocation  String
-    toLocation    String
-    putawayBy     String
-    putawayAt     DateTime     @default(now())
-    notes         String?
-    createdAt     DateTime     @default(now())
-    updatedAt     DateTime     @updatedAt
-    location      Location     @relation("PutawayToLocation", fields: [toLocation], references: [location], onDelete: Restrict)
-    fromLocationRef Location   @relation("PutawayFromLocation", fields: [fromLocation], references: [location], onDelete: Restrict)
-    ReceiveItem   ReceiveItem? @relation(fields: [receiveItemId], references: [id], onDelete: SetNull)
-    receiveItemId Int?
+    id              Int          @id @default(autoincrement())
+    lpn             String
+    sku             String
+    quantity        Int
+    fromLocation    String
+    toLocation      String
+    putawayBy       String
+    putawayByUser   User         @relation("PutawayPutawayBy", fields: [putawayBy], references: [id], onDelete: Restrict)
+    putawayAt       DateTime     @default(now())
+    notes           String?
+    createdAt       DateTime     @default(now())
+    updatedAt       DateTime     @updatedAt
+    location        Location     @relation("PutawayToLocation", fields: [toLocation], references: [location], onDelete: Restrict)
+    fromLocationRef Location     @relation("PutawayFromLocation", fields: [fromLocation], references: [location], onDelete: Restrict)
+    ReceiveItem     ReceiveItem? @relation(fields: [receiveItemId], references: [id], onDelete: SetNull)
+    receiveItemId   Int?
 
     @@index([lpn, sku, fromLocation, toLocation])
+    @@index([putawayBy])
 }
 
 /// Append-only stock ledger: one row per movement of stock, signed so that
@@ -432,13 +473,15 @@ model InventoryMovement {
     refType MovementRefType
     refId   String
 
-    notes     String?
-    createdBy String
-    createdAt DateTime @default(now())
+    notes         String?
+    createdBy     String
+    createdByUser User     @relation("InventoryMovementCreatedBy", fields: [createdBy], references: [id], onDelete: Restrict)
+    createdAt     DateTime @default(now())
 
     @@index([sku, location, lot, lpn])
     @@index([refType, refId])
     @@index([createdAt])
+    @@index([createdBy])
 }
 
 /// Materialised stock on hand for one (sku, location, lot, lpn) key.

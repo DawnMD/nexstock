@@ -14,7 +14,7 @@
     "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push && prisma generate",
     "db:seed": "prisma db seed",
-    "db:reset": "prisma migrate reset --skip-seed",
+    "db:reset": "prisma migrate reset",
     "db:seed:as": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "user:create": "tsx scripts/create-user.ts",
