@@ -1,6 +1,8 @@
 "use client";
 
-import { type AppRouter } from "@/server/api/root";
+// Must be a top-level `import type`: with `verbatimModuleSyntax`, the inline `{ type AppRouter }`
+// form still emits a side-effect import, pulling the server-only tRPC root into the client bundle.
+import type { AppRouter } from "@/server/api/root";
 import { createQueryClient } from "@/trpc/query-client";
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
