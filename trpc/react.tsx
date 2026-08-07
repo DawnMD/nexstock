@@ -3,6 +3,7 @@
 // Must be a top-level `import type`: with `verbatimModuleSyntax`, the inline `{ type AppRouter }`
 // form still emits a side-effect import, pulling the server-only tRPC root into the client bundle.
 import type { AppRouter } from "@/server/api/root";
+import { getBaseUrl } from "@/lib/get-base-url";
 import { createQueryClient } from "@/trpc/query-client";
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -72,10 +73,4 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
       </api.Provider>
     </QueryClientProvider>
   );
-}
-
-function getBaseUrl() {
-  if (typeof window !== "undefined") return window.location.origin;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return `http://localhost:${process.env.PORT ?? 3000}`;
 }
