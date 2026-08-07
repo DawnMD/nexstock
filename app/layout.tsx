@@ -16,8 +16,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Shelf Sync",
-  description: "Warehouse Management System",
+  title: {
+    default: "NexStock",
+    template: "%s · NexStock",
+  },
+  description: "Inbound warehouse management system",
+  applicationName: "NexStock",
+  appleWebApp: { title: "NexStock", capable: true },
+  // Next.js fills og:/twitter: title and description from the resolved page
+  // metadata, so per-page values flow through without repeating them here.
+  openGraph: { type: "website", siteName: "NexStock" },
+  twitter: { card: "summary" },
+  // Every route is behind a session guard, so there is nothing here worth
+  // indexing — and order numbers and SKUs should not leak into search results.
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({

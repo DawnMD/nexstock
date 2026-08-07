@@ -1,6 +1,6 @@
-# Shelf Sync
+# NexStock
 
-An inbound warehouse management system (WMS). Shelf Sync covers the receiving
+An inbound warehouse management system (WMS). NexStock covers the receiving
 side of a warehouse: a purchase order arrives, a vehicle books a dock, the goods
 are inspected and received against the order lines, stock is put away into a
 storage location, and any discrepancies are corrected with adjustments.

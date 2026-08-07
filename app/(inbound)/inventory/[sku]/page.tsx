@@ -1,8 +1,21 @@
+import type { Metadata } from "next";
 import { InventoryMovements } from "@/components/inventory-movements";
 import { InventorySkuBalances } from "@/components/inventory-sku-balances";
 import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
 import { requireSession } from "@/lib/session";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ sku: string }>;
+}): Promise<Metadata> {
+  const { sku } = await params;
+  return {
+    title: `${sku} · Inventory`,
+    description: `Stock balances and movement history for SKU ${sku}.`,
+  };
+}
 
 export default async function InventorySkuPage({
   params,

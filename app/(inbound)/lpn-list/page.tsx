@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import { SearchIcon } from "lucide-react";
 import { api, HydrateClient } from "@/trpc/server";
 import { SiteHeader } from "@/components/site-header";
 import { LpnListOrderSearch } from "@/components/lpn-list-order-search";
 import { requireSession } from "@/lib/session";
+
+export const metadata: Metadata = {
+  title: "LPN List",
+  description: "Look up the licence plate numbers created during receiving.",
+};
 
 export default async function LpnListPage() {
   await requireSession();

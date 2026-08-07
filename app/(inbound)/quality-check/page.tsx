@@ -1,8 +1,15 @@
+import type { Metadata } from "next";
 import { QualityCheckOrderSearch } from "@/components/quality-check-order-search";
 import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
 import { SearchIcon } from "lucide-react";
 import { requireSession } from "@/lib/session";
+
+export const metadata: Metadata = {
+  title: "Quality Check",
+  description:
+    "Inspect inbound order lines before they are received into stock.",
+};
 
 export default async function QualityCheckPage() {
   await requireSession();

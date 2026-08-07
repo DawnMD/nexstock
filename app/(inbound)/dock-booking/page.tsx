@@ -1,9 +1,16 @@
+import type { Metadata } from "next";
 import { DockBookingList } from "@/components/dock-booking-list";
 import { DockDateSearch } from "@/components/dock-date-search";
 import { SearchForm } from "@/components/order-search-form";
 import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
 import { requireSession } from "@/lib/session";
+
+export const metadata: Metadata = {
+  title: "Dock Booking",
+  description:
+    "Book docks for inbound vehicles and follow them from open through check-out.",
+};
 
 export default async function Page({
   searchParams,

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { ReceiveSkuItems } from "@/components/receive-sku-items";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,18 @@ import { format } from "date-fns";
 import { PackageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/session";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ orderNumber: string }>;
+}): Promise<Metadata> {
+  const { orderNumber } = await params;
+  return {
+    title: `Receive · Order ${orderNumber}`,
+    description: `Receive the outstanding lines on order ${orderNumber}.`,
+  };
+}
 
 export default async function ReceiveSkuOrderPage({
   params,

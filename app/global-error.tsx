@@ -33,7 +33,7 @@ export default function GlobalError({
       >
         <div style={{ maxWidth: "32rem", textAlign: "center" }}>
           <h1 style={{ fontSize: "1.25rem", marginBottom: "0.5rem" }}>
-            Shelf Sync could not start
+            NexStock could not start
           </h1>
           <p style={{ color: "#666", marginBottom: "1.5rem" }}>
             {error.message || "An unexpected error occurred."}

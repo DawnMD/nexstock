@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import { LocationMaster } from "@/components/location-master";
 import { SearchForm } from "@/components/order-search-form";
 import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
 import { requireSession } from "@/lib/session";
+
+export const metadata: Metadata = {
+  title: "Locations",
+  description: "The storage locations stock can be put away into.",
+};
 
 export default async function LocationsPage({
   searchParams,

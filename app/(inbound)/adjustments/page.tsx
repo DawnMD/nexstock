@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import { SearchForm } from "@/components/order-search-form";
 import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
 import { AddNewAdjustment } from "@/components/add-new-adjustment";
 import { AdjustmentListTable } from "@/components/adjustment-list-table";
 import { requireSession } from "@/lib/session";
+
+export const metadata: Metadata = {
+  title: "Adjustments",
+  description: "Correct stock discrepancies found after receiving.",
+};
 
 export default async function AdjustmentsPage({
   searchParams,

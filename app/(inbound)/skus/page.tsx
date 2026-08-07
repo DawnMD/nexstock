@@ -1,8 +1,15 @@
+import type { Metadata } from "next";
 import { SearchForm } from "@/components/order-search-form";
 import { SiteHeader } from "@/components/site-header";
 import { SkuMaster } from "@/components/sku-master";
 import { api, HydrateClient } from "@/trpc/server";
 import { requireSession } from "@/lib/session";
+
+export const metadata: Metadata = {
+  title: "SKUs",
+  description:
+    "The SKU catalogue used across receiving, quality check, and inventory.",
+};
 
 export default async function SkusPage({
   searchParams,

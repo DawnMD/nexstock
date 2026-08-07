@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { SiteHeader } from "@/components/site-header";
 import {
   Card,
@@ -13,6 +14,18 @@ import { PackageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { ReceiveSkuProcess } from "@/components/receive-sku-process";
 import { requireSession } from "@/lib/session";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ orderItemNumber: string; orderNumber: string }>;
+}): Promise<Metadata> {
+  const { orderItemNumber, orderNumber } = await params;
+  return {
+    title: `Receive · Line ${orderItemNumber}`,
+    description: `Receive line ${orderItemNumber} of order ${orderNumber}.`,
+  };
+}
 
 export default async function ReceiveItemPage({
   params,

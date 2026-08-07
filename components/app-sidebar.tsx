@@ -14,8 +14,8 @@ import {
 } from "@/components/ui/sidebar";
 import {
   IconDashboard,
-  IconInnerShadowTop,
   IconPackage,
+  IconStack2,
   IconTruck,
   IconSearch,
   IconShoppingCart,
@@ -103,8 +103,8 @@ export function AppSidebar({
               render={<Link href="/dashboard" />}
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <IconInnerShadowTop className="!size-5" />
-              <span className="text-base font-semibold">Shelf Sync</span>
+              <IconStack2 className="!size-5" />
+              <span className="text-base font-semibold">NexStock</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

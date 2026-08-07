@@ -64,7 +64,7 @@ export function SignInForm() {
           <CardHeader>
             <CardTitle>Sign in</CardTitle>
             <CardDescription>
-              Enter your credentials to access Shelf Sync
+              Enter your credentials to access NexStock
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">

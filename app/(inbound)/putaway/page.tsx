@@ -1,8 +1,15 @@
+import type { Metadata } from "next";
 import { SearchIcon } from "lucide-react";
 import { api, HydrateClient } from "@/trpc/server";
 import { SiteHeader } from "@/components/site-header";
 import { PutawayLPNSearch } from "@/components/putaway-lpn-search";
 import { requireSession } from "@/lib/session";
+
+export const metadata: Metadata = {
+  title: "Putaway",
+  description:
+    "Scan an LPN to put received stock away into a storage location.",
+};
 
 export default async function PutawayPage() {
   await requireSession();

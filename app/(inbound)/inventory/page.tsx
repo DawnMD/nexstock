@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import { InventorySummary } from "@/components/inventory-summary";
 import { InventoryViews } from "@/components/inventory-views";
 import { SearchForm } from "@/components/order-search-form";
 import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
 import { requireSession } from "@/lib/session";
+
+export const metadata: Metadata = {
+  title: "Inventory",
+  description: "Live stock balances by SKU across every storage location.",
+};
 
 export default async function InventoryPage({
   searchParams,

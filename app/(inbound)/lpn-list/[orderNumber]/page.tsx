@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { LpnList } from "@/components/lpn-list";
 import { SiteHeader } from "@/components/site-header";
 import {
@@ -13,6 +14,18 @@ import { format } from "date-fns";
 import { PackageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/session";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ orderNumber: string }>;
+}): Promise<Metadata> {
+  const { orderNumber } = await params;
+  return {
+    title: `LPNs · Order ${orderNumber}`,
+    description: `Licence plate numbers created while receiving order ${orderNumber}.`,
+  };
+}
 
 export default async function LpnListOrderPage({
   params,

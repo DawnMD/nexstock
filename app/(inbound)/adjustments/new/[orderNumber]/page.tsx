@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { NewAdjustmentForm } from "@/components/new-adjustment-form";
 import { SiteHeader } from "@/components/site-header";
 import {
@@ -12,6 +13,18 @@ import { api } from "@/trpc/server";
 import { PackageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/session";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ orderNumber: string }>;
+}): Promise<Metadata> {
+  const { orderNumber } = await params;
+  return {
+    title: `New Adjustment · Order ${orderNumber}`,
+    description: `Raise a stock adjustment against order ${orderNumber}.`,
+  };
+}
 
 export default async function NewAdjustmentPage({
   params,

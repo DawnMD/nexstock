@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { SiteHeader } from "@/components/site-header";
 import {
   Card,
@@ -13,6 +14,18 @@ import { api } from "@/trpc/server";
 import { PackageIcon, SlidersVertical } from "lucide-react";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/session";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ adjustmentNumber: string }>;
+}): Promise<Metadata> {
+  const { adjustmentNumber } = await params;
+  return {
+    title: `Adjustment ${adjustmentNumber}`,
+    description: `Stock adjustment ${adjustmentNumber} and the lines it corrected.`,
+  };
+}
 
 export default async function ViewAdjustmentPage({
   params,

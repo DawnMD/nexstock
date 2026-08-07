@@ -1,7 +1,20 @@
+import type { Metadata } from "next";
 import { OrderDetail } from "@/components/order-detail";
 import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
 import { requireSession } from "@/lib/session";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ orderNumber: string }>;
+}): Promise<Metadata> {
+  const { orderNumber } = await params;
+  return {
+    title: `Order ${orderNumber}`,
+    description: `Order lines, dock bookings, and inbound progress for order ${orderNumber}.`,
+  };
+}
 
 export default async function OrderDetailsPage({
   params,

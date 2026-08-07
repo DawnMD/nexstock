@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { QualityCheckProcess } from "@/components/quality-check-process";
 import { SiteHeader } from "@/components/site-header";
 import {
@@ -15,6 +16,18 @@ import { api } from "@/trpc/server";
 import { PackageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/session";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ orderItemNumber: string; orderNumber: string }>;
+}): Promise<Metadata> {
+  const { orderItemNumber, orderNumber } = await params;
+  return {
+    title: `Quality Check · Line ${orderItemNumber}`,
+    description: `Inspect line ${orderItemNumber} of order ${orderNumber}.`,
+  };
+}
 
 export default async function OrderItemPage({
   params,

@@ -1,7 +1,20 @@
+import type { Metadata } from "next";
 import { api, HydrateClient } from "@/trpc/server";
 import { SiteHeader } from "@/components/site-header";
 import { PutawayProcess } from "@/components/putaway-process";
 import { requireSession } from "@/lib/session";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lpn: string }>;
+}): Promise<Metadata> {
+  const { lpn } = await params;
+  return {
+    title: `Putaway ${lpn}`,
+    description: `Put the stock on ${lpn} away into a storage location.`,
+  };
+}
 
 export default async function PutawayLPNPage({
   params,

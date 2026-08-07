@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import { SearchIcon } from "lucide-react";
 import { api, HydrateClient } from "@/trpc/server";
 import { SiteHeader } from "@/components/site-header";
 import { ReceiveSkuOrderSearch } from "@/components/receive-sku-order-search";
 import { requireSession } from "@/lib/session";
+
+export const metadata: Metadata = {
+  title: "Receive SKU",
+  description: "Scan an order to receive its lines against the purchase order.",
+};
 
 export default async function ReceivePage() {
   await requireSession();
