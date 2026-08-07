@@ -14,6 +14,7 @@ export default async function MainAppLayout({
   // Better Auth's `name` is a required column but can be an empty string, so fall
   // back through the email local part before giving up.
   const userData = {
+    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- `??` would not fall back on an empty string
     name: session.user.name || session.user.email.split("@")[0] || "User",
     email: session.user.email,
     avatar: session.user.image ?? "",

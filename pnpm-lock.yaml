@@ -13,16 +13,16 @@ importers:
         version: 1.7.0(@date-fns/tz@1.2.0)(@types/react@19.2.18)(date-fns@4.1.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@hookform/resolvers':
         specifier: ^5.7.1
-        version: 5.7.1(@standard-schema/spec@1.1.0)(ajv@8.20.0)(effect@3.20.0)(react-hook-form@7.84.0(react@19.2.8))(valibot@1.4.2(typescript@7.0.2))(zod@4.4.3)
+        version: 5.7.1(@standard-schema/spec@1.1.0)(ajv@8.20.0)(effect@3.20.0)(react-hook-form@7.84.0(react@19.2.8))(valibot@1.4.2(@typescript/typescript6@6.0.2))(zod@4.4.3)
       '@prisma/adapter-neon':
         specifier: ^7.9.1
         version: 7.9.1
       '@prisma/client':
         specifier: ^7.9.1
-        version: 7.9.1(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2))(typescript@7.0.2)
+        version: 7.9.1(@typescript/typescript6@6.0.2)(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))
       '@t3-oss/env-nextjs':
         specifier: ^0.13.11
-        version: 0.13.11(typescript@7.0.2)(valibot@1.4.2(typescript@7.0.2))(zod@4.4.3)
+        version: 0.13.11(@typescript/typescript6@6.0.2)(valibot@1.4.2(@typescript/typescript6@6.0.2))(zod@4.4.3)
       '@tabler/icons-react':
         specifier: ^3.34.0
         version: 3.34.0(react@19.2.8)
@@ -37,16 +37,16 @@ importers:
         version: 8.21.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@trpc/client':
         specifier: ^11.0.0
-        version: 11.4.0(@trpc/server@11.4.0(typescript@7.0.2))(typescript@7.0.2)
+        version: 11.4.0(@trpc/server@11.4.0(@typescript/typescript6@6.0.2))(@typescript/typescript6@6.0.2)
       '@trpc/react-query':
         specifier: ^11.0.0
-        version: 11.4.0(@tanstack/react-query@5.80.7(react@19.2.8))(@trpc/client@11.4.0(@trpc/server@11.4.0(typescript@7.0.2))(typescript@7.0.2))(@trpc/server@11.4.0(typescript@7.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2)
+        version: 11.4.0(@tanstack/react-query@5.80.7(react@19.2.8))(@trpc/client@11.4.0(@trpc/server@11.4.0(@typescript/typescript6@6.0.2))(@typescript/typescript6@6.0.2))(@trpc/server@11.4.0(@typescript/typescript6@6.0.2))(@typescript/typescript6@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@trpc/server':
         specifier: ^11.0.0
-        version: 11.4.0(typescript@7.0.2)
+        version: 11.4.0(@typescript/typescript6@6.0.2)
       better-auth:
         specifier: ^1.6.26
-        version: 1.6.26(@prisma/client@7.9.1(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2))(typescript@7.0.2))(mysql2@3.15.3)(next@16.3.0(@babel/core@7.29.7)(@types/node@20.19.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 1.6.26(@prisma/client@7.9.1(@typescript/typescript6@6.0.2)(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)))(mysql2@3.15.3)(next@16.3.0(@babel/core@7.29.7)(@types/node@20.19.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -111,6 +111,9 @@ importers:
       '@types/react-dom':
         specifier: ^19.2.4
         version: 19.2.4(@types/react@19.2.18)
+      '@typescript/native':
+        specifier: npm:typescript@^7.0.2
+        version: typescript@7.0.2
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
@@ -119,7 +122,7 @@ importers:
         version: 9.39.5(jiti@2.7.0)
       eslint-config-next:
         specifier: 16.3.0
-        version: 16.3.0(@typescript-eslint/parser@8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2))(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2)
+        version: 16.3.0(@typescript-eslint/parser@8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0)))(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0))
       jiti:
         specifier: ^2.7.0
         version: 2.7.0
@@ -131,7 +134,7 @@ importers:
         version: 0.6.12(prettier@3.5.3)
       prisma:
         specifier: ^7.9.1
-        version: 7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2)
+        version: 7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       tailwindcss:
         specifier: ^4
         version: 4.1.8
@@ -142,11 +145,11 @@ importers:
         specifier: ^1.3.4
         version: 1.3.4
       typescript:
-        specifier: ^7.0.2
-        version: 7.0.2
+        specifier: npm:@typescript/typescript6@^6.0.2
+        version: '@typescript/typescript6@6.0.2'
       typescript-eslint:
         specifier: ^8.66.0
-        version: 8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2)
+        version: 8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0))
 
 packages:
 
@@ -1619,6 +1622,10 @@ packages:
     engines: {node: '>=16.20.0'}
     cpu: [x64]
     os: [win32]
+
+  '@typescript/typescript6@6.0.2':
+    resolution: {integrity: sha512-mbCddXd+jm7hfx7w2YU64/Av4/NqqeG3GoRZgxPcgoTxYjhrcfJRw9ULch71SS4G+Q3bOXFhRvPqjguN0Hyp5w==}
+    hasBin: true
 
   '@unrs/resolver-binding-darwin-arm64@1.7.11':
     resolution: {integrity: sha512-i3/wlWjQJXMh1uiGtiv7k1EYvrrS3L1hdwmWJJiz1D8jWy726YFYPIxQWbEIVPVAgrfRR0XNlLrTQwq17cuCGw==}
@@ -3536,6 +3543,11 @@ packages:
       eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
       typescript: '>=4.8.4 <6.1.0'
 
+  typescript@6.0.3:
+    resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   typescript@7.0.2:
     resolution: {integrity: sha512-8FYau96o3NKOhbjKi/qNvG/W5jhzxkbdm5sj9AbZ/5T5sWqn3hJgLfGx27sRKZWTvyzCP8dLRBTf5tBTSRVUNA==}
     engines: {node: '>=16.20.0'}
@@ -3814,13 +3826,13 @@ snapshots:
       '@better-auth/core': 1.6.26(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.8)(kysely@0.29.4)(nanostores@1.4.2)
       '@better-auth/utils': 0.4.2
 
-  '@better-auth/prisma-adapter@1.6.26(@better-auth/core@1.6.26(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.8)(kysely@0.29.4)(nanostores@1.4.2))(@better-auth/utils@0.4.2)(@prisma/client@7.9.1(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2))(typescript@7.0.2))(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2))':
+  '@better-auth/prisma-adapter@1.6.26(@better-auth/core@1.6.26(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.8)(kysely@0.29.4)(nanostores@1.4.2))(@better-auth/utils@0.4.2)(@prisma/client@7.9.1(@typescript/typescript6@6.0.2)(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)))(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))':
     dependencies:
       '@better-auth/core': 1.6.26(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.8)(kysely@0.29.4)(nanostores@1.4.2)
       '@better-auth/utils': 0.4.2
     optionalDependencies:
-      '@prisma/client': 7.9.1(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2))(typescript@7.0.2)
-      prisma: 7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2)
+      '@prisma/client': 7.9.1(@typescript/typescript6@6.0.2)(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))
+      prisma: 7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
 
   '@better-auth/telemetry@1.6.26(@better-auth/core@1.6.26(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.8)(kysely@0.29.4)(nanostores@1.4.2))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)':
     dependencies:
@@ -4019,7 +4031,7 @@ snapshots:
 
   '@floating-ui/utils@0.2.12': {}
 
-  '@hookform/resolvers@5.7.1(@standard-schema/spec@1.1.0)(ajv@8.20.0)(effect@3.20.0)(react-hook-form@7.84.0(react@19.2.8))(valibot@1.4.2(typescript@7.0.2))(zod@4.4.3)':
+  '@hookform/resolvers@5.7.1(@standard-schema/spec@1.1.0)(ajv@8.20.0)(effect@3.20.0)(react-hook-form@7.84.0(react@19.2.8))(valibot@1.4.2(@typescript/typescript6@6.0.2))(zod@4.4.3)':
     dependencies:
       '@standard-schema/utils': 0.3.0
       react-hook-form: 7.84.0(react@19.2.8)
@@ -4027,7 +4039,7 @@ snapshots:
       '@standard-schema/spec': 1.1.0
       ajv: 8.20.0
       effect: 3.20.0
-      valibot: 1.4.2(typescript@7.0.2)
+      valibot: 1.4.2(@typescript/typescript6@6.0.2)
       zod: 4.4.3
 
   '@humanfs/core@0.19.1': {}
@@ -4256,12 +4268,12 @@ snapshots:
 
   '@prisma/client-runtime-utils@7.9.1': {}
 
-  '@prisma/client@7.9.1(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2))(typescript@7.0.2)':
+  '@prisma/client@7.9.1(@typescript/typescript6@6.0.2)(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))':
     dependencies:
       '@prisma/client-runtime-utils': 7.9.1
     optionalDependencies:
-      prisma: 7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2)
-      typescript: 7.0.2
+      prisma: 7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      typescript: '@typescript/typescript6@6.0.2'
 
   '@prisma/config@7.9.1':
     dependencies:
@@ -4276,7 +4288,7 @@ snapshots:
 
   '@prisma/debug@7.9.1': {}
 
-  '@prisma/dev@0.24.17(typescript@7.0.2)':
+  '@prisma/dev@0.24.17(@typescript/typescript6@6.0.2)':
     dependencies:
       '@electric-sql/pglite': 0.4.3
       '@electric-sql/pglite-socket': 0.1.3(@electric-sql/pglite@0.4.3)
@@ -4291,7 +4303,7 @@ snapshots:
       proper-lockfile: 4.1.2
       remeda: 2.33.4
       std-env: 3.10.0
-      valibot: 1.4.2(typescript@7.0.2)
+      valibot: 1.4.2(@typescript/typescript6@6.0.2)
       zeptomatch: 2.1.0
     transitivePeerDependencies:
       - typescript
@@ -4517,18 +4529,18 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@t3-oss/env-core@0.13.11(typescript@7.0.2)(valibot@1.4.2(typescript@7.0.2))(zod@4.4.3)':
+  '@t3-oss/env-core@0.13.11(@typescript/typescript6@6.0.2)(valibot@1.4.2(@typescript/typescript6@6.0.2))(zod@4.4.3)':
     optionalDependencies:
-      typescript: 7.0.2
-      valibot: 1.4.2(typescript@7.0.2)
+      typescript: '@typescript/typescript6@6.0.2'
+      valibot: 1.4.2(@typescript/typescript6@6.0.2)
       zod: 4.4.3
 
-  '@t3-oss/env-nextjs@0.13.11(typescript@7.0.2)(valibot@1.4.2(typescript@7.0.2))(zod@4.4.3)':
+  '@t3-oss/env-nextjs@0.13.11(@typescript/typescript6@6.0.2)(valibot@1.4.2(@typescript/typescript6@6.0.2))(zod@4.4.3)':
     dependencies:
-      '@t3-oss/env-core': 0.13.11(typescript@7.0.2)(valibot@1.4.2(typescript@7.0.2))(zod@4.4.3)
+      '@t3-oss/env-core': 0.13.11(@typescript/typescript6@6.0.2)(valibot@1.4.2(@typescript/typescript6@6.0.2))(zod@4.4.3)
     optionalDependencies:
-      typescript: 7.0.2
-      valibot: 1.4.2(typescript@7.0.2)
+      typescript: '@typescript/typescript6@6.0.2'
+      valibot: 1.4.2(@typescript/typescript6@6.0.2)
       zod: 4.4.3
 
   '@tabler/icons-react@3.34.0(react@19.2.8)':
@@ -4633,23 +4645,23 @@ snapshots:
 
   '@tanstack/table-core@8.21.3': {}
 
-  '@trpc/client@11.4.0(@trpc/server@11.4.0(typescript@7.0.2))(typescript@7.0.2)':
+  '@trpc/client@11.4.0(@trpc/server@11.4.0(@typescript/typescript6@6.0.2))(@typescript/typescript6@6.0.2)':
     dependencies:
-      '@trpc/server': 11.4.0(typescript@7.0.2)
-      typescript: 7.0.2
+      '@trpc/server': 11.4.0(@typescript/typescript6@6.0.2)
+      typescript: '@typescript/typescript6@6.0.2'
 
-  '@trpc/react-query@11.4.0(@tanstack/react-query@5.80.7(react@19.2.8))(@trpc/client@11.4.0(@trpc/server@11.4.0(typescript@7.0.2))(typescript@7.0.2))(@trpc/server@11.4.0(typescript@7.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2)':
+  '@trpc/react-query@11.4.0(@tanstack/react-query@5.80.7(react@19.2.8))(@trpc/client@11.4.0(@trpc/server@11.4.0(@typescript/typescript6@6.0.2))(@typescript/typescript6@6.0.2))(@trpc/server@11.4.0(@typescript/typescript6@6.0.2))(@typescript/typescript6@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@tanstack/react-query': 5.80.7(react@19.2.8)
-      '@trpc/client': 11.4.0(@trpc/server@11.4.0(typescript@7.0.2))(typescript@7.0.2)
-      '@trpc/server': 11.4.0(typescript@7.0.2)
+      '@trpc/client': 11.4.0(@trpc/server@11.4.0(@typescript/typescript6@6.0.2))(@typescript/typescript6@6.0.2)
+      '@trpc/server': 11.4.0(@typescript/typescript6@6.0.2)
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
-      typescript: 7.0.2
+      typescript: '@typescript/typescript6@6.0.2'
 
-  '@trpc/server@11.4.0(typescript@7.0.2)':
+  '@trpc/server@11.4.0(@typescript/typescript6@6.0.2)':
     dependencies:
-      typescript: 7.0.2
+      typescript: '@typescript/typescript6@6.0.2'
 
   '@tybys/wasm-util@0.9.0':
     dependencies:
@@ -4708,40 +4720,40 @@ snapshots:
     dependencies:
       csstype: 3.2.3
 
-  '@typescript-eslint/eslint-plugin@8.66.0(@typescript-eslint/parser@8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2))(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2)':
+  '@typescript-eslint/eslint-plugin@8.66.0(@typescript-eslint/parser@8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0)))(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0))':
     dependencies:
       '@eslint-community/regexpp': 4.12.2
-      '@typescript-eslint/parser': 8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2)
+      '@typescript-eslint/parser': 8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0))
       '@typescript-eslint/scope-manager': 8.66.0
-      '@typescript-eslint/type-utils': 8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2)
-      '@typescript-eslint/utils': 8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2)
+      '@typescript-eslint/type-utils': 8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0))
+      '@typescript-eslint/utils': 8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0))
       '@typescript-eslint/visitor-keys': 8.66.0
       eslint: 9.39.5(jiti@2.7.0)
       ignore: 7.0.5
       natural-compare: 1.4.0
-      ts-api-utils: 2.5.0(typescript@7.0.2)
-      typescript: 7.0.2
+      ts-api-utils: 2.5.0(@typescript/typescript6@6.0.2)
+      typescript: '@typescript/typescript6@6.0.2'
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/parser@8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2)':
+  '@typescript-eslint/parser@8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0))':
     dependencies:
       '@typescript-eslint/scope-manager': 8.66.0
       '@typescript-eslint/types': 8.66.0
-      '@typescript-eslint/typescript-estree': 8.66.0(typescript@7.0.2)
+      '@typescript-eslint/typescript-estree': 8.66.0(@typescript/typescript6@6.0.2)
       '@typescript-eslint/visitor-keys': 8.66.0
       debug: 4.4.3
       eslint: 9.39.5(jiti@2.7.0)
-      typescript: 7.0.2
+      typescript: '@typescript/typescript6@6.0.2'
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/project-service@8.66.0(typescript@7.0.2)':
+  '@typescript-eslint/project-service@8.66.0(@typescript/typescript6@6.0.2)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.66.0(typescript@7.0.2)
+      '@typescript-eslint/tsconfig-utils': 8.66.0(@typescript/typescript6@6.0.2)
       '@typescript-eslint/types': 8.66.0
       debug: 4.4.3
-      typescript: 7.0.2
+      typescript: '@typescript/typescript6@6.0.2'
     transitivePeerDependencies:
       - supports-color
 
@@ -4750,47 +4762,47 @@ snapshots:
       '@typescript-eslint/types': 8.66.0
       '@typescript-eslint/visitor-keys': 8.66.0
 
-  '@typescript-eslint/tsconfig-utils@8.66.0(typescript@7.0.2)':
+  '@typescript-eslint/tsconfig-utils@8.66.0(@typescript/typescript6@6.0.2)':
     dependencies:
-      typescript: 7.0.2
+      typescript: '@typescript/typescript6@6.0.2'
 
-  '@typescript-eslint/type-utils@8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2)':
+  '@typescript-eslint/type-utils@8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0))':
     dependencies:
       '@typescript-eslint/types': 8.66.0
-      '@typescript-eslint/typescript-estree': 8.66.0(typescript@7.0.2)
-      '@typescript-eslint/utils': 8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2)
+      '@typescript-eslint/typescript-estree': 8.66.0(@typescript/typescript6@6.0.2)
+      '@typescript-eslint/utils': 8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0))
       debug: 4.4.3
       eslint: 9.39.5(jiti@2.7.0)
-      ts-api-utils: 2.5.0(typescript@7.0.2)
-      typescript: 7.0.2
+      ts-api-utils: 2.5.0(@typescript/typescript6@6.0.2)
+      typescript: '@typescript/typescript6@6.0.2'
     transitivePeerDependencies:
       - supports-color
 
   '@typescript-eslint/types@8.66.0': {}
 
-  '@typescript-eslint/typescript-estree@8.66.0(typescript@7.0.2)':
+  '@typescript-eslint/typescript-estree@8.66.0(@typescript/typescript6@6.0.2)':
     dependencies:
-      '@typescript-eslint/project-service': 8.66.0(typescript@7.0.2)
-      '@typescript-eslint/tsconfig-utils': 8.66.0(typescript@7.0.2)
+      '@typescript-eslint/project-service': 8.66.0(@typescript/typescript6@6.0.2)
+      '@typescript-eslint/tsconfig-utils': 8.66.0(@typescript/typescript6@6.0.2)
       '@typescript-eslint/types': 8.66.0
       '@typescript-eslint/visitor-keys': 8.66.0
       debug: 4.4.3
       minimatch: 10.2.6
       semver: 7.8.5
       tinyglobby: 0.2.17
-      ts-api-utils: 2.5.0(typescript@7.0.2)
-      typescript: 7.0.2
+      ts-api-utils: 2.5.0(@typescript/typescript6@6.0.2)
+      typescript: '@typescript/typescript6@6.0.2'
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/utils@8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2)':
+  '@typescript-eslint/utils@8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0))':
     dependencies:
       '@eslint-community/eslint-utils': 4.10.1(eslint@9.39.5(jiti@2.7.0))
       '@typescript-eslint/scope-manager': 8.66.0
       '@typescript-eslint/types': 8.66.0
-      '@typescript-eslint/typescript-estree': 8.66.0(typescript@7.0.2)
+      '@typescript-eslint/typescript-estree': 8.66.0(@typescript/typescript6@6.0.2)
       eslint: 9.39.5(jiti@2.7.0)
-      typescript: 7.0.2
+      typescript: '@typescript/typescript6@6.0.2'
     transitivePeerDependencies:
       - supports-color
 
@@ -4858,6 +4870,10 @@ snapshots:
 
   '@typescript/typescript-win32-x64@7.0.2':
     optional: true
+
+  '@typescript/typescript6@6.0.2':
+    dependencies:
+      '@typescript/old': typescript@6.0.3
 
   '@unrs/resolver-binding-darwin-arm64@1.7.11':
     optional: true
@@ -5121,14 +5137,14 @@ snapshots:
 
   baseline-browser-mapping@2.11.12: {}
 
-  better-auth@1.6.26(@prisma/client@7.9.1(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2))(typescript@7.0.2))(mysql2@3.15.3)(next@16.3.0(@babel/core@7.29.7)(@types/node@20.19.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  better-auth@1.6.26(@prisma/client@7.9.1(@typescript/typescript6@6.0.2)(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)))(mysql2@3.15.3)(next@16.3.0(@babel/core@7.29.7)(@types/node@20.19.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
       '@better-auth/core': 1.6.26(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.8)(kysely@0.29.4)(nanostores@1.4.2)
       '@better-auth/drizzle-adapter': 1.6.26(@better-auth/core@1.6.26(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.8)(kysely@0.29.4)(nanostores@1.4.2))(@better-auth/utils@0.4.2)
       '@better-auth/kysely-adapter': 1.6.26(@better-auth/core@1.6.26(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.8)(kysely@0.29.4)(nanostores@1.4.2))(@better-auth/utils@0.4.2)(kysely@0.29.4)
       '@better-auth/memory-adapter': 1.6.26(@better-auth/core@1.6.26(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.8)(kysely@0.29.4)(nanostores@1.4.2))(@better-auth/utils@0.4.2)
       '@better-auth/mongo-adapter': 1.6.26(@better-auth/core@1.6.26(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.8)(kysely@0.29.4)(nanostores@1.4.2))(@better-auth/utils@0.4.2)
-      '@better-auth/prisma-adapter': 1.6.26(@better-auth/core@1.6.26(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.8)(kysely@0.29.4)(nanostores@1.4.2))(@better-auth/utils@0.4.2)(@prisma/client@7.9.1(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2))(typescript@7.0.2))(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2))
+      '@better-auth/prisma-adapter': 1.6.26(@better-auth/core@1.6.26(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.8)(kysely@0.29.4)(nanostores@1.4.2))(@better-auth/utils@0.4.2)(@prisma/client@7.9.1(@typescript/typescript6@6.0.2)(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)))(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))
       '@better-auth/telemetry': 1.6.26(@better-auth/core@1.6.26(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.8)(kysely@0.29.4)(nanostores@1.4.2))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.1
@@ -5141,10 +5157,10 @@ snapshots:
       nanostores: 1.4.2
       zod: 4.4.3
     optionalDependencies:
-      '@prisma/client': 7.9.1(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2))(typescript@7.0.2)
+      '@prisma/client': 7.9.1(@typescript/typescript6@6.0.2)(prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))
       mysql2: 3.15.3
       next: 16.3.0(@babel/core@7.29.7)(@types/node@20.19.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      prisma: 7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2)
+      prisma: 7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
     transitivePeerDependencies:
@@ -5558,20 +5574,20 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-config-next@16.3.0(@typescript-eslint/parser@8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2))(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2):
+  eslint-config-next@16.3.0(@typescript-eslint/parser@8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0)))(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0)):
     dependencies:
       '@next/eslint-plugin-next': 16.3.0(eslint@9.39.5(jiti@2.7.0))
       eslint: 9.39.5(jiti@2.7.0)
       eslint-import-resolver-node: 0.3.9
       eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.5(jiti@2.7.0))
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.5(jiti@2.7.0))
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0)))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.5(jiti@2.7.0))
       eslint-plugin-jsx-a11y: 6.10.2(eslint@9.39.5(jiti@2.7.0))
       eslint-plugin-react: 7.37.5(eslint@9.39.5(jiti@2.7.0))
       eslint-plugin-react-hooks: 7.1.1(eslint@9.39.5(jiti@2.7.0))
       globals: 16.4.0
-      typescript-eslint: 8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2)
+      typescript-eslint: 8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0))
     optionalDependencies:
-      typescript: 7.0.2
+      typescript: '@typescript/typescript6@6.0.2'
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
       - eslint-import-resolver-webpack
@@ -5597,22 +5613,22 @@ snapshots:
       tinyglobby: 0.2.14
       unrs-resolver: 1.7.11
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.5(jiti@2.7.0))
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0)))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.5(jiti@2.7.0))
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.14.0(@typescript-eslint/parser@8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.5(jiti@2.7.0)):
+  eslint-module-utils@2.14.0(@typescript-eslint/parser@8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0)))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.5(jiti@2.7.0)):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
-      '@typescript-eslint/parser': 8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2)
+      '@typescript-eslint/parser': 8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0))
       eslint: 9.39.5(jiti@2.7.0)
       eslint-import-resolver-node: 0.3.9
       eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.5(jiti@2.7.0))
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.5(jiti@2.7.0)):
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0)))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.5(jiti@2.7.0)):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9
@@ -5623,7 +5639,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 9.39.5(jiti@2.7.0)
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.14.0(@typescript-eslint/parser@8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.5(jiti@2.7.0))
+      eslint-module-utils: 2.14.0(@typescript-eslint/parser@8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0)))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.5(jiti@2.7.0))
       hasown: 2.0.2
       is-core-module: 2.16.1
       is-glob: 4.0.3
@@ -5635,7 +5651,7 @@ snapshots:
       string.prototype.trimend: 1.0.9
       tsconfig-paths: 3.15.0
     optionalDependencies:
-      '@typescript-eslint/parser': 8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2)
+      '@typescript-eslint/parser': 8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0))
     transitivePeerDependencies:
       - eslint-import-resolver-typescript
       - eslint-import-resolver-webpack
@@ -6445,16 +6461,16 @@ snapshots:
 
   prettier@3.5.3: {}
 
-  prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2):
+  prisma@7.9.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
       '@prisma/config': 7.9.1
-      '@prisma/dev': 0.24.17(typescript@7.0.2)
+      '@prisma/dev': 0.24.17(@typescript/typescript6@6.0.2)
       '@prisma/engines': 7.9.1
       '@prisma/studio-core': 0.33.0(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       mysql2: 3.15.3
       postgres: 3.4.7
     optionalDependencies:
-      typescript: 7.0.2
+      typescript: '@typescript/typescript6@6.0.2'
     transitivePeerDependencies:
       - '@types/react'
       - '@types/react-dom'
@@ -6839,9 +6855,9 @@ snapshots:
     dependencies:
       is-number: 7.0.0
 
-  ts-api-utils@2.5.0(typescript@7.0.2):
+  ts-api-utils@2.5.0(@typescript/typescript6@6.0.2):
     dependencies:
-      typescript: 7.0.2
+      typescript: '@typescript/typescript6@6.0.2'
 
   tsconfig-paths@3.15.0:
     dependencies:
@@ -6898,16 +6914,18 @@ snapshots:
       possible-typed-array-names: 1.1.0
       reflect.getprototypeof: 1.0.10
 
-  typescript-eslint@8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2):
+  typescript-eslint@8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0)):
     dependencies:
-      '@typescript-eslint/eslint-plugin': 8.66.0(@typescript-eslint/parser@8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2))(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2)
-      '@typescript-eslint/parser': 8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2)
-      '@typescript-eslint/typescript-estree': 8.66.0(typescript@7.0.2)
-      '@typescript-eslint/utils': 8.66.0(eslint@9.39.5(jiti@2.7.0))(typescript@7.0.2)
+      '@typescript-eslint/eslint-plugin': 8.66.0(@typescript-eslint/parser@8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0)))(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0))
+      '@typescript-eslint/parser': 8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0))
+      '@typescript-eslint/typescript-estree': 8.66.0(@typescript/typescript6@6.0.2)
+      '@typescript-eslint/utils': 8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.5(jiti@2.7.0))
       eslint: 9.39.5(jiti@2.7.0)
-      typescript: 7.0.2
+      typescript: '@typescript/typescript6@6.0.2'
     transitivePeerDependencies:
       - supports-color
+
+  typescript@6.0.3: {}
 
   typescript@7.0.2:
     optionalDependencies:
@@ -6992,9 +7010,9 @@ snapshots:
     dependencies:
       react: 19.2.8
 
-  valibot@1.4.2(typescript@7.0.2):
+  valibot@1.4.2(@typescript/typescript6@6.0.2):
     optionalDependencies:
-      typescript: 7.0.2
+      typescript: '@typescript/typescript6@6.0.2'
 
   which-boxed-primitive@1.1.1:
     dependencies:
