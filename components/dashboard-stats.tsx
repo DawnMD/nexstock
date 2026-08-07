@@ -12,7 +12,7 @@ import { api } from "@/trpc/react";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 interface DashboardStatsProps {
   initialDate?: string | null;
 }
@@ -25,16 +25,13 @@ export function DashboardStats({ initialDate }: DashboardStatsProps) {
     date: initialDate,
   });
 
-  const handleDateChange = useCallback(
-    (date?: Date) => {
-      const dateString = format(date ?? new Date(), "yyyy-MM-dd");
-      const params = new URLSearchParams(searchParams);
-      params.set("date", dateString);
-      router.push(`/dashboard?${params.toString()}`);
-      setOpen(false);
-    },
-    [router, searchParams],
-  );
+  const handleDateChange = (date?: Date) => {
+    const dateString = format(date ?? new Date(), "yyyy-MM-dd");
+    const params = new URLSearchParams(searchParams);
+    params.set("date", dateString);
+    router.push(`/dashboard?${params.toString()}`);
+    setOpen(false);
+  };
 
   const statCards = [
     {
@@ -81,9 +78,7 @@ export function DashboardStats({ initialDate }: DashboardStatsProps) {
               <Calendar
                 mode="single"
                 selected={initialDate ? new Date(initialDate) : new Date()}
-                onSelect={(date) => {
-                  void handleDateChange(date);
-                }}
+                onSelect={handleDateChange}
               />
             </PopoverContent>
           </Popover>

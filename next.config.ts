@@ -6,6 +6,10 @@ import type { NextConfig } from "next";
 import "./env";
 
 const nextConfig: NextConfig = {
+  // Auto-memoize components and hooks so re-renders skip unchanged subtrees without
+  // hand-written `useMemo`/`useCallback`/`memo`. The matching lint rules already ship
+  // with `eslint-plugin-react-hooks` v7 via `eslint-config-next`.
+  reactCompiler: true,
   experimental: {
     // `typescript` resolves to the TS 6 API package so typescript-eslint can run (see
     // package.json). That package ships a `tsc6` bin rather than `tsc`, so Next has no

@@ -17,8 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/trpc/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -65,19 +64,29 @@ export function QualityCheckProcess({
   orderNumber: string;
   orderItemNumber: string;
 }) {
-  const formSchema = useMemo(
-    () => buildQualityCheckFormSchema(receivedQuantity),
-    [receivedQuantity],
-  );
-
   const form = useForm<QualityCheckFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(buildQualityCheckFormSchema(receivedQuantity)),
     defaultValues: {
       damagedQuantity: 0,
       qualityCheckPercentage: 100,
       qcNotes: "",
     },
   });
+
+  // `useWatch` rather than `form.watch()`: the latter is opaque to React
+  // Compiler, which then skips memoizing this whole component.
+  const qualityCheckPercentage = useWatch({
+    control: form.control,
+    name: "qualityCheckPercentage",
+  });
+  const damagedQuantity = useWatch({
+    control: form.control,
+    name: "damagedQuantity",
+  });
+  const inspectedQuantity = qualityCheckPercentageValue(
+    qualityCheckPercentage,
+    receivedQuantity,
+  );
 
   const router = useRouter();
   const apiUtils = api.useUtils();
@@ -132,10 +141,7 @@ export function QualityCheckProcess({
               </div>
               <div className="rounded-lg bg-orange-100 p-3 text-center dark:bg-orange-900/30">
                 <p className="text-xl font-bold text-orange-600 dark:text-orange-400">
-                  {qualityCheckPercentageValue(
-                    form.watch("qualityCheckPercentage"),
-                    receivedQuantity,
-                  )}
+                  {inspectedQuantity}
                 </p>
                 <p className="text-muted-foreground mt-1 text-xs">
                   Inspection Qty
@@ -143,16 +149,13 @@ export function QualityCheckProcess({
               </div>
               <div className="rounded-lg bg-green-100 p-3 text-center dark:bg-green-900/30">
                 <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                  {qualityCheckPercentageValue(
-                    form.watch("qualityCheckPercentage"),
-                    receivedQuantity,
-                  ) - form.watch("damagedQuantity")}
+                  {inspectedQuantity - damagedQuantity}
                 </p>
                 <p className="text-muted-foreground mt-1 text-xs">Passed Qty</p>
               </div>
               <div className="rounded-lg bg-red-100 p-3 text-center dark:bg-red-900/30">
                 <p className="text-xl font-bold text-red-600 dark:text-red-400">
-                  {form.watch("damagedQuantity") || 0}
+                  {damagedQuantity || 0}
                 </p>
                 <p className="text-muted-foreground mt-1 text-xs">
                   Damaged Qty
@@ -237,21 +240,14 @@ export function QualityCheckProcess({
                         placeholder="Enter damaged quantity"
                         {...field}
                         min={0}
-                        max={qualityCheckPercentageValue(
-                          form.getValues("qualityCheckPercentage"),
-                          receivedQuantity,
-                        )}
+                        max={inspectedQuantity}
                         onChange={(e) => {
                           field.onChange(Number(e.target.value));
                         }}
                       />
                     </FormControl>
                     <FormDescription>
-                      Maximum:{" "}
-                      {qualityCheckPercentageValue(
-                        form.getValues("qualityCheckPercentage"),
-                        receivedQuantity,
-                      )}
+                      Maximum: {inspectedQuantity}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

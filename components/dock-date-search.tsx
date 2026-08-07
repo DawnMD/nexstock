@@ -10,7 +10,7 @@ import {
 import { format } from "date-fns";
 import { ChevronDownIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 
 export function DockDateSearch({ date }: { date?: string | null }) {
   const searchParams = useSearchParams();
@@ -18,16 +18,13 @@ export function DockDateSearch({ date }: { date?: string | null }) {
 
   const [open, setOpen] = useState(false);
 
-  const createQueryString = useCallback(
-    (name: string, value: string) => {
-      const params = new URLSearchParams(searchParams);
-      params.set(name, value);
-      return params.toString();
-    },
-    [searchParams],
-  );
+  const createQueryString = (name: string, value: string) => {
+    const params = new URLSearchParams(searchParams);
+    params.set(name, value);
+    return params.toString();
+  };
 
-  const handleDateChange = async (date?: Date) => {
+  const handleDateChange = (date?: Date) => {
     router.push(
       `/dock-booking?${createQueryString("date", format(date ?? new Date(), "yyyy-MM-dd"))}`,
     );
@@ -54,9 +51,7 @@ export function DockDateSearch({ date }: { date?: string | null }) {
             mode="single"
             selected={date ? new Date(date) : new Date()}
             captionLayout="dropdown"
-            onSelect={(date) => {
-              void handleDateChange(date);
-            }}
+            onSelect={handleDateChange}
           />
         </PopoverContent>
       </Popover>

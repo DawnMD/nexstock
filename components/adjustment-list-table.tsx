@@ -174,6 +174,11 @@ export function AdjustmentListTable({
     search: query,
   });
 
+  // TanStack Table v8 returns fresh closures over mutable internal state, so
+  // React Compiler cannot memoize them and skips this component entirely. That
+  // costs nothing here — the table is the whole component — and there is no
+  // upstream fix to adopt, so the bailout is acknowledged rather than reported.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data: data.items,
     columns,

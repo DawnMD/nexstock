@@ -33,7 +33,7 @@ import { api, type RouterOutputs } from "@/trpc/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -127,6 +127,13 @@ function SkuDialog({
   const form = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(formSchema),
     values: isEdit ? toFormValues(editing) : emptySku,
+  });
+
+  // `useWatch` rather than `form.watch()`: the latter is opaque to React
+  // Compiler, which then skips memoizing this whole component.
+  const hasShelfLife = useWatch({
+    control: form.control,
+    name: "hasShelfLife",
   });
 
   const onSettled = async () => {
@@ -320,7 +327,7 @@ function SkuDialog({
                         {...field}
                         type="number"
                         inputMode="numeric"
-                        disabled={isPending || !form.watch("hasShelfLife")}
+                        disabled={isPending || !hasShelfLife}
                       />
                     </FormControl>
                     <FormMessage />

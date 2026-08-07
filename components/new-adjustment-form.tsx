@@ -30,8 +30,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AdjustmentType } from "@/generated/prisma/enums";
 import { SlidersVertical, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -79,12 +78,11 @@ export function NewAdjustmentForm({
     name: "adjustments",
   });
 
-  // Compute which SKUs are already selected
-  const selectedSkus = useMemo(
-    () => form.watch("adjustments").map((a) => a.sku),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [form.watch("adjustments")],
-  );
+  // Compute which SKUs are already selected. `useWatch` rather than
+  // `form.watch()`: the latter is opaque to React Compiler, which then skips
+  // memoizing this whole component.
+  const adjustments = useWatch({ control: form.control, name: "adjustments" });
+  const selectedSkus = adjustments.map((a) => a.sku);
 
   const canAddMore = fields.length < skus.length;
 
