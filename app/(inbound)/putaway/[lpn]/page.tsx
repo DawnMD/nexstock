@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { api, HydrateClient } from "@/trpc/server";
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { PutawayProcess } from "@/components/putaway-process";
 import { requireSession } from "@/lib/session";
@@ -33,11 +34,11 @@ export default async function PutawayLPNPage({
   return (
     <>
       <SiteHeader title={`Putaway - ${lpn}`} />
-      <main className="flex flex-col gap-4 p-4 lg:gap-6">
+      <PageMain className="flex flex-col gap-4 p-4 lg:gap-6">
         <HydrateClient>
           <PutawayProcess lpn={lpn} />
         </HydrateClient>
-      </main>
+      </PageMain>
     </>
   );
 }

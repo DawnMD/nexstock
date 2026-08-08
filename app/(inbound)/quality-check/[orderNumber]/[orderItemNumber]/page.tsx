@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { QualityCheckProcess } from "@/components/quality-check-process";
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import {
   Card,
@@ -67,7 +68,7 @@ export default async function OrderItemPage({
   return (
     <>
       <SiteHeader title="Quality Check" />
-      <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6">
+      <PageMain className="flex flex-1 flex-col gap-4 p-4 lg:gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -114,7 +115,7 @@ export default async function OrderItemPage({
           orderNumber={orderNumber}
           orderItemNumber={orderItemNumber}
         />
-      </main>
+      </PageMain>
     </>
   );
 }

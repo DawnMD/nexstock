@@ -1,3 +1,4 @@
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SearchIcon } from "lucide-react";
@@ -6,7 +7,7 @@ export default function ReceiveOrderLoading() {
   return (
     <>
       <SiteHeader title="Receive SKU" />
-      <main className="flex flex-col gap-4 p-4 lg:gap-6">
+      <PageMain className="flex flex-col gap-4 p-4 lg:gap-6">
         <div className="flex flex-col gap-2">
           <h3 className="flex items-center gap-2 text-lg font-semibold">
             <SearchIcon className="h-5 w-5" />
@@ -22,7 +23,7 @@ export default function ReceiveOrderLoading() {
           </div>
           <Skeleton className="h-10 w-full" />
         </div>
-      </main>
+      </PageMain>
     </>
   );
 }

@@ -1,3 +1,4 @@
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -17,7 +18,7 @@ export default function OrderDetailLoading() {
   return (
     <>
       <SiteHeader title={"Order Details"} />
-      <div className="flex flex-1 flex-col p-4">
+      <PageMain className="flex flex-1 flex-col p-4">
         <div className="flex flex-1 flex-col gap-4 lg:gap-6">
           {/* Header with back button and actions */}
           <div className="flex items-center justify-between">
@@ -169,7 +170,7 @@ export default function OrderDetailLoading() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </PageMain>
     </>
   );
 }

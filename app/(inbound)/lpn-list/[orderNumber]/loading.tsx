@@ -1,12 +1,13 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 
 export default function Loading() {
   return (
     <>
       <SiteHeader title="LPN List" />
-      <main className="flex flex-col gap-4 p-4 lg:gap-6">
+      <PageMain className="flex flex-col gap-4 p-4 lg:gap-6">
         <Card>
           <CardHeader>
             <Skeleton className="h-6 w-32" />
@@ -78,7 +79,7 @@ export default function Loading() {
             </div>
           ))}
         </div>
-      </main>
+      </PageMain>
     </>
   );
 }

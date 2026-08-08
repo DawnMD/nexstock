@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { InventorySummary } from "@/components/inventory-summary";
 import { InventoryViews } from "@/components/inventory-views";
 import { SearchForm } from "@/components/order-search-form";
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
 import { requireSession } from "@/lib/session";
@@ -30,7 +31,7 @@ export default async function InventoryPage({
   return (
     <>
       <SiteHeader title="Inventory" />
-      <main className="flex flex-col gap-6 p-4">
+      <PageMain className="flex flex-col gap-6 p-4">
         <HydrateClient>
           <InventorySummary />
         </HydrateClient>
@@ -40,7 +41,7 @@ export default async function InventoryPage({
         <HydrateClient>
           <InventoryViews search={query} />
         </HydrateClient>
-      </main>
+      </PageMain>
     </>
   );
 }

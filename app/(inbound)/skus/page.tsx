@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SearchForm } from "@/components/order-search-form";
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { SkuMaster } from "@/components/sku-master";
 import { api, HydrateClient } from "@/trpc/server";
@@ -25,12 +26,12 @@ export default async function SkusPage({
   return (
     <>
       <SiteHeader title="SKUs" />
-      <main className="flex flex-col gap-6 p-4">
+      <PageMain className="flex flex-col gap-6 p-4">
         <SearchForm query={query} action="/skus" />
         <HydrateClient>
           <SkuMaster search={query} />
         </HydrateClient>
-      </main>
+      </PageMain>
     </>
   );
 }

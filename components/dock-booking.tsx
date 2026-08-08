@@ -279,7 +279,7 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
             <PlusIcon className="mr-2 h-4 w-4" />
             Create Booking
           </SheetTrigger>
-          <SheetContent className="overflow-y-auto sm:max-w-[500px]">
+          <SheetContent className="overflow-y-auto overscroll-contain sm:max-w-[500px]">
             <SheetHeader>
               <SheetTitle>
                 {editingBooking ? "Edit" : "Create"} Dock Booking

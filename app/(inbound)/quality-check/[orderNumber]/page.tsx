@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { QualityCheckItems } from "@/components/quality-check-items";
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { SkuSearch } from "@/components/sku-search";
 import { Badge } from "@/components/ui/badge";
@@ -55,7 +56,7 @@ export default async function QualityCheckOrderPage({
   return (
     <>
       <SiteHeader title="Quality Check Overview" />
-      <main className="flex flex-col gap-4 p-4 lg:gap-6">
+      <PageMain className="flex flex-col gap-4 p-4 lg:gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -93,7 +94,7 @@ export default async function QualityCheckOrderPage({
           </div>
           <QualityCheckItems orderNumber={orderNumber} />
         </HydrateClient>
-      </main>
+      </PageMain>
     </>
   );
 }

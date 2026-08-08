@@ -50,15 +50,20 @@ function SheetContent({
         data-slot="sheet-content"
         data-side={side}
         className={cn(
-          "bg-background fixed z-50 flex flex-col gap-4 shadow-lg transition duration-500 ease-in-out data-ending-style:duration-300",
+          "bg-background fixed z-50 flex max-h-dvh flex-col gap-4 shadow-lg transition duration-500 ease-in-out data-ending-style:duration-300",
+          // `inset-y-0`/`h-full` on a fixed element resolves against the *large*
+          // viewport on Chrome Android, which parks the bottom of the sheet
+          // behind the address bar. `h-dvh` tracks the visible viewport instead.
+          // The popup itself does not scroll: both consumers bring their own
+          // scroll region, and a second one would nest scrollbars.
           side === "right" &&
-            "inset-y-0 right-0 h-full w-3/4 border-l data-ending-style:translate-x-full data-starting-style:translate-x-full sm:max-w-sm",
+            "top-0 right-0 h-dvh w-3/4 border-l data-ending-style:translate-x-full data-starting-style:translate-x-full sm:max-w-sm",
           side === "left" &&
-            "inset-y-0 left-0 h-full w-3/4 border-r data-ending-style:-translate-x-full data-starting-style:-translate-x-full sm:max-w-sm",
+            "top-0 left-0 h-dvh w-3/4 border-r data-ending-style:-translate-x-full data-starting-style:-translate-x-full sm:max-w-sm",
           side === "top" &&
-            "inset-x-0 top-0 h-auto border-b data-ending-style:-translate-y-full data-starting-style:-translate-y-full",
+            "inset-x-0 top-0 h-auto max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain border-b data-ending-style:-translate-y-full data-starting-style:-translate-y-full",
           side === "bottom" &&
-            "inset-x-0 bottom-0 h-auto border-t data-ending-style:translate-y-full data-starting-style:translate-y-full",
+            "inset-x-0 bottom-0 h-auto max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain border-t pb-[env(safe-area-inset-bottom)] data-ending-style:translate-y-full data-starting-style:translate-y-full",
           className,
         )}
         {...props}

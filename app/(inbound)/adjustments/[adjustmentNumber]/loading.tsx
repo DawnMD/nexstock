@@ -1,3 +1,4 @@
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import {
   Card,
@@ -14,7 +15,7 @@ export default function ViewAdjustmentLoading() {
   return (
     <>
       <SiteHeader title="Adjustment Details" />
-      <main className="flex flex-col gap-4 p-4 lg:gap-6">
+      <PageMain className="flex flex-col gap-4 p-4 lg:gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -85,7 +86,7 @@ export default function ViewAdjustmentLoading() {
             </div>
           </CardContent>
         </Card>
-      </main>
+      </PageMain>
     </>
   );
 }

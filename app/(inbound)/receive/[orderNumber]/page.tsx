@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ReceiveSkuItems } from "@/components/receive-sku-items";
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -53,7 +54,7 @@ export default async function ReceiveSkuOrderPage({
   return (
     <>
       <SiteHeader title="Receive SKU" />
-      <main className="flex flex-col gap-4 p-4 lg:gap-6">
+      <PageMain className="flex flex-col gap-4 p-4 lg:gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -104,7 +105,7 @@ export default async function ReceiveSkuOrderPage({
           </div>
           <ReceiveSkuItems orderNumber={orderNumber} />
         </HydrateClient>
-      </main>
+      </PageMain>
     </>
   );
 }

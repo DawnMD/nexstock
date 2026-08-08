@@ -1,9 +1,10 @@
+import { PageMain } from "@/components/page-main";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function Loading() {
   return (
-    <div className="flex flex-col gap-4 p-4 lg:gap-6">
+    <PageMain className="flex flex-col gap-4 p-4 lg:gap-6">
       <div className="flex flex-col gap-2">
         <Skeleton className="h-6 w-48" />
         <Skeleton className="h-4 w-96" />
@@ -29,6 +30,6 @@ export default function Loading() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PageMain>
   );
 }

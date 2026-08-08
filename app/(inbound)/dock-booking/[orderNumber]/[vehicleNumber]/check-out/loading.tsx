@@ -1,3 +1,4 @@
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -6,7 +7,7 @@ export default function CheckOutLoading() {
   return (
     <>
       <SiteHeader title="Vehicle Check Out" />
-      <main className="p-4">
+      <PageMain className="p-4">
         <div className="flex flex-1 flex-col gap-4 lg:gap-6">
           {/* Header with back button and order number skeleton */}
           <div className="flex items-center gap-4">
@@ -109,7 +110,7 @@ export default function CheckOutLoading() {
             </div>
           </div>
         </div>
-      </main>
+      </PageMain>
     </>
   );
 }

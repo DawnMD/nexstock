@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { VehicleActivityContainer } from "@/components/vehicle-activity-containner";
 import { VehicleActivityForm } from "@/components/vehicle-activity-form";
@@ -40,7 +41,7 @@ export default async function CheckOutPage({
   return (
     <>
       <SiteHeader title="Vehicle Check Out" />
-      <main className="p-4">
+      <PageMain className="p-4">
         <VehicleActivityContainer dockBookingDetails={dockBookingDetails}>
           <HydrateClient>
             <VehicleActivityForm
@@ -50,7 +51,7 @@ export default async function CheckOutPage({
             />
           </HydrateClient>
         </VehicleActivityContainer>
-      </main>
+      </PageMain>
     </>
   );
 }

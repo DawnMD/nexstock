@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { OrderDetail } from "@/components/order-detail";
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
 import { requireSession } from "@/lib/session";
@@ -43,11 +44,11 @@ export default async function OrderDetailsPage({
   return (
     <>
       <SiteHeader title={"Order Details"} />
-      <main className="p-4">
+      <PageMain className="p-4">
         <HydrateClient>
           <OrderDetail orderNumber={orderNumber} />
         </HydrateClient>
-      </main>
+      </PageMain>
     </>
   );
 }

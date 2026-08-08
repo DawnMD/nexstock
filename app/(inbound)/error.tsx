@@ -1,6 +1,7 @@
 "use client";
 
 import { ErrorState } from "@/components/error-state";
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 
 export default function InboundError({
@@ -13,9 +14,9 @@ export default function InboundError({
   return (
     <>
       <SiteHeader title="Something went wrong" />
-      <main className="flex flex-1 flex-col">
+      <PageMain className="flex flex-1 flex-col">
         <ErrorState error={error} reset={reset} />
-      </main>
+      </PageMain>
     </>
   );
 }

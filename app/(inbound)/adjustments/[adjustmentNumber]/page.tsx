@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import {
   Card,
@@ -47,7 +48,7 @@ export default async function ViewAdjustmentPage({
   return (
     <>
       <SiteHeader title="Adjustment Details" />
-      <main className="flex flex-col gap-4 p-4 lg:gap-6">
+      <PageMain className="flex flex-col gap-4 p-4 lg:gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -131,7 +132,7 @@ export default async function ViewAdjustmentPage({
             </div>
           </CardContent>
         </Card>
-      </main>
+      </PageMain>
     </>
   );
 }

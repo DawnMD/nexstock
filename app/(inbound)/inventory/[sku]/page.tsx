@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { InventoryMovements } from "@/components/inventory-movements";
 import { InventorySkuBalances } from "@/components/inventory-sku-balances";
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
 import { requireSession } from "@/lib/session";
@@ -34,7 +35,7 @@ export default async function InventorySkuPage({
   return (
     <>
       <SiteHeader title={`Inventory · ${sku}`} />
-      <main className="flex flex-col gap-6 p-4">
+      <PageMain className="flex flex-col gap-6 p-4">
         <HydrateClient>
           <InventorySkuBalances sku={sku} />
         </HydrateClient>
@@ -47,7 +48,7 @@ export default async function InventorySkuPage({
             </HydrateClient>
           </div>
         </div>
-      </main>
+      </PageMain>
     </>
   );
 }

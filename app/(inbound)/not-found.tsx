@@ -1,3 +1,4 @@
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +15,7 @@ export default function InboundNotFound() {
   return (
     <>
       <SiteHeader title="Not found" />
-      <main className="flex flex-1 items-center justify-center p-4">
+      <PageMain className="flex flex-1 items-center justify-center p-4">
         <Card className="w-full max-w-lg">
           <CardHeader>
             <div className="bg-muted mb-2 flex h-10 w-10 items-center justify-center rounded-lg">
@@ -36,7 +37,7 @@ export default function InboundNotFound() {
             </Button>
           </CardContent>
         </Card>
-      </main>
+      </PageMain>
     </>
   );
 }

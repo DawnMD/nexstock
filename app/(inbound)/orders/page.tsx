@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { OrderTable } from "@/components/order-table";
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
 import { requireSession } from "@/lib/session";
@@ -29,11 +30,11 @@ export default async function Page({
   return (
     <>
       <SiteHeader title="Orders" />
-      <main className="p-4">
+      <PageMain className="p-4">
         <HydrateClient>
           <OrderTable query={query} />
         </HydrateClient>
-      </main>
+      </PageMain>
     </>
   );
 }

@@ -1,3 +1,4 @@
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -7,9 +8,9 @@ import { Search } from "lucide-react";
 
 export default function DockBookingListLoading() {
   return (
-    <div className="flex flex-1 flex-col">
+    <>
       <SiteHeader title="Dock Booking" />
-      <div className="flex flex-1 flex-col gap-4 p-4 lg:gap-6">
+      <PageMain className="flex flex-1 flex-col gap-4 p-4 lg:gap-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="relative flex items-center gap-2">
             <Input
@@ -94,7 +95,7 @@ export default function DockBookingListLoading() {
             </Card>
           ))}
         </div>
-      </div>
-    </div>
+      </PageMain>
+    </>
   );
 }

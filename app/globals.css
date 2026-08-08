@@ -116,7 +116,13 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html,
+  body {
+    height: 100%;
+  }
   body {
     @apply bg-background text-foreground;
+    /* The shell no longer scrolls the document; stop iOS rubber-banding it. */
+    overscroll-behavior-y: none;
   }
 }

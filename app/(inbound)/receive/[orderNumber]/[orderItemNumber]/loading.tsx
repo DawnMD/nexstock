@@ -1,3 +1,4 @@
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import {
   Card,
@@ -14,7 +15,7 @@ export default function Loading() {
   return (
     <>
       <SiteHeader title="Receive SKU" />
-      <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6">
+      <PageMain className="flex flex-1 flex-col gap-4 p-4 lg:gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -72,7 +73,7 @@ export default function Loading() {
             </div>
           </CardContent>
         </Card>
-      </main>
+      </PageMain>
     </>
   );
 }

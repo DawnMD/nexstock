@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DashboardStats } from "@/components/dashboard-stats";
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { api, HydrateClient } from "@/trpc/server";
 import { requireSession } from "@/lib/session";
@@ -26,11 +27,11 @@ export default async function Page({ searchParams }: PageProps) {
   return (
     <>
       <SiteHeader title="Dashboard" />
-      <main className="p-4">
+      <PageMain className="p-4">
         <HydrateClient>
           <DashboardStats initialDate={date} />
         </HydrateClient>
-      </main>
+      </PageMain>
     </>
   );
 }

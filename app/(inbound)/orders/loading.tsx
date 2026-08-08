@@ -1,3 +1,4 @@
+import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,7 @@ export default function OrdersLoading() {
   return (
     <>
       <SiteHeader title="Orders" />
-      <div className="flex w-full flex-col justify-start gap-6 p-4">
+      <PageMain className="flex w-full flex-col justify-start gap-6 p-4">
         {/* Header with customize columns button */}
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
           <div className="relative flex items-center gap-2">
@@ -131,7 +132,7 @@ export default function OrdersLoading() {
             </div>
           </div>
         </div>
-      </div>
+      </PageMain>
     </>
   );
 }

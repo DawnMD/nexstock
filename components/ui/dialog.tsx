@@ -40,24 +40,38 @@ function DialogOverlay({
 
 function DialogContent({
   className,
+  bodyClassName,
   children,
   showCloseButton = true,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean;
+  bodyClassName?: string;
 }) {
   return (
     <DialogPortal>
       <DialogOverlay />
+      {/* The popup clamps to the viewport and the body scrolls inside it, so a
+          tall form stays reachable on a phone and the close button stays
+          pinned instead of scrolling away. */}
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "bg-background data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-closed:fill-mode-forwards fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
+          "bg-background data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-closed:fill-mode-forwards",
+          "fixed top-[50%] left-[50%] z-50 flex max-h-[calc(100dvh-2rem)] w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] flex-col rounded-lg border shadow-lg duration-200 sm:max-w-lg",
           className,
         )}
         {...props}
       >
-        {children}
+        <div
+          data-slot="dialog-body"
+          className={cn(
+            "grid min-h-0 flex-1 gap-4 overflow-y-auto overscroll-contain p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]",
+            bodyClassName,
+          )}
+        >
+          {children}
+        </div>
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
