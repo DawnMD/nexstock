@@ -17,6 +17,14 @@ export const env = createEnv({
       .default("development"),
     /** 32+ char random string signing session cookies. `npx auth@latest secret` generates one. */
     BETTER_AUTH_SECRET: z.string().min(32),
+    /** Resend API key. Sign-up is gated on email verification, so mail must work. */
+    RESEND_API_KEY: z.string().min(1),
+    /**
+     * `From` header on every outbound mail, e.g. `NexStock <no-reply@yourdomain.com>`.
+     * The domain has to be verified in Resend; the default only delivers to the
+     * address that owns the Resend account, which is enough for local work.
+     */
+    EMAIL_FROM: z.string().min(1).default("NexStock <onboarding@resend.dev>"),
     /** Public origin of this deployment. Optional locally; required in production. */
   },
 
@@ -38,6 +46,8 @@ export const env = createEnv({
     DATABASE_URL_UNPOOLED: process.env.DATABASE_URL_UNPOOLED,
     NODE_ENV: process.env.NODE_ENV,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
+    EMAIL_FROM: process.env.EMAIL_FROM,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**
