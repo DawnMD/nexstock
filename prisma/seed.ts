@@ -1,3 +1,4 @@
+import { applyAdjustmentBatch } from "../server/services/adjustments";
 import {
   MovementReason,
   MovementRefType,
@@ -6,6 +7,7 @@ import {
 import type { Vendor } from "../generated/prisma/client";
 import {
   ActivityType,
+  AdjustmentType,
   OrderItemStatus,
   OrderStatus,
   OrderType,
@@ -770,6 +772,62 @@ async function main() {
   }
   console.log(`Created ${receiveItemCount} receive items`);
 
+  // Correct a slice of the received lines so the adjustments screen has data.
+  // These go through `applyAdjustmentBatch` rather than a raw create for the
+  // same reason seeded receipts record a movement above: an adjustment that
+  // only writes its own row leaves the ledger, the line's receivedQuantity and
+  // the order status disagreeing with each other.
+  console.log("Creating adjustments...");
+  const adjustableLines = await prisma.orderItem.findMany({
+    where: { receivedQuantity: { gt: 0 } },
+    orderBy: { id: "asc" },
+    take: 25,
+    select: { id: true, orderId: true, receivedQuantity: true },
+  });
+
+  const adjustmentReasons = [
+    "Damaged in transit",
+    "Miscount at receiving",
+    "Vendor overshipped",
+    "Carton short-shipped",
+    "Pallet re-counted after putaway",
+    "Label mismatch corrected",
+  ];
+
+  let adjustmentCount = 0;
+
+  for (const [index, line] of adjustableLines.entries()) {
+    // Alternate overages and shortages so both badge variants show up. A
+    // shortage can only write off stock the line actually has on hand, so it
+    // is clamped to the received quantity.
+    const isAddition = index % 2 === 0;
+    const quantity = isAddition
+      ? (index % 3) + 1
+      : Math.min((index % 3) + 1, line.receivedQuantity);
+
+    if (quantity < 1) continue;
+
+    await prisma.$transaction((tx) =>
+      applyAdjustmentBatch(tx, {
+        adjustedBy: actorId,
+        adjustments: [
+          {
+            orderItemId: line.id,
+            orderNumber: line.orderId,
+            quantity,
+            adjustmentType: isAddition
+              ? AdjustmentType.ADDITION
+              : AdjustmentType.SUBTRACTION,
+            notes: getRandomElement(adjustmentReasons),
+          },
+        ],
+      }),
+    );
+
+    adjustmentCount += 1;
+  }
+  console.log(`Created ${adjustmentCount} adjustments`);
+
   console.log("\n=== SEEDING COMPLETE ===");
   console.log(`Vendors: ${vendors.length}`);
   console.log(`SKUs: ${skus.length}`);
@@ -780,6 +838,7 @@ async function main() {
   console.log(`Dock Bookings: ${dockBookings.length}`);
   console.log(`Dock Activities: ${dockActivityCount}`);
   console.log(`Receive Items: ${receiveItemCount}`);
+  console.log(`Adjustments: ${adjustmentCount}`);
   console.log(
     `Inventory: ${await prisma.inventoryMovement.count()} movements across ${await prisma.inventoryBalance.count()} balances`,
   );
