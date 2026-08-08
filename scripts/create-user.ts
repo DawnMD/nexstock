@@ -1,6 +1,7 @@
 /**
- * Creates a Better Auth account. Public sign-up is disabled, so this is the only
- * way in.
+ * Creates a Better Auth account directly, skipping the verification email that
+ * `/sign-up` requires. Useful for seeding (which needs the printed id) and for
+ * deployments that turn self-serve sign-up back off.
  *
  *   pnpm user:create you@example.com "Your Name" "your-password"
  */
