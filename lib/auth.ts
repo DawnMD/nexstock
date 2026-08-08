@@ -3,10 +3,9 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 
 import { env } from "@/env";
-import { db } from "@/server/db";
-import { getBaseUrl } from "@/lib/get-base-url";
 import { sendEmail } from "@/lib/email";
 import { verificationEmail } from "@/lib/email-templates";
+import { db } from "@/server/db";
 
 /** Lifetime of a verification link. Repeated in the email copy. */
 const VERIFICATION_TOKEN_TTL_SECONDS = 60 * 60;
@@ -14,7 +13,14 @@ const VERIFICATION_TOKEN_TTL_SECONDS = 60 * 60;
 export const auth = betterAuth({
   database: prismaAdapter(db, { provider: "postgresql" }),
   secret: env.BETTER_AUTH_SECRET,
-  baseURL: getBaseUrl(),
+  baseURL: {
+		allowedHosts: [
+			"localhost:3000",
+			"localhost:5173",
+			"*.vercel.app",
+		],
+		protocol: env.NODE_ENV === "development" ? "http" : "https",
+	},
 
   emailAndPassword: {
     enabled: true,
@@ -60,4 +66,5 @@ export const auth = betterAuth({
   // Lets Better Auth set cookies from Server Actions. The app has none today, but
   // this is the documented Next.js baseline and costs nothing.
   plugins: [nextCookies()],
+  
 });
