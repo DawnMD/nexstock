@@ -5,6 +5,11 @@ import { nextCookies } from "better-auth/next-js";
 import { env } from "@/env";
 import { db } from "@/server/db";
 import { getBaseUrl } from "@/lib/get-base-url";
+import { sendEmail } from "@/lib/email";
+import { verificationEmail } from "@/lib/email-templates";
+
+/** Lifetime of a verification link. Repeated in the email copy. */
+const VERIFICATION_TOKEN_TTL_SECONDS = 60 * 60;
 
 export const auth = betterAuth({
   database: prismaAdapter(db, { provider: "postgresql" }),
@@ -13,11 +18,35 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
-    // Accounts are minted by `pnpm user:create`, never self-serve. This closes
-    // POST /api/auth/sign-up/email as well as hiding a page.
-    disableSignUp: true,
-    // No mail provider is wired, so a user could never complete verification.
-    requireEmailVerification: false,
+    // Self-serve sign-up at /sign-up. The only gate is the verification email
+    // below — anyone who controls a mailbox can create an account, so put this
+    // deployment behind a network boundary if that is not acceptable.
+    disableSignUp: false,
+    minPasswordLength: 8,
+    // No session until the address is confirmed. This also makes Better Auth
+    // return a generic success for a sign-up against an existing email, so the
+    // form cannot be used to enumerate accounts.
+    requireEmailVerification: true,
+  },
+
+  emailVerification: {
+    sendOnSignUp: true,
+    // An operator who signs in before clicking the link gets a fresh one instead
+    // of a dead end.
+    sendOnSignIn: true,
+    // Clicking the link is proof enough; drop them straight into the app.
+    autoSignInAfterVerification: true,
+    expiresIn: VERIFICATION_TOKEN_TTL_SECONDS,
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendEmail(
+        verificationEmail({
+          to: user.email,
+          name: user.name,
+          url,
+          expiresInHours: VERIFICATION_TOKEN_TTL_SECONDS / 3600,
+        }),
+      );
+    },
   },
 
   session: {
