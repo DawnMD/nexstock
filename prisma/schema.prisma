@@ -58,6 +58,10 @@ enum AdjustmentType {
 enum MovementReason {
     RECEIPT
     QC_REJECT
+    /// Puts back what a `QC_REJECT` took out, when an inspection is reset. The
+    /// ledger is append-only, so a mistaken rejection is corrected by a
+    /// compensating entry rather than by deleting the original.
+    QC_REVERSAL
     ADJUSTMENT_ADD
     ADJUSTMENT_SUB
     PUTAWAY_OUT

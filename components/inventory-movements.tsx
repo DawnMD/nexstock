@@ -20,6 +20,7 @@ import type { MovementReason } from "@/generated/prisma/enums";
 const REASON_LABELS: Record<MovementReason, string> = {
   RECEIPT: "Receipt",
   QC_REJECT: "QC rejection",
+  QC_REVERSAL: "QC reset",
   ADJUSTMENT_ADD: "Adjustment (overage)",
   ADJUSTMENT_SUB: "Adjustment (shortage)",
   PUTAWAY_OUT: "Putaway out",
