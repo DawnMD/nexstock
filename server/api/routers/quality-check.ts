@@ -1,4 +1,8 @@
-import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
+import {
+  createTRPCRouter,
+  privateProcedure,
+  writeProcedure,
+} from "@/server/api/trpc";
 import {
   recordQualityCheck,
   resetQualityCheck,
@@ -96,7 +100,7 @@ export const qualityCheckRouter = createTRPCRouter({
         },
       });
     }),
-  updateQualityCheckStatus: privateProcedure
+  updateQualityCheckStatus: writeProcedure
     .input(
       z
         .object({
@@ -126,7 +130,7 @@ export const qualityCheckRouter = createTRPCRouter({
         );
       },
     ),
-  resetQualityCheck: privateProcedure
+  resetQualityCheck: writeProcedure
     .input(z.object({ id: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.db.$transaction((tx) =>

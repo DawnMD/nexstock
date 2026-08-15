@@ -128,6 +128,13 @@ model User {
     createdAt     DateTime @default(now())
     updatedAt     DateTime @updatedAt
 
+    /// Read-only when true. The public demo signs in as such an account so a
+    /// visitor can walk every screen without being able to move anyone's stock;
+    /// `writeProcedure` in `server/api/trpc.ts` is what enforces it. Not part of
+    /// Better Auth's own schema — an app concern added alongside it, which is
+    /// why it is a plain column with a safe default rather than a role model.
+    isDemo Boolean @default(false)
+
     sessions Session[]
     accounts Account[]
 

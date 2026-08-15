@@ -1,4 +1,8 @@
-import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
+import {
+  createTRPCRouter,
+  privateProcedure,
+  writeProcedure,
+} from "@/server/api/trpc";
 import {
   createLocation,
   deleteLocation,
@@ -61,7 +65,7 @@ export const locationRouter = createTRPCRouter({
       }));
     }),
 
-  createLocation: privateProcedure
+  createLocation: writeProcedure
     .input(
       z.object({
         location: z.string().min(1, "Location code is required"),
@@ -74,7 +78,7 @@ export const locationRouter = createTRPCRouter({
       );
     }),
 
-  updateLocation: privateProcedure
+  updateLocation: writeProcedure
     .input(
       z.object({
         location: z.string().min(1),
@@ -87,7 +91,7 @@ export const locationRouter = createTRPCRouter({
       );
     }),
 
-  deleteLocation: privateProcedure
+  deleteLocation: writeProcedure
     .input(z.object({ location: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.db.$transaction((tx) =>

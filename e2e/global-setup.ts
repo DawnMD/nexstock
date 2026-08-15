@@ -18,6 +18,13 @@ export const OPERATOR = {
   password: "e2e-password-1234",
 };
 
+/** The read-only account `demo-account.spec.ts` signs in as. */
+export const DEMO = {
+  email: "demo@demo.nexstock.app",
+  name: "Demo Visitor",
+  password: "demo-password-1234",
+};
+
 const STORAGE_STATE = "e2e/.auth/operator.json";
 
 /**
@@ -27,7 +34,7 @@ const STORAGE_STATE = "e2e/.auth/operator.json";
  * Better Auth directly is deliberate too: `lib/auth.ts` pulls in `server-only`,
  * which throws outside a React server environment.
  */
-async function ensureOperator() {
+async function ensureAccounts() {
   const connectionString =
     process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
   if (!connectionString) {
@@ -38,26 +45,42 @@ async function ensureOperator() {
 
   const db = new PrismaClient({ adapter: createAdapter(connectionString) });
 
+  let needsOperator = true;
+  let needsDemo = true;
   try {
-    const existing = await db.user.findUnique({
-      where: { email: OPERATOR.email },
-      select: { id: true },
+    const existing = await db.user.findMany({
+      where: { email: { in: [OPERATOR.email, DEMO.email] } },
+      select: { email: true },
     });
-    if (existing) return;
+    const emails = new Set(existing.map((user) => user.email));
+    needsOperator = !emails.has(OPERATOR.email);
+    needsDemo = !emails.has(DEMO.email);
   } finally {
     await db.$disconnect();
   }
 
-  await run("pnpm", [
-    "user:create",
-    OPERATOR.email,
-    OPERATOR.name,
-    OPERATOR.password,
-  ]);
+  if (needsOperator) {
+    await run("pnpm", [
+      "user:create",
+      OPERATOR.email,
+      OPERATOR.name,
+      OPERATOR.password,
+    ]);
+  }
+
+  if (needsDemo) {
+    await run("pnpm", [
+      "user:create",
+      DEMO.email,
+      DEMO.name,
+      DEMO.password,
+      "--demo",
+    ]);
+  }
 }
 
 export default async function globalSetup(config: FullConfig) {
-  await ensureOperator();
+  await ensureAccounts();
 
   const baseURL = config.projects[0]?.use.baseURL;
   if (!baseURL) throw new Error("No baseURL configured for the e2e project");

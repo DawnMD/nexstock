@@ -1,4 +1,8 @@
-import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
+import {
+  createTRPCRouter,
+  privateProcedure,
+  writeProcedure,
+} from "@/server/api/trpc";
 import type { Prisma } from "@/generated/prisma/client";
 import { PickTaskStatus, SalesOrderStatus } from "@/generated/prisma/client";
 import {
@@ -170,7 +174,7 @@ export const outboundRouter = createTRPCRouter({
       });
     }),
 
-  createSalesOrder: privateProcedure
+  createSalesOrder: writeProcedure
     .input(
       z.object({
         orderNumber: z.string().min(1, "Order number is required"),
@@ -194,7 +198,7 @@ export const outboundRouter = createTRPCRouter({
       );
     }),
 
-  allocate: privateProcedure
+  allocate: writeProcedure
     .input(z.object({ orderNumber: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.db.$transaction((tx) =>
@@ -202,7 +206,7 @@ export const outboundRouter = createTRPCRouter({
       );
     }),
 
-  cancelAllocation: privateProcedure
+  cancelAllocation: writeProcedure
     .input(z.object({ orderNumber: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.db.$transaction((tx) =>
@@ -210,7 +214,7 @@ export const outboundRouter = createTRPCRouter({
       );
     }),
 
-  confirmPick: privateProcedure
+  confirmPick: writeProcedure
     .input(
       z.object({
         pickTaskId: z.number().int().positive(),
@@ -223,7 +227,7 @@ export const outboundRouter = createTRPCRouter({
       );
     }),
 
-  reversePick: privateProcedure
+  reversePick: writeProcedure
     .input(z.object({ pickTaskId: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.db.$transaction((tx) =>
@@ -234,7 +238,7 @@ export const outboundRouter = createTRPCRouter({
       );
     }),
 
-  packCarton: privateProcedure
+  packCarton: writeProcedure
     .input(
       z.object({
         cartonNumber: z.string().min(1, "Carton number is required"),
@@ -248,7 +252,7 @@ export const outboundRouter = createTRPCRouter({
       );
     }),
 
-  confirmShipment: privateProcedure
+  confirmShipment: writeProcedure
     .input(
       z.object({
         shipmentNumber: z.string().min(1, "Shipment number is required"),
@@ -264,7 +268,7 @@ export const outboundRouter = createTRPCRouter({
       );
     }),
 
-  cancelSalesOrder: privateProcedure
+  cancelSalesOrder: writeProcedure
     .input(z.object({ orderNumber: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.db.$transaction((tx) =>

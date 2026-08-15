@@ -12,9 +12,15 @@ import { config as loadEnv } from "dotenv";
 // `prisma/script-env.ts` and `prisma.config.ts`.
 loadEnv({ path: [".env.local", ".env"], quiet: true });
 
-const [email, name, password] = process.argv.slice(2);
+const args = process.argv.slice(2);
+// `--demo` marks the account read-only: it can browse every screen and every
+// mutation is refused server-side. This is what the public demo signs in as.
+const isDemo = args.includes("--demo");
+const [email, name, password] = args.filter((arg) => arg !== "--demo");
 if (!email || !name || !password) {
-  throw new Error('Usage: pnpm user:create <email> "<name>" "<password>"');
+  throw new Error(
+    'Usage: pnpm user:create <email> "<name>" "<password>" [--demo]',
+  );
 }
 
 // Dynamic import is load-bearing: a static one would be hoisted above
@@ -41,4 +47,11 @@ await ctx.internalAdapter.createAccount({
   password: await ctx.password.hash(password),
 });
 
-console.log(`Created ${user.email} (${user.id})`);
+if (isDemo) {
+  const { db } = await import("@/server/db");
+  await db.user.update({ where: { id: user.id }, data: { isDemo: true } });
+}
+
+console.log(
+  `Created ${user.email} (${user.id})${isDemo ? " — read-only demo account" : ""}`,
+);

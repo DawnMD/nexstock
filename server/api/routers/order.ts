@@ -1,5 +1,9 @@
 import { calculateOrderStats } from "@/lib/order-utils";
-import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
+import {
+  createTRPCRouter,
+  privateProcedure,
+  writeProcedure,
+} from "@/server/api/trpc";
 import type { Prisma } from "@/generated/prisma/client";
 import { ActivityType } from "@/generated/prisma/client";
 import {
@@ -203,13 +207,13 @@ export const orderRouter = createTRPCRouter({
     return vehicleTypes;
   }),
 
-  deleteDockBooking: privateProcedure
+  deleteDockBooking: writeProcedure
     .input(z.object({ id: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.db.$transaction((tx) => deleteDockBooking(tx, input.id));
     }),
 
-  createDockBooking: privateProcedure
+  createDockBooking: writeProcedure
     .input(
       z.object({
         orderNumber: z.string().min(1),
@@ -340,7 +344,7 @@ export const orderRouter = createTRPCRouter({
       });
       return dockBooking;
     }),
-  updateDockActivity: privateProcedure
+  updateDockActivity: writeProcedure
     .input(
       z.object({
         vehicleNumber: z.string().min(1),
@@ -362,7 +366,7 @@ export const orderRouter = createTRPCRouter({
         }),
       );
     }),
-  updateDockBooking: privateProcedure
+  updateDockBooking: writeProcedure
     .input(
       z.object({
         id: z.number().int().positive(),

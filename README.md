@@ -153,6 +153,19 @@ Sign-up responses are deliberately uninformative — an address that already has
 an account gets the same "check your inbox" screen as a new one — so the form
 cannot be used to enumerate accounts.
 
+### Read-only demo accounts
+
+`pnpm user:create demo@example.com "Demo" "password" --demo` creates an account
+that can browse every screen and change nothing. It is a real, verified user, so
+the read paths are not special-cased anywhere; what stops it writing is
+`writeProcedure` in `server/api/trpc.ts`, which every mutation is built on and
+which refuses a caller whose `isDemo` flag is set. The banner in the layout only
+explains the refusal — it is not what enforces it.
+
+The flag is read from the database rather than the session, so revoking demo
+status takes effect on the next request instead of whenever the five-minute
+session cache expires.
+
 There is no allowlist, so anyone who controls a mailbox can register. If that is
 not acceptable for a deployment, put it behind a network boundary or set
 `emailAndPassword.disableSignUp: true` in `lib/auth.ts` and mint accounts with
@@ -181,7 +194,7 @@ Sign in at `/sign-in`; every page under `app/(inbound)/` calls
 | `pnpm db:seed`      | Reset and seed the warehouse tables (as the synthetic `SYSTEM` user).            |
 | `pnpm db:seed:as`   | Same, but forwards `--user-id=<id>` so the data is attributed to a real account. |
 | `pnpm db:reset`     | Drop the database and replay every migration. **Destroys all data.**             |
-| `pnpm user:create`  | Create an account: `pnpm user:create <email> "<name>" "<password>"`.             |
+| `pnpm user:create`  | Create an account: `pnpm user:create <email> "<name>" "<password>" [--demo]`.    |
 | `pnpm db:studio`    | Prisma Studio.                                                                   |
 
 CI (`.github/workflows/ci.yaml`) runs lint, Prettier, typecheck, unit tests,
@@ -261,6 +274,9 @@ lib/             shared helpers
   so any signed-in user can read every order and mutate any booking, receipt,
   quality check, adjustment or putaway. Fine for a single-operator hobby
   deployment; this is the first thing to build before it goes multi-user.
+- **No roles beyond read-only.** `isDemo` is the only authorization the app has;
+  every other signed-in user can do everything. A real deployment needs an
+  operator/supervisor/admin split, and `writeProcedure` is the seam to build it on.
 - **No wave picking.** Pick tasks are generated per sales order rather than
   batched across orders into waves, so a picker walks the aisles once per order.
 - **Sales orders are created through the API, not a form.** `outbound.createSalesOrder`

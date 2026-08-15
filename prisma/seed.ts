@@ -1026,6 +1026,19 @@ async function main() {
     `Created ${salesOrderCount} sales orders, ${pickTaskCount} pick tasks, ${shipmentCount} shipments`,
   );
 
+  // A read-only account for the public demo, so a visitor can walk every screen
+  // without being able to move anyone's stock. It has no password here — mint
+  // one with `pnpm user:create <email> "<name>" "<password>" --demo` — but
+  // seeding the flag means a demo account created that way, or an existing one,
+  // survives a re-seed with its read-only status intact.
+  const demoUsers = await prisma.user.updateMany({
+    where: { email: { endsWith: "@demo.nexstock.app" } },
+    data: { isDemo: true },
+  });
+  if (demoUsers.count > 0) {
+    console.log(`Marked ${demoUsers.count} demo account(s) read-only`);
+  }
+
   console.log("\n=== SEEDING COMPLETE ===");
   console.log(`Vendors: ${vendors.length}`);
   console.log(`SKUs: ${skus.length}`);
