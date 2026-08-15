@@ -127,6 +127,8 @@ Sign in at `/sign-in`; every page under `app/(inbound)/` calls
 | `pnpm start`        | Serve the production build.                                                      |
 | `pnpm typecheck`    | `tsc --noEmit`.                                                                  |
 | `pnpm lint`         | ESLint via `next lint`.                                                          |
+| `pnpm test`         | Service-layer tests (Vitest) against a real Postgres. See [Testing](#testing).   |
+| `pnpm test:watch`   | The same suite in watch mode.                                                    |
 | `pnpm format:check` | Prettier check.                                                                  |
 | `pnpm format:write` | Prettier write.                                                                  |
 | `pnpm db:push`      | Push schema without a migration (dev), then regenerate the client.               |
@@ -138,19 +140,51 @@ Sign in at `/sign-in`; every page under `app/(inbound)/` calls
 | `pnpm user:create`  | Create an account: `pnpm user:create <email> "<name>" "<password>"`.             |
 | `pnpm db:studio`    | Prisma Studio.                                                                   |
 
-CI (`.github/workflows/ci.yaml`) runs lint, Prettier, typecheck and build on
-every pull request.
+CI (`.github/workflows/ci.yaml`) runs lint, Prettier, typecheck, tests and build
+on every pull request.
+
+## Testing
+
+The tests exercise `server/services/` — the layer that owns every stock
+movement — against a **real Postgres**, not a mocked Prisma client. That is
+deliberate: what these tests assert is `SELECT … FOR UPDATE` serialising two
+concurrent receipts, an atomic `increment` refusing to take a balance negative,
+`FULL JOIN` reconciliation, and transaction rollback. None of that survives a
+mock, which would only confirm that the code calls the functions it calls.
+
+Point `TEST_DATABASE_URL` at a throwaway database, apply the migrations, and run
+the suite:
+
+```bash
+createdb nexstock_test
+export TEST_DATABASE_URL="postgresql://postgres@localhost:5432/nexstock_test"
+DATABASE_URL_UNPOOLED="$TEST_DATABASE_URL" pnpm db:migrate
+pnpm test
+```
+
+Every test that moves stock ends by asserting the invariant the whole inventory
+core rests on — `sum(InventoryMovement.quantity) === InventoryBalance.quantity`
+for every key — using the same query `inventory.getDrift` serves to the
+`/inventory` screen. CI runs all of it against a `postgres:16` service
+container.
+
+Note that the app talks to Neon over WebSockets via `@prisma/adapter-neon`,
+which needs a Neon endpoint; the tests use `@prisma/adapter-pg` against plain
+Postgres instead. Only the transport differs — the services take a
+`Prisma.TransactionClient` and never learn which adapter produced it.
 
 ## Project layout
 
 ```
-app/            App Router routes; the inbound screens live under app/(inbound)/
-components/     React components; components/ui/ is shadcn
-server/api/     tRPC routers (order, receive, quality-check, putaway, adjustments)
-trpc/           tRPC client/server wiring and the React Query client
-prisma/         schema.prisma, migrations, seed.ts
-generated/      Prisma Client, generated from the schema (gitignored)
-lib/            shared helpers
+app/             App Router routes; the inbound screens live under app/(inbound)/
+components/      React components; components/ui/ is shadcn
+server/services/ the business logic: every stock movement goes through here
+server/api/      tRPC routers, which are thin shells over the services
+trpc/            tRPC client/server wiring and the React Query client
+prisma/          schema.prisma, migrations, seed.ts
+tests/           Vitest suites, run against a real Postgres
+generated/       Prisma Client, generated from the schema (gitignored)
+lib/             shared helpers
 ```
 
 ## Known limitations
@@ -160,8 +194,7 @@ lib/            shared helpers
   so any signed-in user can read every order and mutate any booking, receipt,
   quality check, adjustment or putaway. Fine for a single-operator hobby
   deployment; this is the first thing to build before it goes multi-user.
-- **No inventory model.** There is no stock-on-hand table. Received, rejected
-  and put-away quantities live in separate tables that are not reconciled, so
-  quantities can drift between screens.
 - **Inbound only.** There is no picking, packing or shipping.
-- **No tests.** There is no test runner configured yet.
+- **No end-to-end tests.** The service layer is covered (see
+  [Testing](#testing)); the React components and the tRPC routers above them
+  are not.
