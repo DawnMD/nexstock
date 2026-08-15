@@ -14,13 +14,9 @@ export const auth = betterAuth({
   database: prismaAdapter(db, { provider: "postgresql" }),
   secret: env.BETTER_AUTH_SECRET,
   baseURL: {
-		allowedHosts: [
-			"localhost:3000",
-			"localhost:5173",
-			"*.vercel.app",
-		],
-		protocol: env.NODE_ENV === "development" ? "http" : "https",
-	},
+    allowedHosts: ["localhost:3000", "localhost:5173", "*.vercel.app"],
+    protocol: env.NODE_ENV === "development" ? "http" : "https",
+  },
 
   emailAndPassword: {
     enabled: true,
@@ -66,5 +62,4 @@ export const auth = betterAuth({
   // Lets Better Auth set cookies from Server Actions. The app has none today, but
   // this is the documented Next.js baseline and costs nothing.
   plugins: [nextCookies()],
-  
 });
