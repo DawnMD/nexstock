@@ -17,6 +17,15 @@ export const env = createEnv({
       .default("development"),
     /** 32+ char random string signing session cookies. `npx auth@latest secret` generates one. */
     BETTER_AUTH_SECRET: z.string().min(32),
+    /**
+     * Public origin Better Auth should treat as its own, e.g.
+     * `https://nexstock.example.com`. Set this when the app is served from
+     * anywhere other than `localhost:3000` or a `*.vercel.app` domain —
+     * without it, Better Auth rejects the request as an unknown host and every
+     * sign-in returns a 500. Optional; the allowed-host defaults in
+     * `lib/auth.ts` cover local development and Vercel previews.
+     */
+    BETTER_AUTH_URL: z.string().url().optional(),
     /** Resend API key. Sign-up is gated on email verification, so mail must work. */
     RESEND_API_KEY: z.string().min(1),
     /**
@@ -46,6 +55,7 @@ export const env = createEnv({
     DATABASE_URL_UNPOOLED: process.env.DATABASE_URL_UNPOOLED,
     NODE_ENV: process.env.NODE_ENV,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
+    BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,

@@ -24,11 +24,12 @@ Orders → Dock booking → Quality check → Receive → Putaway → Adjustment
 
 ## Stack
 
-- [Next.js 15](https://nextjs.org) (App Router, React 19, Turbopack in dev)
+- [Next.js 16](https://nextjs.org) (App Router, React 19, Turbopack in dev)
 - [tRPC 11](https://trpc.io) + [TanStack Query](https://tanstack.com/query)
-- [Prisma 7](https://prisma.io) on [Neon](https://neon.tech) Postgres (via the `@prisma/adapter-neon` driver adapter)
+- [Prisma 7](https://prisma.io) on Postgres — [Neon](https://neon.tech) via `@prisma/adapter-neon`, or any plain Postgres via `@prisma/adapter-pg`; the connection string decides
 - [Better Auth](https://better-auth.com) for authentication (self-hosted sessions, email + password)
 - [Tailwind CSS 4](https://tailwindcss.com) + [shadcn/ui](https://ui.shadcn.com) (Base UI primitives)
+- [Vitest](https://vitest.dev) against a real Postgres, and [Playwright](https://playwright.dev) end to end
 
 ## Getting started
 
@@ -36,7 +37,9 @@ Orders → Dock booking → Quality check → Receive → Putaway → Adjustment
 
 - Node.js 22+ (the Neon serverless driver needs a global `WebSocket`)
 - pnpm 9 (`corepack enable`)
-- A [Neon](https://console.neon.tech) project (free tier is fine)
+- Postgres. A [Neon](https://console.neon.tech) project (free tier is fine) is
+  what this is deployed on, but any local Postgres works — `server/db.ts` picks
+  the driver adapter from the connection string.
 
 ### Environment variables
 
@@ -48,9 +51,10 @@ cp .env.example .env
 
 | Variable                            | Description                                                                                                                          |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `DATABASE_URL`                      | Neon **pooled** connection string — the host contains `-pooler`. Used by Prisma Client at runtime.                                   |
-| `DATABASE_URL_UNPOOLED`                        | Neon **direct** connection string (same host without `-pooler`). Used by the Prisma CLI for migrations and by the `prisma/` scripts. |
+| `DATABASE_URL`                      | Connection string used by Prisma Client at runtime. On Neon this is the **pooled** one — the host contains `-pooler`.                |
+| `DATABASE_URL_UNPOOLED`             | Direct connection string. On Neon this is the same host without `-pooler`. Used by the Prisma CLI for migrations and by the `prisma/` scripts. |
 | `BETTER_AUTH_SECRET`                | 32+ character random string that signs session cookies. Generate one with `npx auth@latest secret`.                                  |
+| `BETTER_AUTH_URL`                   | Optional. Public origin, e.g. `https://wms.example.com`. Required when serving from anywhere other than `localhost:3000` or `*.vercel.app` — without it Better Auth rejects the request as an unknown host and sign-in 500s. |
 | `RESEND_API_KEY`                    | [Resend](https://resend.com) API key. Sign-up is gated on a verification email, so this has to be a real key.                        |
 | `EMAIL_FROM`                        | `From` header on outbound mail. Defaults to `NexStock <onboarding@resend.dev>`, which only delivers to the Resend account owner.     |
 
@@ -65,8 +69,8 @@ bypass that (useful for Docker builds).
 
 Prisma 7 no longer loads `.env` implicitly, so `prisma.config.ts` does it
 explicitly, reading `.env.local` first and then `.env` (Next.js' precedence).
-Create one of those before `pnpm install`, since the postinstall
-`prisma generate` needs `DATABASE_URL_UNPOOLED`.
+`pnpm install` works without either — `prisma generate` needs no database — but
+`pnpm db:migrate` and the `prisma/` scripts need `DATABASE_URL_UNPOOLED`.
 
 ### Setup
 
@@ -129,6 +133,7 @@ Sign in at `/sign-in`; every page under `app/(inbound)/` calls
 | `pnpm lint`         | ESLint via `next lint`.                                                          |
 | `pnpm test`         | Service-layer tests (Vitest) against a real Postgres. See [Testing](#testing).   |
 | `pnpm test:watch`   | The same suite in watch mode.                                                    |
+| `pnpm test:e2e`     | Playwright end-to-end tests against a built app. See [Testing](#testing).        |
 | `pnpm format:check` | Prettier check.                                                                  |
 | `pnpm format:write` | Prettier write.                                                                  |
 | `pnpm db:push`      | Push schema without a migration (dev), then regenerate the client.               |
@@ -140,8 +145,8 @@ Sign in at `/sign-in`; every page under `app/(inbound)/` calls
 | `pnpm user:create`  | Create an account: `pnpm user:create <email> "<name>" "<password>"`.             |
 | `pnpm db:studio`    | Prisma Studio.                                                                   |
 
-CI (`.github/workflows/ci.yaml`) runs lint, Prettier, typecheck, tests and build
-on every pull request.
+CI (`.github/workflows/ci.yaml`) runs lint, Prettier, typecheck, unit tests,
+build and end-to-end tests on every pull request.
 
 ## Testing
 
@@ -162,16 +167,37 @@ DATABASE_URL_UNPOOLED="$TEST_DATABASE_URL" pnpm db:migrate
 pnpm test
 ```
 
+### End-to-end
+
+`pnpm test:e2e` drives the real app in Chromium — a production build, a real
+database, a real session — which is what proves the tRPC routers and the screens
+are wired to the services underneath them. Point `.env` at a seeded database,
+set `BETTER_AUTH_URL` to the port Playwright serves on, and run it:
+
+```bash
+createdb nexstock_e2e
+# In .env: DATABASE_URL, DATABASE_URL_UNPOOLED → nexstock_e2e
+#          BETTER_AUTH_URL=http://127.0.0.1:3100
+pnpm db:migrate && pnpm db:seed && pnpm build
+pnpm test:e2e
+```
+
+The operator account is created by `global-setup.ts` (via `pnpm user:create`,
+which skips the verification email) and signed in through the real form once;
+the specs reuse that session. If the machine already has a Chromium that
+Playwright did not install, point `PLAYWRIGHT_CHROMIUM_PATH` at it instead of
+downloading another.
+
 Every test that moves stock ends by asserting the invariant the whole inventory
 core rests on — `sum(InventoryMovement.quantity) === InventoryBalance.quantity`
 for every key — using the same query `inventory.getDrift` serves to the
 `/inventory` screen. CI runs all of it against a `postgres:16` service
 container.
 
-Note that the app talks to Neon over WebSockets via `@prisma/adapter-neon`,
-which needs a Neon endpoint; the tests use `@prisma/adapter-pg` against plain
-Postgres instead. Only the transport differs — the services take a
-`Prisma.TransactionClient` and never learn which adapter produced it.
+The tests connect with `@prisma/adapter-pg`, as the app itself does for any
+non-Neon connection string. Only the transport differs from a Neon deployment —
+the services take a `Prisma.TransactionClient` and never learn which adapter
+produced it.
 
 ## Project layout
 

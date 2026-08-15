@@ -19,6 +19,13 @@ if (!email || !name || !password) {
 
 // Dynamic import is load-bearing: a static one would be hoisted above
 // `loadEnv()` and `@/env` would throw on the missing DATABASE_URL.
+//
+// This pulls in `lib/email.ts`, which is marked `server-only`. That package
+// resolves to a module that throws unless the `react-server` export condition is
+// set, which Next does and plain Node does not — so this script threw on import
+// and `pnpm user:create` could not run at all. The npm script passes
+// `--conditions=react-server` to tsx; run it that way rather than with bare
+// `tsx` if invoking it directly.
 const { auth } = await import("@/lib/auth");
 
 const ctx = await auth.$context;
