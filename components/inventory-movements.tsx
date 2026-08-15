@@ -26,6 +26,10 @@ const REASON_LABELS: Record<MovementReason, string> = {
   PUTAWAY_OUT: "Putaway out",
   PUTAWAY_IN: "Putaway in",
   TRANSFER: "Transfer",
+  PICK_OUT: "Pick out",
+  PICK_IN: "Pick in",
+  PICK_REVERSAL: "Pick reversed",
+  SHIP: "Shipped",
 };
 
 export function InventoryMovements({

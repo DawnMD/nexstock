@@ -33,6 +33,15 @@ export const db = new PrismaClient({
  * columns point at it and the fixtures reuse one actor across the suite.
  */
 export async function resetWarehouse() {
+  // Outbound first: pick tasks and cartons reference sales orders, and the
+  // ledger rows they wrote have to go before the SKUs and locations under them.
+  await db.pickTask.deleteMany();
+  await db.carton.deleteMany();
+  await db.shipment.deleteMany();
+  await db.salesOrderItem.deleteMany();
+  await db.salesOrder.deleteMany();
+  await db.customer.deleteMany();
+
   await db.inventoryBalance.deleteMany();
   await db.inventoryMovement.deleteMany();
   await db.putaway.deleteMany();

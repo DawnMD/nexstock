@@ -1,9 +1,14 @@
 # NexStock
 
-An inbound warehouse management system (WMS). NexStock covers the receiving
-side of a warehouse: a purchase order arrives, a vehicle books a dock, the goods
-are inspected and received against the order lines, stock is put away into a
-storage location, and any discrepancies are corrected with adjustments.
+A warehouse management system (WMS) covering both directions. Inbound: a
+purchase order arrives, a vehicle books a dock, the goods are inspected and
+received against the order lines, and stock is put away into a storage location.
+Outbound: a sales order reserves specific pallets, a picker fetches them, they
+are boxed into cartons and dispatched.
+
+Every movement in either direction goes through one append-only ledger, and the
+`/inventory` screen shows the reconciliation between that ledger and the
+materialised balances rather than asking you to take it on trust.
 
 ## The inbound flow
 
@@ -21,6 +26,20 @@ Orders → Dock booking → Quality check → Receive → Putaway → Adjustment
 | **Putaway**       | `/putaway`, `/putaway/[lpn]`       | Move a received LPN from staging into a storage `Location`.                                                                            |
 | **Adjustments**   | `/adjustments`                     | Record additions/subtractions against an order line to correct quantities.                                                             |
 | **Dashboard**     | `/dashboard`                       | Order stats and today's dock schedule.                                                                                                 |
+
+## The outbound flow
+
+```
+Sales orders → Allocate → Pick → Pack → Ship
+```
+
+| Step             | Route                                        | What happens                                                                                                                                   |
+| ---------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Sales orders** | `/sales-orders`, `/sales-orders/[orderNumber]` | Orders going out to a `Customer`, each with line items.                                                                                        |
+| **Allocate**     | on the sales order screen                    | Reserves specific pallets, FEFO then FIFO, producing one `PickTask` per balance drawn against. Nothing moves; open reservations are netted off so two orders cannot be promised the same stock. |
+| **Pick**         | `/pick`                                      | The worklist, in aisle order. Confirming moves stock out of the rack and into the dispatch bay — a net-zero pair, like a putaway. Short picks are recorded as such. |
+| **Pack**         | `/ship?order=…`                              | Boxes picked lines into a `Carton`. Writes no stock movement: the units are already in the bay, and a carton says how they are boxed, not where they are. |
+| **Ship**         | `/ship?order=…`                              | Dispatches cartons on a `Shipment`. The only operation in NexStock that reduces stock on hand without being a write-off.                       |
 
 ## Stack
 
@@ -205,6 +224,8 @@ produced it.
 app/             App Router routes; the inbound screens live under app/(inbound)/
 components/      React components; components/ui/ is shadcn
 server/services/ the business logic: every stock movement goes through here
+                 inbound: receiving, quality, putaway, adjustments
+                 outbound: allocation, picking (pack/ship), sales-orders
 server/api/      tRPC routers, which are thin shells over the services
 trpc/            tRPC client/server wiring and the React Query client
 prisma/          schema.prisma, migrations, seed.ts
@@ -220,7 +241,8 @@ lib/             shared helpers
   so any signed-in user can read every order and mutate any booking, receipt,
   quality check, adjustment or putaway. Fine for a single-operator hobby
   deployment; this is the first thing to build before it goes multi-user.
-- **Inbound only.** There is no picking, packing or shipping.
-- **No end-to-end tests.** The service layer is covered (see
-  [Testing](#testing)); the React components and the tRPC routers above them
-  are not.
+- **No wave picking.** Pick tasks are generated per sales order rather than
+  batched across orders into waves, so a picker walks the aisles once per order.
+- **Sales orders are created through the API, not a form.** `outbound.createSalesOrder`
+  is complete and tested; the screen to drive it is not built yet, so the seed
+  is what puts orders on the board.

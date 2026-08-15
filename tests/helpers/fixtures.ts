@@ -109,6 +109,97 @@ export async function createOrderWithLine(options: {
   return { order, orderItem };
 }
 
+export async function createCustomer(reference = "CUST-1") {
+  return await db.customer.create({
+    data: { name: `Customer ${reference}`, reference, city: "Testville" },
+  });
+}
+
+/** A customer and a sales order with one line on it. */
+export async function createSalesOrderWithLine(options: {
+  orderNumber: string;
+  sku: string;
+  orderedQuantity: number;
+  customerReference?: string;
+}) {
+  const reference = options.customerReference ?? `CUST-${options.orderNumber}`;
+  await createCustomer(reference);
+
+  const order = await db.salesOrder.create({
+    data: {
+      orderNumber: options.orderNumber,
+      customerReference: reference,
+      createdBy: TEST_USER_ID,
+      updatedBy: TEST_USER_ID,
+      items: {
+        create: {
+          sku: options.sku,
+          orderedQuantity: options.orderedQuantity,
+        },
+      },
+    },
+    include: { items: true },
+  });
+
+  const item = order.items[0];
+  if (!item) throw new Error("Fixture sales order was created without a line");
+
+  return { order, item };
+}
+
+/**
+ * Receive a pallet and put it away into storage, which is the state outbound
+ * actually starts from — allocation only considers stock that is somewhere it
+ * can be picked from.
+ */
+export async function stockInStorage(options: {
+  sku: string;
+  lpn: string;
+  quantity: number;
+  location: string;
+  lot?: string;
+  lotExpiryDate?: Date | null;
+  orderNumber?: string;
+}) {
+  const { receiveStock } = await import("@/server/services/receiving");
+  const { createPutaway } = await import("@/server/services/putaway");
+
+  const orderNumber = options.orderNumber ?? `PO-${options.lpn}`;
+  const { orderItem } = await createOrderWithLine({
+    orderNumber,
+    sku: options.sku,
+    orderedQuantity: options.quantity,
+  });
+
+  await db.$transaction((tx) =>
+    receiveStock(tx, {
+      orderItemId: orderItem.id,
+      receivedQuantity: options.quantity,
+      sku: options.sku,
+      location: "STAGE",
+      lpn: options.lpn,
+      lot: options.lot,
+      lotExpiryDate: options.lotExpiryDate ?? null,
+      uom: "EACH",
+      vehicleNumber: "TRK-1",
+      receivedBy: TEST_USER_ID,
+    }),
+  );
+
+  await db.$transaction((tx) =>
+    createPutaway(tx, {
+      lpn: options.lpn,
+      sku: options.sku,
+      quantity: options.quantity,
+      fromLocation: "STAGE",
+      toLocation: options.location,
+      putawayBy: TEST_USER_ID,
+    }),
+  );
+
+  return orderItem;
+}
+
 export async function createDockAndVehicleType() {
   const dock = await db.dock.create({ data: { name: "DOCK-1" } });
   const vehicleType = await db.vehicleType.create({
