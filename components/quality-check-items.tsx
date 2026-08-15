@@ -63,21 +63,23 @@ export function QualityCheckItems({ orderNumber }: { orderNumber: string }) {
       </Card>
     );
   }
-  const isAvailableForQualityCheck =
-    orderItems.dockBookings.length > 0 &&
-    orderItems.dockBookings.every(
-      (dockBooking) => dockBooking.activities.length >= 2,
-    ) &&
-    orderItems.dockBookings.every((dockBooking) =>
+  // Goods can be inspected once a container has been opened. This asks whether
+  // *any* vehicle on the order has been opened, not every one: an order split
+  // across three trucks used to block QC on all of its lines until the last
+  // truck arrived, including lines already received off the first. It also tests
+  // for the OPEN activity directly rather than using `activities.length >= 2` as
+  // a stand-in for it.
+  const isAvailableForQualityCheck = orderItems.dockBookings.some(
+    (dockBooking) =>
       dockBooking.activities.some(
         (activity) => activity.activityType === "OPEN",
       ),
-    );
+  );
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {orderItems.items.map((item) => (
-        <Card key={item.Sku.sku} className="relative">
+        <Card key={item.id} className="relative">
           <CardHeader className="flex items-center gap-2 pb-3">
             <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg">
               <PackageIcon className="text-primary h-4 w-4" />

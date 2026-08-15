@@ -11,6 +11,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -68,43 +76,30 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-// Function to generate random CBM based on vehicle type
-const generateRandomCBM = (vehicleType: string): number => {
-  const cbmRanges: Record<string, { min: number; max: number }> = {
-    Truck: { min: 20, max: 80 },
-    Container: { min: 30, max: 120 },
-    Trailer: { min: 40, max: 150 },
-    Van: { min: 10, max: 40 },
-    Flatbed: { min: 15, max: 60 },
-  };
-
-  const range = cbmRanges[vehicleType] ?? { min: 20, max: 80 };
-  return Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
-};
+/**
+ * Every numeric field arrives from an `<input>` as a string, so each is parsed
+ * and bounded here rather than trusting `parseInt` downstream. `cbm` used to be
+ * a bare `z.string()`: submitting it empty sent `parseInt("") === NaN` to a tRPC
+ * `z.number()`, which rejected it with an error naming no field at all.
+ */
+const wholeNumber = (label: string, min: number) =>
+  z
+    .string()
+    .min(1, { message: `${label} is required` })
+    .refine((val) => Number.isInteger(Number(val)), {
+      message: `${label} must be a whole number`,
+    })
+    .refine((val) => Number(val) >= min, {
+      message: `${label} must be ${min} or more`,
+    });
 
 const formSchema = z.object({
   dockId: z.string().min(1, { message: "Dock is required" }),
   vehicleTypeId: z.string().min(1, { message: "Vehicle type is required" }),
   vehicleNumber: z.string().min(1, { message: "Vehicle number is required" }),
-  weight: z
-    .string()
-    .min(1, { message: "Weight is required" })
-    .refine((val) => !isNaN(Number(val)), {
-      message: "Weight must be a number",
-    })
-    .refine((val) => Number(val) > 0, {
-      message: "Weight must be greater than 0",
-    }),
-  queue: z
-    .string()
-    .min(1, { message: "Queue is required" })
-    .refine((val) => !isNaN(Number(val)), {
-      message: "Queue must be a number",
-    })
-    .refine((val) => Number(val) > 0, {
-      message: "Queue must be greater than 0",
-    }),
-  cbm: z.string(),
+  weight: wholeNumber("Weight", 1),
+  queue: wholeNumber("Queue", 1),
+  cbm: wholeNumber("CBM", 0),
   driverName: z.string().min(1, { message: "Driver name is required" }),
   driverPhone: z.string().optional(),
   eta: z.date().optional(),
@@ -113,6 +108,13 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
   const utils = api.useUtils();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingBooking, setEditingBooking] = useState<
+    (typeof dockBookings)[number] | null
+  >(null);
+  // `DockActivity` cascades on delete, so a booking that has been worked takes
+  // its whole check-in/open/close/check-out trail with it. Deleting used to fire
+  // straight off the dropdown item; the SKU and location tables both confirm
+  // first, and this is now consistent with them.
+  const [pendingDelete, setPendingDelete] = useState<
     (typeof dockBookings)[number] | null
   >(null);
   const form = useForm<z.infer<typeof formSchema>>({
@@ -164,10 +166,15 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
         utils.order.getDockBookingsByOrderNumber.invalidate({
           orderNumber,
         }),
+        utils.order.getTodayDockSchedule.invalidate(),
         utils.qualityCheck.getOrderItems.invalidate(),
         utils.qualityCheck.getQualityCheckItems.invalidate(),
       ]);
+      setPendingDelete(null);
       toast.success("Dock booking deleted successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
@@ -207,6 +214,7 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
     if (editingBooking) {
       updateDockBookingMutation.mutate({
         id: editingBooking.id,
+        orderNumber,
         ...payload,
       });
     } else {
@@ -338,21 +346,7 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
                             value: vehicleType.id.toString(),
                             label: vehicleType.type,
                           }))}
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                            // Generate random CBM when vehicle type is selected
-                            if (value) {
-                              const selectedVehicleType = vehicleTypes.find(
-                                (vt) => vt.id.toString() === value,
-                              );
-                              if (selectedVehicleType) {
-                                const randomCBM = generateRandomCBM(
-                                  selectedVehicleType.type,
-                                );
-                                form.setValue("cbm", randomCBM.toString());
-                              }
-                            }
-                          }}
+                          onValueChange={field.onChange}
                           defaultValue={field.value}
                         >
                           <FormControl>
@@ -439,12 +433,17 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
                     name="cbm"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>CBM (Auto-generated) *</FormLabel>
+                        <FormLabel>CBM *</FormLabel>
                         <FormControl>
+                          {/* Was a disabled field filled in by `Math.random()`
+                              off the vehicle type. Load volume is something the
+                              operator knows and the rack capacity check depends
+                              on, so it is entered rather than invented. */}
                           <Input
-                            placeholder="Auto-generated based on vehicle type"
+                            type="number"
+                            min={0}
+                            placeholder="Enter load volume in cbm"
                             {...field}
-                            disabled
                           />
                         </FormControl>
                         <FormMessage />
@@ -645,11 +644,7 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
 
                           <DropdownMenuItem
                             className="cursor-pointer text-red-600"
-                            onClick={() => {
-                              deleteDockBookingMutation.mutate({
-                                id: booking.id,
-                              });
-                            }}
+                            onClick={() => setPendingDelete(booking)}
                           >
                             <TrashIcon className="mr-2 h-4 w-4 text-red-500" />
                             Delete
@@ -668,6 +663,42 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
           <div className="text-center font-medium">No dock bookings found</div>
         </CardContent>
       )}
+
+      <Dialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Delete the booking for {pendingDelete?.vehicleNumber}?
+            </DialogTitle>
+            <DialogDescription>
+              {(pendingDelete?._count.activities ?? 0) > 0
+                ? `This vehicle has already been worked — ${pendingDelete?._count.activities} activities are recorded against it — so the booking can no longer be deleted.`
+                : "The booking will be removed. Nothing has been recorded against this vehicle yet."}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingDelete(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={
+                deleteDockBookingMutation.isPending ||
+                (pendingDelete?._count.activities ?? 0) > 0
+              }
+              onClick={() =>
+                pendingDelete &&
+                deleteDockBookingMutation.mutate({ id: pendingDelete.id })
+              }
+            >
+              {deleteDockBookingMutation.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

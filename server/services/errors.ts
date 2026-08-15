@@ -35,3 +35,12 @@ export const notFound = (message: string) =>
 /** The write collides with one that already happened. */
 export const conflict = (message: string) =>
   new ServiceError("CONFLICT", message);
+
+/**
+ * The record exists and the write is well-formed, but the state it is in does
+ * not allow this step yet — a vehicle cannot be closed before it was opened.
+ * Distinct from `badRequest`: the same call becomes valid once the missing
+ * predecessor happens.
+ */
+export const preconditionFailed = (message: string) =>
+  new ServiceError("PRECONDITION_FAILED", message);

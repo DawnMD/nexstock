@@ -29,7 +29,11 @@ import { z } from "zod";
 
 const activitySchema = z.object({
   notes: z.string().optional(),
-  containerCondition: z.boolean().optional(),
+  // Only the OPEN step inspects the container, and when it does the operator has
+  // to say which it was. It was previously optional with an `undefined` default
+  // rendered as `field.value ? "good" : "bad"`, so the form opened with **Bad**
+  // pre-selected and an untouched submit silently recorded a damaged container.
+  containerCondition: z.enum(["good", "bad"]).optional(),
 });
 
 export function VehicleActivityForm({
@@ -68,11 +72,19 @@ export function VehicleActivityForm({
   });
 
   const onSubmit = (data: z.infer<typeof activitySchema>) => {
+    if (activityType === "OPEN" && !data.containerCondition) {
+      form.setError("containerCondition", {
+        type: "manual",
+        message: "Record the container's condition before opening",
+      });
+      return;
+    }
+
     updateDockActivity.mutate({
       vehicleNumber,
       activity: activityType,
       notes: data.notes,
-      containerCondition: data.containerCondition,
+      containerCondition: data.containerCondition === "good",
       orderNumber,
     });
   };
@@ -96,10 +108,10 @@ export function VehicleActivityForm({
                   <FormItem className="flex flex-row items-start space-y-0 space-x-3">
                     <FormControl>
                       <RadioGroup
-                        onValueChange={(value) =>
-                          field.onChange(value === "good")
-                        }
-                        defaultValue={field.value ? "good" : "bad"}
+                        onValueChange={field.onChange}
+                        // No `defaultValue`: nothing is pre-selected, so the
+                        // operator's choice is always a deliberate one.
+                        value={field.value}
                         className="flex flex-row space-x-4"
                       >
                         <FormItem className="flex items-center space-y-0 space-x-2">
