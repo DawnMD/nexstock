@@ -26,6 +26,7 @@ Orders → Dock booking → Quality check → Receive → Putaway → Adjustment
 | **Putaway**       | `/putaway`, `/putaway/[lpn]`       | Move a received LPN from staging into a storage `Location`.                                                                            |
 | **Adjustments**   | `/adjustments`                     | Record additions/subtractions against an order line to correct quantities.                                                             |
 | **Dashboard**     | `/dashboard`                       | Order stats and today's dock schedule.                                                                                                 |
+| **Reports**       | `/reports`                         | Throughput, aging, utilisation, quality and dock turnaround, each with CSV export. See [Reporting](#reporting).                        |
 
 ## The outbound flow
 
@@ -41,6 +42,24 @@ Sales orders → Allocate → Pick → Pack → Ship
 | **Pack**         | `/ship?order=…`                              | Boxes picked lines into a `Carton`. Writes no stock movement: the units are already in the bay, and a carton says how they are boxed, not where they are. |
 | **Ship**         | `/ship?order=…`                              | Dispatches cartons on a `Shipment`. The only operation in NexStock that reduces stock on hand without being a write-off.                       |
 
+## Reporting
+
+`/reports` answers the questions the warehouse data can already support, with a
+CSV export beside each one:
+
+| Report                   | What it shows                                                                                                                        |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **Throughput**           | Units received and shipped per day. Two charts, never one with two y-axes.                                                           |
+| **Stock aging**          | On-hand bucketed by age, measured from the receipt that brought each pallet in — so relocating a pallet does not make it look new.   |
+| **Location utilisation** | Volume used against each rack's rating. An unrated rack reports nothing rather than 0%; "unrated" and "empty" are different answers. |
+| **Reject rate by SKU**   | Rejected over received across every line, so a SKU that consistently arrives damaged stands out from one bad pallet.                  |
+| **Dock turnaround**      | Check-in to check-out per vehicle. `DockActivity` has recorded these timestamps since the schema was written and nothing read them.   |
+
+Export is a route handler (`/api/reports/[report]`) rather than a tRPC
+procedure, because the browser has to be handed a file — but the data comes from
+the same procedures the screens render, through a server-side caller, so a report
+and its export cannot drift apart.
+
 ## Stack
 
 - [Next.js 16](https://nextjs.org) (App Router, React 19, Turbopack in dev)
@@ -48,6 +67,7 @@ Sales orders → Allocate → Pick → Pack → Ship
 - [Prisma 7](https://prisma.io) on Postgres — [Neon](https://neon.tech) via `@prisma/adapter-neon`, or any plain Postgres via `@prisma/adapter-pg`; the connection string decides
 - [Better Auth](https://better-auth.com) for authentication (self-hosted sessions, email + password)
 - [Tailwind CSS 4](https://tailwindcss.com) + [shadcn/ui](https://ui.shadcn.com) (Base UI primitives)
+- [Recharts](https://recharts.org) for the report charts
 - [Vitest](https://vitest.dev) against a real Postgres, and [Playwright](https://playwright.dev) end to end
 
 ## Getting started

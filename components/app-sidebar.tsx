@@ -28,6 +28,7 @@ import {
   IconFileInvoice,
   IconChecklist,
   IconSend,
+  IconChartBar,
 } from "@tabler/icons-react";
 import Link from "next/link";
 
@@ -66,6 +67,7 @@ export const navSections: NavSection[] = [
       { title: "Inventory", url: "/inventory", icon: IconBuildingWarehouse },
       { title: "SKUs", url: "/skus", icon: IconTag },
       { title: "Locations", url: "/locations", icon: IconRuler },
+      { title: "Reports", url: "/reports", icon: IconChartBar },
     ],
   },
 ];
