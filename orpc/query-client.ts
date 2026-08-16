@@ -2,7 +2,6 @@ import {
   defaultShouldDehydrateQuery,
   QueryClient,
 } from "@tanstack/react-query";
-import SuperJSON from "superjson";
 
 export const createQueryClient = () =>
   new QueryClient({
@@ -27,13 +26,16 @@ export const createQueryClient = () =>
         },
       },
       dehydrate: {
-        serializeData: SuperJSON.serialize,
+        // No `serializeData`/`deserializeData` pair: oRPC's RPC protocol carries
+        // `Date`, `BigInt`, `Map` and `Set` natively, which is what superjson
+        // used to be here for.
+        //
+        // Dehydrating queries that are still pending is what lets a prefetch
+        // stream in rather than blocking the RSC render — pure TanStack Query
+        // config, unaffected by the transport.
         shouldDehydrateQuery: (query) =>
           defaultShouldDehydrateQuery(query) ||
           query.state.status === "pending",
-      },
-      hydrate: {
-        deserializeData: SuperJSON.deserialize,
       },
     },
   });
