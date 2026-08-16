@@ -14,7 +14,7 @@ export default defineConfig({
     testTimeout: 30_000,
     hookTimeout: 30_000,
     setupFiles: ["tests/setup.ts"],
-    // `env.ts` validates at import time, and importing a tRPC router reaches it
+    // `env.ts` validates at import time, and importing an oRPC router reaches it
     // through `lib/auth.ts`. These are placeholders so that import succeeds —
     // the tests talk to Postgres through `tests/helpers/db.ts` and
     // `TEST_DATABASE_URL`, and nothing here sends mail or resolves a session.
@@ -29,7 +29,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL(".", import.meta.url)),
-      // Importing a tRPC router reaches `lib/auth.ts` and `lib/email.ts`, which
+      // Importing an oRPC router reaches `lib/auth.ts` and `lib/email.ts`, which
       // are marked `server-only` — a package that throws unless the
       // `react-server` export condition is set. See the stub for why aliasing
       // it away costs nothing here.

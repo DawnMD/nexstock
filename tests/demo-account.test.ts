@@ -8,8 +8,10 @@
  */
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { createCaller } from "@/server/api/root";
-import type { createTRPCContext } from "@/server/api/trpc";
+import { createRouterClient } from "@orpc/server";
+
+import type { Context } from "@/server/api/context";
+import { router } from "@/server/api/root";
 import { AdjustmentType } from "@/generated/prisma/client";
 
 import { db } from "./helpers/db";
@@ -21,19 +23,17 @@ import {
   TEST_USER_ID,
 } from "./helpers/fixtures";
 
-type Context = Awaited<ReturnType<typeof createTRPCContext>>;
-
 const DEMO_USER_ID = "test-demo-actor";
 
 const callerFor = (userId: string) =>
-  createCaller(
-    (): Context => ({
+  createRouterClient(router, {
+    context: (): Context => ({
       db: db as unknown as Context["db"],
       session: null,
       userId,
       headers: new Headers(),
     }),
-  );
+  });
 
 const demo = callerFor(DEMO_USER_ID);
 const operator = callerFor(TEST_USER_ID);
