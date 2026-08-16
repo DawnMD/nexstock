@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@/trpc/server";
+import { serverClient } from "@/orpc/server";
 import { PackageIcon, SlidersVertical } from "lucide-react";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/session";
@@ -37,7 +37,7 @@ export default async function ViewAdjustmentPage({
 
   const { adjustmentNumber } = await params;
 
-  const adjustment = await api.adjustments.getAdjustmentInfo({
+  const adjustment = await serverClient.adjustments.getAdjustmentInfo({
     adjustmentId: adjustmentNumber,
   });
 

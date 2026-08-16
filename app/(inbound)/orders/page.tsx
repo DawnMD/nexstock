@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { DataTableSkeleton } from "@/components/skeletons";
 import { OrderTable } from "@/components/order-table";
 import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
-import { api, HydrateClient } from "@/trpc/server";
+import { HydrateClient, prefetch, serverOrpc } from "@/orpc/server";
 import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = {
@@ -21,18 +23,24 @@ export default async function Page({
   await requireSession();
 
   const { query } = await searchParams;
-  void api.order.getPaginatedOrders.prefetch({
-    limit: 20,
-    pageIndex: 0,
-    search: query,
-  });
+  prefetch(
+    serverOrpc.order.getPaginatedOrders.queryOptions({
+      input: {
+        limit: 20,
+        pageIndex: 0,
+        search: query,
+      },
+    }),
+  );
 
   return (
     <>
       <SiteHeader title="Orders" />
       <PageMain className="p-4">
         <HydrateClient>
-          <OrderTable query={query} />
+          <Suspense fallback={<DataTableSkeleton columns={8} />}>
+            <OrderTable query={query} />
+          </Suspense>
         </HydrateClient>
       </PageMain>
     </>

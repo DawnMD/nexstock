@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { CardListSkeleton } from "@/components/skeletons";
 import { LpnList } from "@/components/lpn-list";
 import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
@@ -10,7 +12,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { api, HydrateClient } from "@/trpc/server";
+import {
+  HydrateClient,
+  prefetch,
+  serverClient,
+  serverOrpc,
+} from "@/orpc/server";
 import { format } from "date-fns";
 import { PackageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -37,14 +44,16 @@ export default async function LpnListOrderPage({
 
   const { orderNumber } = await params;
 
-  const [order] = await Promise.all([
-    api.receive.getOrderItems({
-      orderNumber,
+  // Two different queries, not the same one twice: the LPN table below reads
+  // `getReceivedItemsByOrder`, and this page's header reads the order. Only the
+  // header is awaited — the prefetch streams into the boundary.
+  prefetch(
+    serverOrpc.receive.getReceivedItemsByOrder.queryOptions({
+      input: { orderNumber },
     }),
-    api.receive.getReceivedItemsByOrder.prefetch({
-      orderNumber,
-    }),
-  ]);
+  );
+
+  const order = await serverClient.receive.getOrderItems({ orderNumber });
 
   if (!order) {
     notFound();
@@ -94,7 +103,9 @@ export default async function LpnListOrderPage({
           </CardContent>
         </Card>
         <HydrateClient>
-          <LpnList orderNumber={orderNumber} />
+          <Suspense fallback={<CardListSkeleton rows={6} />}>
+            <LpnList orderNumber={orderNumber} />
+          </Suspense>
         </HydrateClient>
       </PageMain>
     </>

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { CardListSkeleton } from "@/components/skeletons";
 import { SearchIcon } from "lucide-react";
-import { api, HydrateClient } from "@/trpc/server";
+import { HydrateClient, prefetch, serverOrpc } from "@/orpc/server";
 import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { LpnListOrderSearch } from "@/components/lpn-list-order-search";
@@ -14,7 +16,7 @@ export const metadata: Metadata = {
 export default async function LpnListPage() {
   await requireSession();
 
-  void api.receive.getAllOrderNumbers.prefetch();
+  prefetch(serverOrpc.receive.getAllOrderNumbers.queryOptions());
 
   return (
     <>
@@ -30,7 +32,9 @@ export default async function LpnListPage() {
           </p>
         </div>
         <HydrateClient>
-          <LpnListOrderSearch />
+          <Suspense fallback={<CardListSkeleton rows={6} />}>
+            <LpnListOrderSearch />
+          </Suspense>
         </HydrateClient>
       </PageMain>
     </>

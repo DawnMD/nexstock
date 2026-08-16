@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { FormSkeleton } from "@/components/skeletons";
 import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { VehicleActivityContainer } from "@/components/vehicle-activity-containner";
 import { VehicleActivityForm } from "@/components/vehicle-activity-form";
-import { api, HydrateClient } from "@/trpc/server";
+import { HydrateClient, serverClient } from "@/orpc/server";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/session";
 
@@ -29,7 +31,7 @@ export default async function CheckInPage({
   const { orderNumber, vehicleNumber } = await params;
 
   const dockBookingDetails =
-    await api.order.getDockBookingByVehicleNumberAndOrderNumber({
+    await serverClient.order.getDockBookingByVehicleNumberAndOrderNumber({
       vehicleNumber,
       orderNumber,
     });
@@ -44,11 +46,13 @@ export default async function CheckInPage({
       <PageMain className="p-4">
         <VehicleActivityContainer dockBookingDetails={dockBookingDetails}>
           <HydrateClient>
-            <VehicleActivityForm
-              vehicleNumber={vehicleNumber}
-              activityType="CHECK_IN"
-              orderNumber={orderNumber}
-            />
+            <Suspense fallback={<FormSkeleton fields={2} />}>
+              <VehicleActivityForm
+                vehicleNumber={vehicleNumber}
+                activityType="CHECK_IN"
+                orderNumber={orderNumber}
+              />
+            </Suspense>
           </HydrateClient>
         </VehicleActivityContainer>
       </PageMain>

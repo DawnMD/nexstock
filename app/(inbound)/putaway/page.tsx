@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { CardListSkeleton } from "@/components/skeletons";
 import { SearchIcon } from "lucide-react";
-import { api, HydrateClient } from "@/trpc/server";
+import { HydrateClient, prefetch, serverOrpc } from "@/orpc/server";
 import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { PutawayLPNSearch } from "@/components/putaway-lpn-search";
@@ -15,7 +17,7 @@ export const metadata: Metadata = {
 export default async function PutawayPage() {
   await requireSession();
 
-  void api.putaway.getAllLPNs.prefetch();
+  prefetch(serverOrpc.putaway.getAllLPNs.queryOptions());
 
   return (
     <>
@@ -31,7 +33,9 @@ export default async function PutawayPage() {
           </p>
         </div>
         <HydrateClient>
-          <PutawayLPNSearch />
+          <Suspense fallback={<CardListSkeleton rows={6} />}>
+            <PutawayLPNSearch />
+          </Suspense>
         </HydrateClient>
       </PageMain>
     </>

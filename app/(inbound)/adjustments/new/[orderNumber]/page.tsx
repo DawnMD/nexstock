@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { api } from "@/trpc/server";
+import { serverClient } from "@/orpc/server";
 import { PackageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/session";
@@ -36,7 +36,7 @@ export default async function NewAdjustmentPage({
 
   const { orderNumber } = await params;
 
-  const order = await api.adjustments.getOrderInfo({ orderNumber });
+  const order = await serverClient.adjustments.getOrderInfo({ orderNumber });
 
   if (!order) {
     notFound();

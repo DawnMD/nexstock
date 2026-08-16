@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { CardListSkeleton } from "@/components/skeletons";
+import { Skeleton } from "@/components/ui/skeleton";
 import { QualityCheckItems } from "@/components/quality-check-items";
 import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
@@ -12,7 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { api, HydrateClient } from "@/trpc/server";
+import { fetchQuery, HydrateClient, serverOrpc } from "@/orpc/server";
 import { PackageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/session";
@@ -38,16 +41,14 @@ export default async function QualityCheckOrderPage({
 
   const { orderNumber } = await params;
 
-  //direct call wont add to the cache, so we need to prefetch again
-  //this is a workaround to get the order items to be cached
-  const [order] = await Promise.all([
-    api.qualityCheck.getOrderItems({
-      orderNumber,
+  // One query, read twice: the header below needs the value on the server and
+  // `<QualityCheckItems>` asks for the same thing on the client, so this fills
+  // the cache `HydrateClient` dehydrates rather than running it a second time.
+  const order = await fetchQuery(
+    serverOrpc.qualityCheck.getOrderItems.queryOptions({
+      input: { orderNumber },
     }),
-    api.qualityCheck.getOrderItems.prefetch({
-      orderNumber,
-    }),
-  ]);
+  );
 
   if (!order) {
     notFound();
@@ -83,7 +84,12 @@ export default async function QualityCheckOrderPage({
           </CardContent>
         </Card>
         <HydrateClient>
-          <SkuSearch orderNumber={orderNumber} />
+          {/* Two boundaries rather than one around the whole block: the search
+              box and the item list read different queries, and the heading
+              between them is static markup that should never be hidden. */}
+          <Suspense fallback={<Skeleton className="h-9 w-full max-w-sm" />}>
+            <SkuSearch orderNumber={orderNumber} />
+          </Suspense>
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold">Order Items</h2>
@@ -92,7 +98,9 @@ export default async function QualityCheckOrderPage({
               {order.items.length} total SKUs
             </Badge>
           </div>
-          <QualityCheckItems orderNumber={orderNumber} />
+          <Suspense fallback={<CardListSkeleton rows={6} />}>
+            <QualityCheckItems orderNumber={orderNumber} />
+          </Suspense>
         </HydrateClient>
       </PageMain>
     </>

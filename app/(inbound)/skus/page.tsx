@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { CardTableSkeleton } from "@/components/skeletons";
 import { SearchForm } from "@/components/order-search-form";
 import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { SkuMaster } from "@/components/sku-master";
-import { api, HydrateClient } from "@/trpc/server";
+import { HydrateClient, prefetch, serverOrpc } from "@/orpc/server";
 import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = {
@@ -21,7 +23,7 @@ export default async function SkusPage({
 
   const { query } = await searchParams;
 
-  void api.sku.getSkus.prefetch({ search: query });
+  prefetch(serverOrpc.sku.getSkus.queryOptions({ input: { search: query } }));
 
   return (
     <>
@@ -29,7 +31,9 @@ export default async function SkusPage({
       <PageMain className="flex flex-col gap-6 p-4">
         <SearchForm query={query} action="/skus" />
         <HydrateClient>
-          <SkuMaster search={query} />
+          <Suspense fallback={<CardTableSkeleton columns={7} />}>
+            <SkuMaster search={query} />
+          </Suspense>
         </HydrateClient>
       </PageMain>
     </>

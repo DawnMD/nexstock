@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { CardListSkeleton } from "@/components/skeletons";
 import { QualityCheckOrderSearch } from "@/components/quality-check-order-search";
 import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
-import { api, HydrateClient } from "@/trpc/server";
+import { HydrateClient, prefetch, serverOrpc } from "@/orpc/server";
 import { SearchIcon } from "lucide-react";
 import { requireSession } from "@/lib/session";
 
@@ -15,7 +17,7 @@ export const metadata: Metadata = {
 export default async function QualityCheckPage() {
   await requireSession();
 
-  void api.qualityCheck.getAllOrderNumbers.prefetch();
+  prefetch(serverOrpc.qualityCheck.getAllOrderNumbers.queryOptions());
 
   return (
     <>
@@ -31,7 +33,9 @@ export default async function QualityCheckPage() {
           </p>
         </div>
         <HydrateClient>
-          <QualityCheckOrderSearch />
+          <Suspense fallback={<CardListSkeleton rows={6} />}>
+            <QualityCheckOrderSearch />
+          </Suspense>
         </HydrateClient>
       </PageMain>
     </>
