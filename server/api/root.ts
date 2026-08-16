@@ -8,14 +8,14 @@ import { reportsRouter } from "@/server/api/routers/reports";
 import { receiveRouter } from "@/server/api/routers/receive";
 import { skuRouter } from "@/server/api/routers/sku";
 import { qualityCheckRouter } from "@/server/api/routers/quality-check";
-import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 
 /**
  * This is the primary router for your server.
  *
- * All routers added in /api/routers should be manually added here.
+ * All routers added in /api/routers should be manually added here. In oRPC a
+ * router is a plain object, so there is no builder call wrapping this.
  */
-export const appRouter = createTRPCRouter({
+export const router = {
   order: orderRouter,
   qualityCheck: qualityCheckRouter,
   receive: receiveRouter,
@@ -26,16 +26,7 @@ export const appRouter = createTRPCRouter({
   sku: skuRouter,
   outbound: outboundRouter,
   reports: reportsRouter,
-});
+};
 
 // export type definition of API
-export type AppRouter = typeof appRouter;
-
-/**
- * Create a server-side caller for the tRPC API.
- * @example
- * const trpc = createCaller(createContext);
- * const res = await trpc.post.all();
- *       ^? Post[]
- */
-export const createCaller = createCallerFactory(appRouter);
+export type Router = typeof router;

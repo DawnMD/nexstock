@@ -12,36 +12,55 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
 export function PickList({ orderNumber }: { orderNumber?: string | null }) {
-  const apiUtils = api.useUtils();
-  const [tasks] = api.outbound.getPickList.useSuspenseQuery({ orderNumber });
+  const queryClient = useQueryClient();
+  const { data: tasks } = useSuspenseQuery(
+    orpc.outbound.getPickList.queryOptions({ input: { orderNumber } }),
+  );
   // What the picker actually found, keyed by task. Defaults to the allocated
   // quantity, since a full pick is the common case.
   const [picked, setPicked] = useState<Record<number, string>>({});
 
-  const confirmPick = api.outbound.confirmPick.useMutation({
-    onSuccess: async (task) => {
-      await Promise.all([
-        apiUtils.outbound.getPickList.invalidate(),
-        apiUtils.outbound.getSalesOrder.invalidate(),
-        apiUtils.outbound.getSalesOrders.invalidate(),
-        apiUtils.outbound.getPackList.invalidate(),
-        apiUtils.outbound.getSummary.invalidate(),
-        apiUtils.inventory.invalidate(),
-      ]);
-      toast.success(
-        task.pickedQuantity === task.quantity
-          ? `Picked ${task.pickedQuantity} × ${task.sku}`
-          : `Short pick recorded: ${task.pickedQuantity} of ${task.quantity} × ${task.sku}`,
-      );
-    },
-    onError: (error) => toast.error(error.message),
-  });
+  const confirmPick = useMutation(
+    orpc.outbound.confirmPick.mutationOptions({
+      onSuccess: async (task) => {
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: orpc.outbound.getPickList.key(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.outbound.getSalesOrder.key(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.outbound.getSalesOrders.key(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.outbound.getPackList.key(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.outbound.getSummary.key(),
+          }),
+          queryClient.invalidateQueries({ queryKey: orpc.inventory.key() }),
+        ]);
+        toast.success(
+          task.pickedQuantity === task.quantity
+            ? `Picked ${task.pickedQuantity} × ${task.sku}`
+            : `Short pick recorded: ${task.pickedQuantity} of ${task.quantity} × ${task.sku}`,
+        );
+      },
+      onError: (error) => toast.error(error.message),
+    }),
+  );
 
   if (tasks.length === 0) {
     return (

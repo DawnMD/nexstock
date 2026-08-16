@@ -1,12 +1,8 @@
-import {
-  createTRPCRouter,
-  privateProcedure,
-  writeProcedure,
-} from "@/server/api/trpc";
+import { privateProcedure, writeProcedure } from "@/server/api/orpc";
 import { applyAdjustmentBatch } from "@/server/services/adjustments";
 import type { Prisma } from "@/generated/prisma/client";
 import { AdjustmentType } from "@/generated/prisma/client";
-import { TRPCError } from "@trpc/server";
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
 /**
@@ -33,7 +29,7 @@ const adjustmentSearchFilter = (
   };
 };
 
-export const adjustmentsRouter = createTRPCRouter({
+export const adjustmentsRouter = {
   getAdjustments: privateProcedure
     .input(
       z.object({
@@ -42,7 +38,7 @@ export const adjustmentsRouter = createTRPCRouter({
         search: z.string().nullish(),
       }),
     )
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const where = adjustmentSearchFilter(input.search);
 
       // Execute both queries in a transaction for consistency
@@ -125,7 +121,7 @@ export const adjustmentsRouter = createTRPCRouter({
           .max(100),
       }),
     )
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) =>
         applyAdjustmentBatch(tx, {
           adjustments: input.adjustments,
@@ -135,7 +131,7 @@ export const adjustmentsRouter = createTRPCRouter({
     }),
   getOrderInfo: privateProcedure
     .input(z.object({ orderNumber: z.string() }))
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const order = await ctx.db.order.findUnique({
         where: { orderNumber: input.orderNumber },
         select: {
@@ -178,7 +174,7 @@ export const adjustmentsRouter = createTRPCRouter({
    */
   checkOrder: privateProcedure
     .input(z.object({ orderNumber: z.string().min(1) }))
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const order = await ctx.db.order.findUnique({
         where: { orderNumber: input.orderNumber },
         select: {
@@ -189,15 +185,13 @@ export const adjustmentsRouter = createTRPCRouter({
       });
 
       if (!order) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
+        throw new ORPCError("NOT_FOUND", {
           message: `Order ${input.orderNumber} not found`,
         });
       }
 
       if (order._count.items === 0) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
+        throw new ORPCError("BAD_REQUEST", {
           message: "Order has no line items to adjust",
         });
       }
@@ -206,7 +200,7 @@ export const adjustmentsRouter = createTRPCRouter({
     }),
   getAdjustmentInfo: privateProcedure
     .input(z.object({ adjustmentId: z.string() }))
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const adjustment = await ctx.db.adjustment.findUnique({
         where: { id: input.adjustmentId },
         include: {
@@ -232,4 +226,4 @@ export const adjustmentsRouter = createTRPCRouter({
 
       return adjustment;
     }),
-});
+};

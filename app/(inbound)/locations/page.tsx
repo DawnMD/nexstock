@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { CardTableSkeleton } from "@/components/skeletons";
 import { LocationMaster } from "@/components/location-master";
 import { SearchForm } from "@/components/order-search-form";
 import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
-import { api, HydrateClient } from "@/trpc/server";
+import { HydrateClient, prefetch, serverOrpc } from "@/orpc/server";
 import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = {
@@ -20,7 +22,9 @@ export default async function LocationsPage({
 
   const { query } = await searchParams;
 
-  void api.location.getLocations.prefetch({ search: query });
+  prefetch(
+    serverOrpc.location.getLocations.queryOptions({ input: { search: query } }),
+  );
 
   return (
     <>
@@ -28,7 +32,9 @@ export default async function LocationsPage({
       <PageMain className="flex flex-col gap-6 p-4">
         <SearchForm query={query} action="/locations" />
         <HydrateClient>
-          <LocationMaster search={query} />
+          <Suspense fallback={<CardTableSkeleton columns={7} />}>
+            <LocationMaster search={query} />
+          </Suspense>
         </HydrateClient>
       </PageMain>
     </>

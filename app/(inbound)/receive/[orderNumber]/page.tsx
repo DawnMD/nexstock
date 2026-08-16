@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { CardListSkeleton } from "@/components/skeletons";
 import { ReceiveSkuItems } from "@/components/receive-sku-items";
 import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
@@ -11,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { api, HydrateClient } from "@/trpc/server";
+import { fetchQuery, HydrateClient, serverOrpc } from "@/orpc/server";
 import { format } from "date-fns";
 import { PackageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -38,14 +40,12 @@ export default async function ReceiveSkuOrderPage({
 
   const { orderNumber } = await params;
 
-  const [order] = await Promise.all([
-    api.receive.getOrderItems({
-      orderNumber,
-    }),
-    api.receive.getOrderItems.prefetch({
-      orderNumber,
-    }),
-  ]);
+  // One query, read twice: the header below needs the value on the server and
+  // `<ReceiveSkuItems>` asks for the same thing on the client, so this fills the
+  // cache `HydrateClient` dehydrates rather than running it a second time.
+  const order = await fetchQuery(
+    serverOrpc.receive.getOrderItems.queryOptions({ input: { orderNumber } }),
+  );
 
   if (!order) {
     notFound();
@@ -103,7 +103,9 @@ export default async function ReceiveSkuOrderPage({
               {order.items.length} total SKUs
             </Badge>
           </div>
-          <ReceiveSkuItems orderNumber={orderNumber} />
+          <Suspense fallback={<CardListSkeleton rows={6} />}>
+            <ReceiveSkuItems orderNumber={orderNumber} />
+          </Suspense>
         </HydrateClient>
       </PageMain>
     </>

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { api, HydrateClient } from "@/trpc/server";
+import { Suspense } from "react";
+import { FormSkeleton } from "@/components/skeletons";
+import { HydrateClient, prefetch, serverOrpc } from "@/orpc/server";
 import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { PutawayProcess } from "@/components/putaway-process";
@@ -26,17 +28,19 @@ export default async function PutawayLPNPage({
 
   const { lpn } = await params;
 
-  await Promise.all([
-    api.putaway.getLPNDetails.prefetch({ lpn }),
-    api.putaway.getLocations.prefetch(),
-  ]);
+  // Not awaited, like every other page: pending queries are dehydrated too, so
+  // these stream into the boundary below rather than blocking the RSC render.
+  prefetch(serverOrpc.putaway.getLPNDetails.queryOptions({ input: { lpn } }));
+  prefetch(serverOrpc.putaway.getLocations.queryOptions());
 
   return (
     <>
       <SiteHeader title={`Putaway - ${lpn}`} />
       <PageMain className="flex flex-col gap-4 p-4 lg:gap-6">
         <HydrateClient>
-          <PutawayProcess lpn={lpn} />
+          <Suspense fallback={<FormSkeleton />}>
+            <PutawayProcess lpn={lpn} />
+          </Suspense>
         </HydrateClient>
       </PageMain>
     </>

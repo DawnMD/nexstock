@@ -1,8 +1,4 @@
-import {
-  createTRPCRouter,
-  privateProcedure,
-  writeProcedure,
-} from "@/server/api/trpc";
+import { privateProcedure, writeProcedure } from "@/server/api/orpc";
 import type { Prisma } from "@/generated/prisma/client";
 import { PickTaskStatus, SalesOrderStatus } from "@/generated/prisma/client";
 import {
@@ -38,8 +34,8 @@ const salesOrderSearchFilter = (
   };
 };
 
-export const outboundRouter = createTRPCRouter({
-  getCustomers: privateProcedure.query(async ({ ctx }) => {
+export const outboundRouter = {
+  getCustomers: privateProcedure.handler(async ({ context: ctx }) => {
     return await ctx.db.customer.findMany({
       select: { reference: true, name: true, city: true },
       orderBy: { name: "asc" },
@@ -48,7 +44,7 @@ export const outboundRouter = createTRPCRouter({
 
   getSalesOrders: privateProcedure
     .input(z.object({ search: z.string().nullish() }))
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const orders = await ctx.db.salesOrder.findMany({
         where: salesOrderSearchFilter(input.search),
         select: {
@@ -84,7 +80,7 @@ export const outboundRouter = createTRPCRouter({
 
   getSalesOrder: privateProcedure
     .input(z.object({ orderNumber: z.string().min(1) }))
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.salesOrder.findUnique({
         where: { orderNumber: input.orderNumber },
         include: {
@@ -108,7 +104,7 @@ export const outboundRouter = createTRPCRouter({
   /** The picker's worklist: everything reserved and not yet fetched. */
   getPickList: privateProcedure
     .input(z.object({ orderNumber: z.string().nullish() }))
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.pickTask.findMany({
         where: {
           status: PickTaskStatus.PENDING,
@@ -133,7 +129,7 @@ export const outboundRouter = createTRPCRouter({
   /** Picked lines that are not in a carton yet. */
   getPackList: privateProcedure
     .input(z.object({ orderNumber: z.string().min(1) }))
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.pickTask.findMany({
         where: {
           orderId: input.orderNumber,
@@ -155,7 +151,7 @@ export const outboundRouter = createTRPCRouter({
   /** Cartons packed for an order and not yet on a shipment. */
   getUnshippedCartons: privateProcedure
     .input(z.object({ orderNumber: z.string().min(1) }))
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.carton.findMany({
         where: {
           shipmentId: null,
@@ -192,7 +188,7 @@ export const outboundRouter = createTRPCRouter({
           .max(100),
       }),
     )
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) =>
         createSalesOrder(tx, { ...input, createdBy: ctx.userId }),
       );
@@ -200,7 +196,7 @@ export const outboundRouter = createTRPCRouter({
 
   allocate: writeProcedure
     .input(z.object({ orderNumber: z.string().min(1) }))
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) =>
         allocateSalesOrder(tx, { orderNumber: input.orderNumber }),
       );
@@ -208,7 +204,7 @@ export const outboundRouter = createTRPCRouter({
 
   cancelAllocation: writeProcedure
     .input(z.object({ orderNumber: z.string().min(1) }))
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) =>
         cancelAllocation(tx, input.orderNumber),
       );
@@ -221,7 +217,7 @@ export const outboundRouter = createTRPCRouter({
         pickedQuantity: z.number().int().nonnegative(),
       }),
     )
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) =>
         confirmPick(tx, { ...input, pickedBy: ctx.userId }),
       );
@@ -229,7 +225,7 @@ export const outboundRouter = createTRPCRouter({
 
   reversePick: writeProcedure
     .input(z.object({ pickTaskId: z.number().int().positive() }))
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) =>
         reversePick(tx, {
           pickTaskId: input.pickTaskId,
@@ -246,7 +242,7 @@ export const outboundRouter = createTRPCRouter({
         weight: z.number().nonnegative().nullish(),
       }),
     )
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) =>
         packCarton(tx, { ...input, packedBy: ctx.userId }),
       );
@@ -262,7 +258,7 @@ export const outboundRouter = createTRPCRouter({
         cartonIds: z.array(z.number().int().positive()).min(1).max(200),
       }),
     )
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) =>
         confirmShipment(tx, { ...input, shippedBy: ctx.userId }),
       );
@@ -270,7 +266,7 @@ export const outboundRouter = createTRPCRouter({
 
   cancelSalesOrder: writeProcedure
     .input(z.object({ orderNumber: z.string().min(1) }))
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) =>
         cancelSalesOrder(tx, {
           orderNumber: input.orderNumber,
@@ -280,7 +276,7 @@ export const outboundRouter = createTRPCRouter({
     }),
 
   /** Headline numbers for the outbound board. */
-  getSummary: privateProcedure.query(async ({ ctx }) => {
+  getSummary: privateProcedure.handler(async ({ context: ctx }) => {
     const [open, pending, packed, shipped] = await ctx.db.$transaction([
       ctx.db.salesOrder.count({
         where: {
@@ -306,4 +302,4 @@ export const outboundRouter = createTRPCRouter({
       shipments: shipped,
     };
   }),
-});
+};

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { api } from "@/trpc/server";
+import { serverClient } from "@/orpc/server";
 import { PackageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { ReceiveSkuProcess } from "@/components/receive-sku-process";
@@ -37,7 +37,7 @@ export default async function ReceiveItemPage({
 
   const { orderItemNumber, orderNumber } = await params;
 
-  const orderItem = await api.receive.getReceiveItem({
+  const orderItem = await serverClient.receive.getReceiveItem({
     id: Number(orderItemNumber),
   });
 

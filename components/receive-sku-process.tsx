@@ -24,7 +24,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -68,13 +73,19 @@ export function ReceiveSkuProcess({
   orderItem,
 }: ReceiveSkuProcessProps) {
   const router = useRouter();
-  const apiUtils = api.useUtils();
+  const queryClient = useQueryClient();
 
   // Get vehicle numbers for this order
-  const [vehicles] = api.receive.getOrderVehicles.useSuspenseQuery({
-    orderNumber,
-  });
-  const [locations] = api.putaway.getLocations.useSuspenseQuery();
+  const { data: vehicles } = useSuspenseQuery(
+    orpc.receive.getOrderVehicles.queryOptions({
+      input: {
+        orderNumber,
+      },
+    }),
+  );
+  const { data: locations } = useSuspenseQuery(
+    orpc.putaway.getLocations.queryOptions(),
+  );
 
   const form = useForm<ReceiveSkuFormValues>({
     resolver: zodResolver(ReceiveSkuFormSchema),
@@ -92,13 +103,21 @@ export function ReceiveSkuProcess({
     },
   });
 
-  const { mutate: updateReceiveStatus, isPending } =
-    api.receive.updateReceiveStatus.useMutation({
+  const { mutate: updateReceiveStatus, isPending } = useMutation(
+    orpc.receive.updateReceiveStatus.mutationOptions({
       onSuccess: async () => {
         await Promise.all([
-          apiUtils.order.getOrderDetailsByOrderNumber.invalidate(),
-          apiUtils.receive.getOrderItems.invalidate({ orderNumber }),
-          apiUtils.receive.getReceiveItem.invalidate(),
+          queryClient.invalidateQueries({
+            queryKey: orpc.order.getOrderDetailsByOrderNumber.key(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.receive.getOrderItems.key({
+              input: { orderNumber },
+            }),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.receive.getReceiveItem.key(),
+          }),
         ]);
         toast.success("Item received successfully");
         router.push(`/receive/${orderNumber}`);
@@ -106,7 +125,8 @@ export function ReceiveSkuProcess({
       onError: (error) => {
         toast.error(error.message || "Failed to receive item");
       },
-    });
+    }),
+  );
 
   function onSubmit(data: ReceiveSkuFormValues) {
     updateReceiveStatus({

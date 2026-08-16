@@ -10,7 +10,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getActivityType } from "@/lib/order-utils";
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { ActivityType } from "@/generated/prisma/enums";
 import { format } from "date-fns";
 import {
@@ -31,10 +32,14 @@ export function DockBookingList({
   query?: string | null;
   date?: string | null;
 }) {
-  const [bookings] = api.order.getTodayDockSchedule.useSuspenseQuery({
-    search: query,
-    date,
-  });
+  const { data: bookings } = useSuspenseQuery(
+    orpc.order.getTodayDockSchedule.queryOptions({
+      input: {
+        search: query,
+        date,
+      },
+    }),
+  );
 
   if (bookings.length === 0) {
     return (

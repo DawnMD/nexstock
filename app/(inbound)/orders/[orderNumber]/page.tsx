@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { OrderDetailSkeleton } from "@/components/skeletons";
 import { OrderDetail } from "@/components/order-detail";
 import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
-import { api, HydrateClient } from "@/trpc/server";
+import { HydrateClient, prefetch, serverOrpc } from "@/orpc/server";
 import { requireSession } from "@/lib/session";
 
 export async function generateMetadata({
@@ -30,23 +32,29 @@ export default async function OrderDetailsPage({
     return <div>Order not found</div>;
   }
 
-  await Promise.all([
-    api.order.getOrderDetailsByOrderNumber.prefetch({
-      orderNumber,
+  // Not awaited: pending queries are dehydrated too, so all four stream into
+  // the boundary below rather than holding up the RSC render.
+  prefetch(
+    serverOrpc.order.getOrderDetailsByOrderNumber.queryOptions({
+      input: { orderNumber },
     }),
-    api.order.getAvailableDocks.prefetch(),
-    api.order.getVehicleTypes.prefetch(),
-    api.order.getDockBookingsByOrderNumber.prefetch({
-      orderNumber,
+  );
+  prefetch(serverOrpc.order.getAvailableDocks.queryOptions());
+  prefetch(serverOrpc.order.getVehicleTypes.queryOptions());
+  prefetch(
+    serverOrpc.order.getDockBookingsByOrderNumber.queryOptions({
+      input: { orderNumber },
     }),
-  ]);
+  );
 
   return (
     <>
       <SiteHeader title={"Order Details"} />
       <PageMain className="p-4">
         <HydrateClient>
-          <OrderDetail orderNumber={orderNumber} />
+          <Suspense fallback={<OrderDetailSkeleton />}>
+            <OrderDetail orderNumber={orderNumber} />
+          </Suspense>
         </HydrateClient>
       </PageMain>
     </>

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { TRPCReactProvider } from "@/trpc/react";
+import { ORPCReactProvider } from "@/orpc/client";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
 
@@ -51,7 +51,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <TRPCReactProvider>
+        <ORPCReactProvider>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
@@ -61,7 +61,7 @@ export default function RootLayout({
             {children}
             <Toaster richColors closeButton position="top-right" />
           </ThemeProvider>
-        </TRPCReactProvider>
+        </ORPCReactProvider>
       </body>
     </html>
   );

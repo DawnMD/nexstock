@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { WorklistSkeleton } from "@/components/skeletons";
 import Link from "next/link";
 import { PackAndShip } from "@/components/pack-and-ship";
 import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { Card, CardContent } from "@/components/ui/card";
-import { api, HydrateClient } from "@/trpc/server";
+import { HydrateClient, prefetch, serverOrpc } from "@/orpc/server";
 import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = {
@@ -43,15 +45,25 @@ export default async function Page({
     );
   }
 
-  void api.outbound.getPackList.prefetch({ orderNumber: order });
-  void api.outbound.getUnshippedCartons.prefetch({ orderNumber: order });
+  prefetch(
+    serverOrpc.outbound.getPackList.queryOptions({
+      input: { orderNumber: order },
+    }),
+  );
+  prefetch(
+    serverOrpc.outbound.getUnshippedCartons.queryOptions({
+      input: { orderNumber: order },
+    }),
+  );
 
   return (
     <>
       <SiteHeader title="Pack & Ship" />
       <PageMain className="p-4">
         <HydrateClient>
-          <PackAndShip orderNumber={order} />
+          <Suspense fallback={<WorklistSkeleton />}>
+            <PackAndShip orderNumber={order} />
+          </Suspense>
         </HydrateClient>
       </PageMain>
     </>

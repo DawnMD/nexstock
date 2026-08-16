@@ -22,7 +22,7 @@ import {
  * Footer shared by every table built on `tableFeatureSet`.
  *
  * Both tables paginate on the server, so the row counts and the
- * next/previous affordances come from the tRPC `pagination` payload while the
+ * next/previous affordances come from the server's `pagination` payload while the
  * page index and size are read off the table's own state. Reading them from
  * `table.state` rather than from a caller-local variable is what keeps the
  * displayed range in step with the buttons.

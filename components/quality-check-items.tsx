@@ -18,7 +18,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import {
   CheckIcon,
   ClipboardCheckIcon,
@@ -49,35 +54,77 @@ function qcBadgeVariant(qualityCheck: QualityCheckSummary) {
 }
 
 export function QualityCheckItems({ orderNumber }: { orderNumber: string }) {
-  const apiUtils = api.useUtils();
-  const [orderItems] = api.qualityCheck.getOrderItems.useSuspenseQuery({
-    orderNumber,
-  });
+  const queryClient = useQueryClient();
+  const { data: orderItems } = useSuspenseQuery(
+    orpc.qualityCheck.getOrderItems.queryOptions({
+      input: {
+        orderNumber,
+      },
+    }),
+  );
   const [pendingReset, setPendingReset] = useState<{
     id: number;
     sku: string;
   } | null>(null);
 
-  const resetQualityCheck = api.qualityCheck.resetQualityCheck.useMutation({
-    onSuccess: async () => {
-      await Promise.all([
-        apiUtils.qualityCheck.getOrderItems.invalidate({ orderNumber }),
-        apiUtils.qualityCheck.getQualityCheckItems.invalidate(),
-        apiUtils.order.getOrderDetailsByOrderNumber.invalidate(),
-        // The rejected units are back on their pallets, so the putaway worklist
-        // and the inventory screens have both changed.
-        apiUtils.putaway.invalidate(),
-        apiUtils.inventory.invalidate(),
-      ]);
-      setPendingReset(null);
-      toast.success("Quality check reset — the line can be inspected again");
-    },
-    onError: (error) => {
-      toast.error("Failed to reset the quality check", {
-        description: error.message,
-      });
-    },
+  const itemsKey = orpc.qualityCheck.getOrderItems.queryKey({
+    input: { orderNumber },
   });
+
+  const resetQualityCheck = useMutation(
+    orpc.qualityCheck.resetQualityCheck.mutationOptions({
+      /**
+       * The only outbound-adjacent mutation here that is safe to show
+       * optimistically: reset is defined as "undo the inspection", so the new
+       * state is fully known from the id — the check record goes and the
+       * rejected units come back. Everything downstream of it (the ledger, the
+       * putaway worklist) is still invalidated rather than guessed.
+       */
+      onMutate: async ({ id }) => {
+        await queryClient.cancelQueries({ queryKey: itemsKey });
+        const snapshot = queryClient.getQueryData(itemsKey);
+
+        queryClient.setQueryData(itemsKey, (current) =>
+          current == null
+            ? current
+            : {
+                ...current,
+                items: current.items.map((item) =>
+                  item.id === id
+                    ? { ...item, qualityCheck: null, rejectedQuantity: 0 }
+                    : item,
+                ),
+              },
+        );
+
+        return { snapshot };
+      },
+      onSuccess: () =>
+        toast.success("Quality check reset — the line can be inspected again"),
+      onError: (error, _values, context) => {
+        queryClient.setQueryData(itemsKey, context?.snapshot);
+        toast.error("Failed to reset the quality check", {
+          description: error.message,
+        });
+      },
+      onSettled: async () => {
+        setPendingReset(null);
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: itemsKey }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.qualityCheck.getQualityCheckItems.key(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.order.getOrderDetailsByOrderNumber.key(),
+          }),
+          // The rejected units are back on their pallets, so the putaway worklist
+          // and the inventory screens have both changed.
+          queryClient.invalidateQueries({ queryKey: orpc.putaway.key() }),
+          queryClient.invalidateQueries({ queryKey: orpc.inventory.key() }),
+        ]);
+      },
+    }),
+  );
 
   if (!orderItems?.items.length) {
     return (

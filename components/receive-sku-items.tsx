@@ -9,15 +9,20 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { ClipboardCheckIcon, PackageIcon } from "lucide-react";
 import Link from "next/link";
 import { formatStatusDisplay } from "@/lib/order-utils";
 
 export function ReceiveSkuItems({ orderNumber }: { orderNumber: string }) {
-  const [orderItems] = api.receive.getOrderItems.useSuspenseQuery({
-    orderNumber,
-  });
+  const { data: orderItems } = useSuspenseQuery(
+    orpc.receive.getOrderItems.queryOptions({
+      input: {
+        orderNumber,
+      },
+    }),
+  );
 
   if (!orderItems?.items.length) {
     return (

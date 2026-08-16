@@ -4,14 +4,13 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { tableFeatureSet, type AppTableFeatures } from "@/lib/table-features";
-import type { AppRouter } from "@/server/api/root";
-import { api } from "@/trpc/react";
+import { orpc, type RouterOutputs } from "@/orpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   useTable,
   type ColumnDef,
   type ColumnFiltersState,
 } from "@tanstack/react-table";
-import type { inferRouterOutputs } from "@trpc/server";
 import { format } from "date-fns";
 import { ExternalLinkIcon } from "lucide-react";
 import { useState } from "react";
@@ -20,7 +19,7 @@ import Link from "next/link";
 
 const columns: ColumnDef<
   AppTableFeatures,
-  inferRouterOutputs<AppRouter>["adjustments"]["getAdjustments"]["items"][number]
+  RouterOutputs["adjustments"]["getAdjustments"]["items"][number]
 >[] = [
   {
     accessorKey: "adjustmentId",
@@ -148,11 +147,15 @@ export function AdjustmentListTable({
     pageSize: limit,
   });
 
-  const [data] = api.adjustments.getAdjustments.useSuspenseQuery({
-    limit: pagination.pageSize,
-    pageIndex: pagination.pageIndex,
-    search: query,
-  });
+  const { data } = useSuspenseQuery(
+    orpc.adjustments.getAdjustments.queryOptions({
+      input: {
+        limit: pagination.pageSize,
+        pageIndex: pagination.pageIndex,
+        search: query,
+      },
+    }),
+  );
 
   const table = useTable({
     features: tableFeatureSet,

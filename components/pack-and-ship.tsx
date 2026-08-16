@@ -12,7 +12,12 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { BoxIcon, TruckIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -26,11 +31,17 @@ import { toast } from "sonner";
  * is the step that takes them out of the warehouse.
  */
 export function PackAndShip({ orderNumber }: { orderNumber: string }) {
-  const apiUtils = api.useUtils();
-  const [packList] = api.outbound.getPackList.useSuspenseQuery({ orderNumber });
-  const [cartons] = api.outbound.getUnshippedCartons.useSuspenseQuery({
-    orderNumber,
-  });
+  const queryClient = useQueryClient();
+  const { data: packList } = useSuspenseQuery(
+    orpc.outbound.getPackList.queryOptions({ input: { orderNumber } }),
+  );
+  const { data: cartons } = useSuspenseQuery(
+    orpc.outbound.getUnshippedCartons.queryOptions({
+      input: {
+        orderNumber,
+      },
+    }),
+  );
 
   const [selectedTasks, setSelectedTasks] = useState<number[]>([]);
   const [cartonNumber, setCartonNumber] = useState("");
@@ -43,37 +54,53 @@ export function PackAndShip({ orderNumber }: { orderNumber: string }) {
 
   const refresh = async () => {
     await Promise.all([
-      apiUtils.outbound.getPackList.invalidate({ orderNumber }),
-      apiUtils.outbound.getUnshippedCartons.invalidate({ orderNumber }),
-      apiUtils.outbound.getSalesOrder.invalidate({ orderNumber }),
-      apiUtils.outbound.getSalesOrders.invalidate(),
-      apiUtils.outbound.getSummary.invalidate(),
-      apiUtils.inventory.invalidate(),
+      queryClient.invalidateQueries({
+        queryKey: orpc.outbound.getPackList.key({ input: { orderNumber } }),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: orpc.outbound.getUnshippedCartons.key({
+          input: { orderNumber },
+        }),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: orpc.outbound.getSalesOrder.key({ input: { orderNumber } }),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: orpc.outbound.getSalesOrders.key(),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: orpc.outbound.getSummary.key(),
+      }),
+      queryClient.invalidateQueries({ queryKey: orpc.inventory.key() }),
     ]);
   };
 
-  const packCarton = api.outbound.packCarton.useMutation({
-    onSuccess: async (carton) => {
-      await refresh();
-      setSelectedTasks([]);
-      setCartonNumber("");
-      setCartonWeight("");
-      toast.success(`Packed carton ${carton.cartonNumber}`);
-    },
-    onError: (error) => toast.error(error.message),
-  });
+  const packCarton = useMutation(
+    orpc.outbound.packCarton.mutationOptions({
+      onSuccess: async (carton) => {
+        await refresh();
+        setSelectedTasks([]);
+        setCartonNumber("");
+        setCartonWeight("");
+        toast.success(`Packed carton ${carton.cartonNumber}`);
+      },
+      onError: (error) => toast.error(error.message),
+    }),
+  );
 
-  const confirmShipment = api.outbound.confirmShipment.useMutation({
-    onSuccess: async (shipment) => {
-      await refresh();
-      setSelectedCartons([]);
-      setShipmentNumber("");
-      setCarrier("");
-      setTrackingNumber("");
-      toast.success(`Shipment ${shipment.shipmentNumber} dispatched`);
-    },
-    onError: (error) => toast.error(error.message),
-  });
+  const confirmShipment = useMutation(
+    orpc.outbound.confirmShipment.mutationOptions({
+      onSuccess: async (shipment) => {
+        await refresh();
+        setSelectedCartons([]);
+        setShipmentNumber("");
+        setCarrier("");
+        setTrackingNumber("");
+        toast.success(`Shipment ${shipment.shipmentNumber} dispatched`);
+      },
+      onError: (error) => toast.error(error.message),
+    }),
+  );
 
   const toggle = (
     id: number,

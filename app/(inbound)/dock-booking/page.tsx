@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { CardListSkeleton } from "@/components/skeletons";
 import { DockBookingList } from "@/components/dock-booking-list";
 import { DockDateSearch } from "@/components/dock-date-search";
 import { SearchForm } from "@/components/order-search-form";
 import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
-import { api, HydrateClient } from "@/trpc/server";
+import { HydrateClient, prefetch, serverOrpc } from "@/orpc/server";
 import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = {
@@ -25,10 +27,14 @@ export default async function Page({
 
   const { query, date } = await searchParams;
 
-  void api.order.getTodayDockSchedule.prefetch({
-    search: query,
-    date,
-  });
+  prefetch(
+    serverOrpc.order.getTodayDockSchedule.queryOptions({
+      input: {
+        search: query,
+        date,
+      },
+    }),
+  );
 
   return (
     <>
@@ -39,7 +45,9 @@ export default async function Page({
           <DockDateSearch date={date} />
         </div>
         <HydrateClient>
-          <DockBookingList query={query} date={date} />
+          <Suspense fallback={<CardListSkeleton rows={6} />}>
+            <DockBookingList query={query} date={date} />
+          </Suspense>
         </HydrateClient>
       </PageMain>
     </>

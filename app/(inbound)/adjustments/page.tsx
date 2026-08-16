@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { DataTableSkeleton } from "@/components/skeletons";
 import { SearchForm } from "@/components/order-search-form";
 import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
-import { api, HydrateClient } from "@/trpc/server";
+import { HydrateClient, prefetch, serverOrpc } from "@/orpc/server";
 import { AddNewAdjustment } from "@/components/add-new-adjustment";
 import { AdjustmentListTable } from "@/components/adjustment-list-table";
 import { requireSession } from "@/lib/session";
@@ -28,11 +30,15 @@ export default async function AdjustmentsPage({
   const searchLimit = limit ? parseInt(limit) : 20;
   const searchPage = page ? parseInt(page) : 0;
 
-  void api.adjustments.getAdjustments.prefetch({
-    limit: searchLimit,
-    pageIndex: searchPage,
-    search: query,
-  });
+  prefetch(
+    serverOrpc.adjustments.getAdjustments.queryOptions({
+      input: {
+        limit: searchLimit,
+        pageIndex: searchPage,
+        search: query,
+      },
+    }),
+  );
 
   return (
     <>
@@ -45,11 +51,13 @@ export default async function AdjustmentsPage({
           </div>
 
           <HydrateClient>
-            <AdjustmentListTable
-              query={query}
-              limit={searchLimit}
-              page={searchPage}
-            />
+            <Suspense fallback={<DataTableSkeleton columns={10} />}>
+              <AdjustmentListTable
+                query={query}
+                limit={searchLimit}
+                page={searchPage}
+              />
+            </Suspense>
           </HydrateClient>
         </div>
       </PageMain>

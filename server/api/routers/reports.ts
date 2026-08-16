@@ -1,4 +1,4 @@
-import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
+import { privateProcedure } from "@/server/api/orpc";
 import { z } from "zod";
 
 /**
@@ -27,11 +27,11 @@ const resolveRange = (input: { from?: Date | null; to?: Date | null }) => {
   return { from, to };
 };
 
-export const reportsRouter = createTRPCRouter({
+export const reportsRouter = {
   /** Units received per day, so the shape of the week is visible. */
   getReceivingThroughput: privateProcedure
     .input(dateRange)
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const { from, to } = resolveRange(input);
 
       return await ctx.db.$queryRaw<
@@ -56,7 +56,7 @@ export const reportsRouter = createTRPCRouter({
    */
   getDockTurnaround: privateProcedure
     .input(dateRange)
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const { from, to } = resolveRange(input);
 
       return await ctx.db.$queryRaw<
@@ -95,7 +95,7 @@ export const reportsRouter = createTRPCRouter({
    */
   getQualityBySku: privateProcedure
     .input(dateRange)
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const { from, to } = resolveRange(input);
 
       return await ctx.db.$queryRaw<
@@ -138,7 +138,7 @@ export const reportsRouter = createTRPCRouter({
    * — that column moves every time the pallet is touched, so it would report a
    * relocated pallet as brand new.
    */
-  getStockAging: privateProcedure.query(async ({ ctx }) => {
+  getStockAging: privateProcedure.handler(async ({ context: ctx }) => {
     return await ctx.db.$queryRaw<
       { bucket: string; sortKey: number; units: number; pallets: number }[]
     >`
@@ -173,7 +173,7 @@ export const reportsRouter = createTRPCRouter({
   /** Outbound counterpart of receiving throughput. */
   getShippingThroughput: privateProcedure
     .input(dateRange)
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const { from, to } = resolveRange(input);
 
       return await ctx.db.$queryRaw<
@@ -198,7 +198,7 @@ export const reportsRouter = createTRPCRouter({
    * Both ratings are optional on `Location`, so a rack without one reports null
    * rather than 0% — "unrated" and "empty" are different answers.
    */
-  getLocationUtilisation: privateProcedure.query(async ({ ctx }) => {
+  getLocationUtilisation: privateProcedure.handler(async ({ context: ctx }) => {
     return await ctx.db.$queryRaw<
       {
         location: string;
@@ -238,7 +238,7 @@ export const reportsRouter = createTRPCRouter({
   /** Headline numbers across the whole period, for the tiles at the top. */
   getSummary: privateProcedure
     .input(dateRange)
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const { from, to } = resolveRange(input);
 
       const [received, shipped, rejected, onHand] = await Promise.all([
@@ -274,4 +274,4 @@ export const reportsRouter = createTRPCRouter({
         to,
       };
     }),
-});
+};

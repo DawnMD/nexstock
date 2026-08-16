@@ -1,6 +1,7 @@
 "use client";
 
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -12,7 +13,9 @@ import {
 } from "@/components/ui/table";
 
 export function InventorySkuBalances({ sku }: { sku: string }) {
-  const [balances] = api.inventory.getBalances.useSuspenseQuery({ sku });
+  const { data: balances } = useSuspenseQuery(
+    orpc.inventory.getBalances.queryOptions({ input: { sku } }),
+  );
 
   const total = balances.reduce((sum, balance) => sum + balance.quantity, 0);
   const description = balances[0]?.skuRef.description;

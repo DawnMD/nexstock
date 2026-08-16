@@ -1,8 +1,11 @@
 "use client";
 
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Suspense } from "react";
 import {
   IconAlertTriangle,
   IconArrowsExchange,
@@ -43,7 +46,9 @@ function Stat({
  * from nobody checking.
  */
 function DriftBanner() {
-  const [drift] = api.inventory.getDrift.useSuspenseQuery();
+  const { data: drift } = useSuspenseQuery(
+    orpc.inventory.getDrift.queryOptions(),
+  );
 
   if (drift.length === 0) {
     return (
@@ -81,7 +86,9 @@ function DriftBanner() {
 }
 
 export function InventorySummary() {
-  const [summary] = api.inventory.getSummary.useSuspenseQuery();
+  const { data: summary } = useSuspenseQuery(
+    orpc.inventory.getSummary.queryOptions(),
+  );
 
   return (
     <div className="space-y-4">
@@ -107,7 +114,11 @@ export function InventorySummary() {
           icon={IconArrowsExchange}
         />
       </div>
-      <DriftBanner />
+      {/* Its own boundary: the reconciliation query is a full-table scan over
+          the ledger, and it should not hold the four headline numbers back. */}
+      <Suspense fallback={<Skeleton className="h-5 w-80" />}>
+        <DriftBanner />
+      </Suspense>
     </div>
   );
 }

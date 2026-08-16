@@ -2,19 +2,20 @@ import { type NextRequest } from "next/server";
 
 import { csvResponse, toCsv } from "@/lib/csv";
 import { getSession } from "@/lib/session";
-import { createCaller } from "@/server/api/root";
-import { createTRPCContext } from "@/server/api/trpc";
+import { createContext } from "@/server/api/context";
+import { router, type Router } from "@/server/api/root";
+import { createRouterClient, type RouterClient } from "@orpc/server";
 
 /**
  * CSV export for the reports screen.
  *
- * A route handler rather than a tRPC procedure because the browser has to be
- * handed a file: tRPC speaks JSON over a batched transport, so a download needs
- * a plain endpoint with `Content-Disposition` on it.
+ * A route handler rather than an oRPC procedure because the browser has to be
+ * handed a file: oRPC speaks its own RPC protocol over a batched transport, so a
+ * download needs a plain endpoint with `Content-Disposition` on it.
  *
- * The data still comes from the same tRPC procedures the screen renders, through
- * a server-side caller. That is deliberate — the report and its export cannot
- * drift apart, because there is only one query behind both.
+ * The data still comes from the same oRPC procedures the screen renders, through
+ * a server-side router client. That is deliberate — the report and its export
+ * cannot drift apart, because there is only one query behind both.
  */
 
 type Report =
@@ -64,15 +65,15 @@ export async function GET(
     to: parseDate(searchParams.get("to")),
   };
 
-  const api = createCaller(() =>
-    createTRPCContext({ headers: request.headers }),
-  );
+  const api = createRouterClient(router, {
+    context: await createContext(request.headers),
+  });
 
   const { body, filename } = await buildReport(api, report, range);
   return csvResponse(filename, body);
 }
 
-type Caller = ReturnType<typeof createCaller>;
+type Caller = RouterClient<Router>;
 
 async function buildReport(
   api: Caller,

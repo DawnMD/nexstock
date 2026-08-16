@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { StatCardsSkeleton, TabbedTableSkeleton } from "@/components/skeletons";
 import { InventorySummary } from "@/components/inventory-summary";
 import { InventoryViews } from "@/components/inventory-views";
 import { SearchForm } from "@/components/order-search-form";
 import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
-import { api, HydrateClient } from "@/trpc/server";
+import { HydrateClient, prefetch, serverOrpc } from "@/orpc/server";
 import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = {
@@ -21,25 +23,37 @@ export default async function InventoryPage({
 
   const { query } = await searchParams;
 
-  void api.inventory.getSummary.prefetch();
-  void api.inventory.getDrift.prefetch();
-  void api.inventory.getBySku.prefetch({ search: query });
-  void api.inventory.getByLocation.prefetch({ search: query });
-  void api.inventory.getByZone.prefetch();
-  void api.inventory.getBalances.prefetch({ search: query });
+  prefetch(serverOrpc.inventory.getSummary.queryOptions());
+  prefetch(serverOrpc.inventory.getDrift.queryOptions());
+  prefetch(
+    serverOrpc.inventory.getBySku.queryOptions({ input: { search: query } }),
+  );
+  prefetch(
+    serverOrpc.inventory.getByLocation.queryOptions({
+      input: { search: query },
+    }),
+  );
+  prefetch(serverOrpc.inventory.getByZone.queryOptions());
+  prefetch(
+    serverOrpc.inventory.getBalances.queryOptions({ input: { search: query } }),
+  );
 
   return (
     <>
       <SiteHeader title="Inventory" />
       <PageMain className="flex flex-col gap-6 p-4">
         <HydrateClient>
-          <InventorySummary />
+          <Suspense fallback={<StatCardsSkeleton withIcon />}>
+            <InventorySummary />
+          </Suspense>
         </HydrateClient>
 
         <SearchForm query={query} action="/inventory" />
 
         <HydrateClient>
-          <InventoryViews search={query} />
+          <Suspense fallback={<TabbedTableSkeleton columns={5} />}>
+            <InventoryViews search={query} />
+          </Suspense>
         </HydrateClient>
       </PageMain>
     </>

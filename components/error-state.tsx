@@ -16,7 +16,7 @@ import { useEffect } from "react";
  * Shared failure screen for the route error boundaries.
  *
  * A dropped Wi-Fi connection on a handheld is the likeliest failure in a
- * warehouse, and it surfaces as a thrown tRPC error inside a suspense query.
+ * warehouse, and it surfaces as a thrown oRPC error inside a suspense query.
  * Retry has to be one large tap away, so `reset` is the primary action.
  */
 export function ErrorState({

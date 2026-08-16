@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { getStatusVariant } from "@/lib/order-utils";
 import { formatStatusDisplay } from "@/lib/order-utils";
 import { Badge } from "@/components/ui/badge";
-import { api } from "@/trpc/server";
+import { serverClient } from "@/orpc/server";
 import { PackageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/session";
@@ -39,7 +39,7 @@ export default async function OrderItemPage({
 
   const { orderItemNumber, orderNumber } = await params;
 
-  const orderItem = await api.qualityCheck.getQualityCheckItems({
+  const orderItem = await serverClient.qualityCheck.getQualityCheckItems({
     id: Number(orderItemNumber),
   });
 

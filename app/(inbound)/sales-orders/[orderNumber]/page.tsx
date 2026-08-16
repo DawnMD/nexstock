@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { SalesOrderDetailSkeleton } from "@/components/skeletons";
 import { PageMain } from "@/components/page-main";
 import { SalesOrderDetail } from "@/components/sales-order-detail";
 import { SiteHeader } from "@/components/site-header";
-import { api, HydrateClient } from "@/trpc/server";
+import { fetchQuery, HydrateClient, serverOrpc } from "@/orpc/server";
 import { requireSession } from "@/lib/session";
 import { notFound } from "next/navigation";
 
@@ -27,7 +29,13 @@ export default async function Page({
 
   const { orderNumber } = await params;
 
-  const order = await api.outbound.getSalesOrder({ orderNumber });
+  // `fetchQuery` rather than a direct client call: the guard needs the value
+  // *and* `<SalesOrderDetail>` below asks for the same query, so this fills the
+  // cache that `HydrateClient` dehydrates. A direct call would leave the
+  // boundary empty and have the browser fetch it again over HTTP.
+  const order = await fetchQuery(
+    serverOrpc.outbound.getSalesOrder.queryOptions({ input: { orderNumber } }),
+  );
   if (!order) notFound();
 
   return (
@@ -35,7 +43,9 @@ export default async function Page({
       <SiteHeader title="Sales Order" />
       <PageMain className="p-4">
         <HydrateClient>
-          <SalesOrderDetail orderNumber={orderNumber} />
+          <Suspense fallback={<SalesOrderDetailSkeleton />}>
+            <SalesOrderDetail orderNumber={orderNumber} />
+          </Suspense>
         </HydrateClient>
       </PageMain>
     </>

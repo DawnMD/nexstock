@@ -13,8 +13,10 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { createCaller } from "@/server/api/root";
-import type { createTRPCContext } from "@/server/api/trpc";
+import { createRouterClient } from "@orpc/server";
+
+import type { Context } from "@/server/api/context";
+import { router } from "@/server/api/root";
 import { AdjustmentType } from "@/generated/prisma/client";
 import { applyAdjustmentBatch } from "@/server/services/adjustments";
 import { allocateSalesOrder } from "@/server/services/allocation";
@@ -42,10 +44,8 @@ import {
  * `userId`, so the session is the minimum shape that satisfies it rather than a
  * real Better Auth session.
  */
-type Context = Awaited<ReturnType<typeof createTRPCContext>>;
-
-const api = createCaller(
-  (): Context => ({
+const api = createRouterClient(router, {
+  context: (): Context => ({
     // The app's client is constructed with explicit log levels, so its type
     // carries them in a generic the test client has no reason to match. Nothing
     // here touches `$on`, which is the only thing that generic affects.
@@ -54,7 +54,7 @@ const api = createCaller(
     userId: TEST_USER_ID,
     headers: new Headers(),
   }),
-);
+});
 
 /** Runs the full inbound → outbound story so every report has data. */
 async function busyWarehouse() {

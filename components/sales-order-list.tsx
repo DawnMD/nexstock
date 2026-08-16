@@ -10,7 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import type { SalesOrderStatus } from "@/generated/prisma/enums";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -37,7 +38,9 @@ const STATUS_LABEL: Record<SalesOrderStatus, string> = {
 };
 
 export function SalesOrderList({ search }: { search?: string | null }) {
-  const [orders] = api.outbound.getSalesOrders.useSuspenseQuery({ search });
+  const { data: orders } = useSuspenseQuery(
+    orpc.outbound.getSalesOrders.queryOptions({ input: { search } }),
+  );
 
   if (orders.length === 0) {
     return (

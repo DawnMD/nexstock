@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { CardTableSkeleton } from "@/components/skeletons";
 import { PageMain } from "@/components/page-main";
 import { PickList } from "@/components/pick-list";
 import { SiteHeader } from "@/components/site-header";
-import { api, HydrateClient } from "@/trpc/server";
+import { HydrateClient, prefetch, serverOrpc } from "@/orpc/server";
 import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = {
@@ -19,14 +21,20 @@ export default async function Page({
 
   const { order } = await searchParams;
 
-  void api.outbound.getPickList.prefetch({ orderNumber: order });
+  prefetch(
+    serverOrpc.outbound.getPickList.queryOptions({
+      input: { orderNumber: order },
+    }),
+  );
 
   return (
     <>
       <SiteHeader title="Pick List" />
       <PageMain className="flex flex-col gap-4 p-4">
         <HydrateClient>
-          <PickList orderNumber={order} />
+          <Suspense fallback={<CardTableSkeleton columns={8} rows={8} />}>
+            <PickList orderNumber={order} />
+          </Suspense>
         </HydrateClient>
       </PageMain>
     </>

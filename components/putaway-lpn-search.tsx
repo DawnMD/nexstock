@@ -9,13 +9,16 @@ import {
   CommandInput,
   CommandSeparator,
 } from "@/components/ui/command";
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { PackageIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export function PutawayLPNSearch() {
   const router = useRouter();
-  const [lpns] = api.putaway.getAllLPNs.useSuspenseQuery();
+  const { data: lpns } = useSuspenseQuery(
+    orpc.putaway.getAllLPNs.queryOptions(),
+  );
 
   return (
     <Command>

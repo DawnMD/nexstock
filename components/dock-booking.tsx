@@ -61,7 +61,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, subDays } from "date-fns";
 import {
@@ -79,7 +84,7 @@ import { z } from "zod";
 /**
  * Every numeric field arrives from an `<input>` as a string, so each is parsed
  * and bounded here rather than trusting `parseInt` downstream. `cbm` used to be
- * a bare `z.string()`: submitting it empty sent `parseInt("") === NaN` to a tRPC
+ * a bare `z.string()`: submitting it empty sent `parseInt("") === NaN` to a server
  * `z.number()`, which rejected it with an error naming no field at all.
  */
 const wholeNumber = (label: string, min: number) =>
@@ -105,7 +110,7 @@ const formSchema = z.object({
   eta: z.date().optional(),
 });
 export function DockBooking({ orderNumber }: { orderNumber: string }) {
-  const utils = api.useUtils();
+  const queryClient = useQueryClient();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingBooking, setEditingBooking] = useState<
     (typeof dockBookings)[number] | null
@@ -132,71 +137,114 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
     },
   });
 
-  const [dockBookings] =
-    api.order.getDockBookingsByOrderNumber.useSuspenseQuery({
-      orderNumber,
-    });
+  const { data: dockBookings } = useSuspenseQuery(
+    orpc.order.getDockBookingsByOrderNumber.queryOptions({
+      input: {
+        orderNumber,
+      },
+    }),
+  );
 
-  const [availableDocks] = api.order.getAvailableDocks.useSuspenseQuery();
-  const [vehicleTypes] = api.order.getVehicleTypes.useSuspenseQuery();
+  const { data: availableDocks } = useSuspenseQuery(
+    orpc.order.getAvailableDocks.queryOptions(),
+  );
+  const { data: vehicleTypes } = useSuspenseQuery(
+    orpc.order.getVehicleTypes.queryOptions(),
+  );
 
-  const createDockBookingMutation = api.order.createDockBooking.useMutation({
-    onSuccess: async () => {
-      // Invalidate the dock bookings and today's dock schedule queries to refresh the list
-      await Promise.all([
-        utils.order.getDockBookingsByOrderNumber.invalidate({
-          orderNumber,
-        }),
-        utils.order.getTodayDockSchedule.invalidate(),
-        utils.qualityCheck.getOrderItems.invalidate(),
-        utils.qualityCheck.getQualityCheckItems.invalidate(),
-      ]);
-      setIsSheetOpen(false);
-      form.reset();
-      toast.success("Dock booking created successfully");
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
+  const createDockBookingMutation = useMutation(
+    orpc.order.createDockBooking.mutationOptions({
+      onSuccess: async () => {
+        // Invalidate the dock bookings and today's dock schedule queries to refresh the list
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: orpc.order.getDockBookingsByOrderNumber.key({
+              input: {
+                orderNumber,
+              },
+            }),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.order.getTodayDockSchedule.key(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.qualityCheck.getOrderItems.key(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.qualityCheck.getQualityCheckItems.key(),
+          }),
+        ]);
+        setIsSheetOpen(false);
+        form.reset();
+        toast.success("Dock booking created successfully");
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    }),
+  );
 
-  const deleteDockBookingMutation = api.order.deleteDockBooking.useMutation({
-    onSuccess: async () => {
-      await Promise.all([
-        utils.order.getDockBookingsByOrderNumber.invalidate({
-          orderNumber,
-        }),
-        utils.order.getTodayDockSchedule.invalidate(),
-        utils.qualityCheck.getOrderItems.invalidate(),
-        utils.qualityCheck.getQualityCheckItems.invalidate(),
-      ]);
-      setPendingDelete(null);
-      toast.success("Dock booking deleted successfully");
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
+  const deleteDockBookingMutation = useMutation(
+    orpc.order.deleteDockBooking.mutationOptions({
+      onSuccess: async () => {
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: orpc.order.getDockBookingsByOrderNumber.key({
+              input: {
+                orderNumber,
+              },
+            }),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.order.getTodayDockSchedule.key(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.qualityCheck.getOrderItems.key(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.qualityCheck.getQualityCheckItems.key(),
+          }),
+        ]);
+        setPendingDelete(null);
+        toast.success("Dock booking deleted successfully");
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    }),
+  );
 
-  const updateDockBookingMutation = api.order.updateDockBooking.useMutation({
-    onSuccess: async () => {
-      await Promise.all([
-        utils.order.getDockBookingsByOrderNumber.invalidate({
-          orderNumber,
-        }),
-        utils.order.getTodayDockSchedule.invalidate(),
-        utils.qualityCheck.getOrderItems.invalidate(),
-        utils.qualityCheck.getQualityCheckItems.invalidate(),
-      ]);
-      setIsSheetOpen(false);
-      setEditingBooking(null);
-      form.reset();
-      toast.success("Dock booking updated successfully");
-    },
-    onError: (error: { message: string }) => {
-      toast.error(error.message);
-    },
-  });
+  const updateDockBookingMutation = useMutation(
+    orpc.order.updateDockBooking.mutationOptions({
+      onSuccess: async () => {
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: orpc.order.getDockBookingsByOrderNumber.key({
+              input: {
+                orderNumber,
+              },
+            }),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.order.getTodayDockSchedule.key(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.qualityCheck.getOrderItems.key(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.qualityCheck.getQualityCheckItems.key(),
+          }),
+        ]);
+        setIsSheetOpen(false);
+        setEditingBooking(null);
+        form.reset();
+        toast.success("Dock booking updated successfully");
+      },
+      onError: (error: { message: string }) => {
+        toast.error(error.message);
+      },
+    }),
+  );
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     const payload = {

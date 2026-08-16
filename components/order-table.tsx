@@ -13,8 +13,8 @@ import { DataTable } from "@/components/ui/data-table";
 import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { tableFeatureSet, type AppTableFeatures } from "@/lib/table-features";
 import { getStatusVariant } from "@/lib/utils";
-import type { AppRouter } from "@/server/api/root";
-import { api } from "@/trpc/react";
+import { orpc, type RouterOutputs } from "@/orpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { OrderStatus } from "@/generated/prisma/enums";
 import {
   type ColumnDef,
@@ -22,7 +22,6 @@ import {
   type ColumnVisibilityState,
   useTable,
 } from "@tanstack/react-table";
-import type { inferRouterOutputs } from "@trpc/server";
 import { format } from "date-fns";
 import {
   CheckCircle2Icon,
@@ -76,7 +75,7 @@ const formatStatusDisplay = (status: OrderStatus) => {
 
 const columns: ColumnDef<
   AppTableFeatures,
-  inferRouterOutputs<AppRouter>["order"]["getPaginatedOrders"]["items"][number]
+  RouterOutputs["order"]["getPaginatedOrders"]["items"][number]
 >[] = [
   {
     accessorKey: "orderNumber",
@@ -190,11 +189,15 @@ export function OrderTable({ query }: { query?: string | null }) {
   });
 
   // Use suspense query for proper loading states
-  const [data] = api.order.getPaginatedOrders.useSuspenseQuery({
-    limit: pagination.pageSize,
-    pageIndex: pagination.pageIndex,
-    search: query,
-  });
+  const { data } = useSuspenseQuery(
+    orpc.order.getPaginatedOrders.queryOptions({
+      input: {
+        limit: pagination.pageSize,
+        pageIndex: pagination.pageIndex,
+        search: query,
+      },
+    }),
+  );
 
   const table = useTable({
     features: tableFeatureSet,

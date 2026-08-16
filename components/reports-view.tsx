@@ -17,7 +17,9 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/trpc/react";
+import { StatCardsSkeleton } from "@/components/skeletons";
+import { orpc } from "@/orpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense } from "react";
 import { format } from "date-fns";
 import { DownloadIcon } from "lucide-react";
@@ -63,7 +65,7 @@ function ExportLink({ report, label }: { report: string; label: string }) {
     <a
       href={`/api/reports/${report}`}
       className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs"
-      // A route handler, not a tRPC call: the browser has to be handed a file.
+      // A route handler, not an oRPC call: the browser has to be handed a file.
       download
     >
       <DownloadIcon className="size-3" />
@@ -134,8 +136,12 @@ function StatTile({
 }
 
 function ThroughputCharts() {
-  const [receiving] = api.reports.getReceivingThroughput.useSuspenseQuery({});
-  const [shipping] = api.reports.getShippingThroughput.useSuspenseQuery({});
+  const { data: receiving } = useSuspenseQuery(
+    orpc.reports.getReceivingThroughput.queryOptions({ input: {} }),
+  );
+  const { data: shipping } = useSuspenseQuery(
+    orpc.reports.getShippingThroughput.queryOptions({ input: {} }),
+  );
 
   const shape = (rows: { day: Date; units: number }[]) =>
     rows.map((row) => ({
@@ -250,7 +256,9 @@ function ThroughputCharts() {
 }
 
 function AgingChart() {
-  const [aging] = api.reports.getStockAging.useSuspenseQuery();
+  const { data: aging } = useSuspenseQuery(
+    orpc.reports.getStockAging.queryOptions(),
+  );
 
   return (
     <Card>
@@ -339,7 +347,9 @@ function AgingChart() {
 }
 
 function QualityTable() {
-  const [rows] = api.reports.getQualityBySku.useSuspenseQuery({});
+  const { data: rows } = useSuspenseQuery(
+    orpc.reports.getQualityBySku.queryOptions({ input: {} }),
+  );
 
   return (
     <Card>
@@ -398,7 +408,9 @@ function QualityTable() {
 }
 
 function DockTurnaroundTable() {
-  const [rows] = api.reports.getDockTurnaround.useSuspenseQuery({});
+  const { data: rows } = useSuspenseQuery(
+    orpc.reports.getDockTurnaround.queryOptions({ input: {} }),
+  );
 
   return (
     <Card>
@@ -457,7 +469,9 @@ function DockTurnaroundTable() {
 }
 
 function UtilisationTable() {
-  const [rows] = api.reports.getLocationUtilisation.useSuspenseQuery();
+  const { data: rows } = useSuspenseQuery(
+    orpc.reports.getLocationUtilisation.queryOptions(),
+  );
 
   return (
     <Card>
@@ -518,33 +532,46 @@ function UtilisationTable() {
   );
 }
 
-export function ReportsView() {
-  const [summary] = api.reports.getSummary.useSuspenseQuery({});
+function SummaryTiles() {
+  const { data: summary } = useSuspenseQuery(
+    orpc.reports.getSummary.queryOptions({ input: {} }),
+  );
 
   return (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <StatTile
+        label="Units received"
+        value={summary.unitsReceived}
+        hint={`${summary.receipts} receipts, last 30 days`}
+      />
+      <StatTile
+        label="Units rejected"
+        value={summary.unitsRejected}
+        hint="written off at quality check"
+      />
+      <StatTile
+        label="Shipments"
+        value={summary.shipments}
+        hint="dispatched in the period"
+      />
+      <StatTile
+        label="Units on hand"
+        value={summary.unitsOnHand}
+        hint="across every location now"
+      />
+    </div>
+  );
+}
+
+export function ReportsView() {
+  return (
     <div className="flex flex-col gap-4 lg:gap-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatTile
-          label="Units received"
-          value={summary.unitsReceived}
-          hint={`${summary.receipts} receipts, last 30 days`}
-        />
-        <StatTile
-          label="Units rejected"
-          value={summary.unitsRejected}
-          hint="written off at quality check"
-        />
-        <StatTile
-          label="Shipments"
-          value={summary.shipments}
-          hint="dispatched in the period"
-        />
-        <StatTile
-          label="Units on hand"
-          value={summary.unitsOnHand}
-          hint="across every location now"
-        />
-      </div>
+      {/* The tiles aggregate over the whole period and the tabs below already
+          have their own boundaries, so holding one behind the other only makes
+          the slower of the two the speed of the screen. */}
+      <Suspense fallback={<StatCardsSkeleton count={4} />}>
+        <SummaryTiles />
+      </Suspense>
 
       <Tabs defaultValue="throughput">
         <TabsList>

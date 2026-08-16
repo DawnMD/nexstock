@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { ReportsSkeleton } from "@/components/skeletons";
 import { PageMain } from "@/components/page-main";
 import { ReportsView } from "@/components/reports-view";
 import { SiteHeader } from "@/components/site-header";
-import { api, HydrateClient } from "@/trpc/server";
+import { HydrateClient, prefetch, serverOrpc } from "@/orpc/server";
 import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = {
@@ -14,16 +16,22 @@ export const metadata: Metadata = {
 export default async function Page() {
   await requireSession();
 
-  void api.reports.getSummary.prefetch({});
-  void api.reports.getReceivingThroughput.prefetch({});
-  void api.reports.getShippingThroughput.prefetch({});
+  prefetch(serverOrpc.reports.getSummary.queryOptions({ input: {} }));
+  prefetch(
+    serverOrpc.reports.getReceivingThroughput.queryOptions({ input: {} }),
+  );
+  prefetch(
+    serverOrpc.reports.getShippingThroughput.queryOptions({ input: {} }),
+  );
 
   return (
     <>
       <SiteHeader title="Reports" />
       <PageMain className="p-4">
         <HydrateClient>
-          <ReportsView />
+          <Suspense fallback={<ReportsSkeleton />}>
+            <ReportsView />
+          </Suspense>
         </HydrateClient>
       </PageMain>
     </>

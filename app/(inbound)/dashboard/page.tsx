@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { StatCardsSkeleton } from "@/components/skeletons";
 import { DashboardStats } from "@/components/dashboard-stats";
 import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
-import { api, HydrateClient } from "@/trpc/server";
+import { HydrateClient, prefetch, serverOrpc } from "@/orpc/server";
 import { requireSession } from "@/lib/session";
 
 interface PageProps {
@@ -20,16 +22,22 @@ export default async function Page({ searchParams }: PageProps) {
 
   const { date } = await searchParams;
 
-  void api.order.getOrderStats.prefetch({
-    date,
-  });
+  prefetch(
+    serverOrpc.order.getOrderStats.queryOptions({
+      input: {
+        date,
+      },
+    }),
+  );
 
   return (
     <>
       <SiteHeader title="Dashboard" />
       <PageMain className="p-4">
         <HydrateClient>
-          <DashboardStats initialDate={date} />
+          <Suspense fallback={<StatCardsSkeleton />}>
+            <DashboardStats initialDate={date} />
+          </Suspense>
         </HydrateClient>
       </PageMain>
     </>
