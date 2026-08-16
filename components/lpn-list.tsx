@@ -1,6 +1,7 @@
 "use client";
 
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 
 function LpnListHeader({ count }: { count: number }) {
@@ -113,9 +114,13 @@ function LpnItem({
 }
 
 export function LpnList({ orderNumber }: { orderNumber: string }) {
-  const [receivedItems] = api.receive.getReceivedItemsByOrder.useSuspenseQuery({
-    orderNumber,
-  });
+  const { data: receivedItems } = useSuspenseQuery(
+    orpc.receive.getReceivedItemsByOrder.queryOptions({
+      input: {
+        orderNumber,
+      },
+    }),
+  );
 
   return (
     <>

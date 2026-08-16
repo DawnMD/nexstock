@@ -20,7 +20,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -44,7 +45,7 @@ export function AddNewAdjustment() {
     },
   });
 
-  const apiUtils = api.useUtils();
+  const queryClient = useQueryClient();
   const [isChecking, setIsChecking] = useState(false);
 
   // checkOrder is a read, so it is a query fetched on demand rather than a
@@ -53,7 +54,9 @@ export function AddNewAdjustment() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsChecking(true);
     try {
-      const order = await apiUtils.adjustments.checkOrder.fetch(values);
+      const order = await queryClient.fetchQuery(
+        orpc.adjustments.checkOrder.queryOptions({ input: values }),
+      );
       router.push(`/adjustments/new/${order.orderNumber}`);
       form.reset();
     } catch (error) {

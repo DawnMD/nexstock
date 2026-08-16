@@ -17,46 +17,65 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { format } from "date-fns";
 import { PackageIcon, TruckIcon } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
 export function SalesOrderDetail({ orderNumber }: { orderNumber: string }) {
-  const apiUtils = api.useUtils();
-  const [order] = api.outbound.getSalesOrder.useSuspenseQuery({ orderNumber });
+  const queryClient = useQueryClient();
+  const { data: order } = useSuspenseQuery(
+    orpc.outbound.getSalesOrder.queryOptions({ input: { orderNumber } }),
+  );
 
   const refresh = async () => {
     await Promise.all([
-      apiUtils.outbound.getSalesOrder.invalidate({ orderNumber }),
-      apiUtils.outbound.getSalesOrders.invalidate(),
-      apiUtils.outbound.getPickList.invalidate(),
-      apiUtils.outbound.getSummary.invalidate(),
-      apiUtils.inventory.invalidate(),
+      queryClient.invalidateQueries({
+        queryKey: orpc.outbound.getSalesOrder.key({ input: { orderNumber } }),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: orpc.outbound.getSalesOrders.key(),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: orpc.outbound.getPickList.key(),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: orpc.outbound.getSummary.key(),
+      }),
+      queryClient.invalidateQueries({ queryKey: orpc.inventory.key() }),
     ]);
   };
 
-  const allocate = api.outbound.allocate.useMutation({
-    onSuccess: async (result) => {
-      await refresh();
-      const total = result.reduce((sum, line) => sum + line.allocated, 0);
-      toast.success(
-        total > 0
-          ? `Allocated ${total} units across ${result.length} line(s)`
-          : "Nothing left to allocate",
-      );
-    },
-    onError: (error) => toast.error(error.message),
-  });
+  const allocate = useMutation(
+    orpc.outbound.allocate.mutationOptions({
+      onSuccess: async (result) => {
+        await refresh();
+        const total = result.reduce((sum, line) => sum + line.allocated, 0);
+        toast.success(
+          total > 0
+            ? `Allocated ${total} units across ${result.length} line(s)`
+            : "Nothing left to allocate",
+        );
+      },
+      onError: (error) => toast.error(error.message),
+    }),
+  );
 
-  const cancelAllocation = api.outbound.cancelAllocation.useMutation({
-    onSuccess: async () => {
-      await refresh();
-      toast.success("Allocation released");
-    },
-    onError: (error) => toast.error(error.message),
-  });
+  const cancelAllocation = useMutation(
+    orpc.outbound.cancelAllocation.mutationOptions({
+      onSuccess: async () => {
+        await refresh();
+        toast.success("Allocation released");
+      },
+      onError: (error) => toast.error(error.message),
+    }),
+  );
 
   if (!order) {
     return (

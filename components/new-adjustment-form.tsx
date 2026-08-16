@@ -25,7 +25,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AdjustmentType } from "@/generated/prisma/enums";
 import { SlidersVertical, Trash2 } from "lucide-react";
@@ -65,7 +66,7 @@ export function NewAdjustmentForm({
   orderNumber: string;
 }) {
   const router = useRouter();
-  const apiUtils = api.useUtils();
+  const queryClient = useQueryClient();
 
   const form = useForm<AdjustmentFormValues>({
     resolver: zodResolver(AdjustmentFormSchema),
@@ -86,20 +87,26 @@ export function NewAdjustmentForm({
 
   const canAddMore = fields.length < skus.length;
 
-  const createAdjustment = api.adjustments.createAdjustmentBatch.useMutation({
-    onSuccess: async () => {
-      toast.success(`Adjustment created successfully`);
-      await Promise.all([
-        apiUtils.order.getOrderDetailsByOrderNumber.invalidate(),
-        apiUtils.adjustments.getAdjustments.invalidate(),
-      ]);
-      form.reset();
-      router.push(`/adjustments`);
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
+  const createAdjustment = useMutation(
+    orpc.adjustments.createAdjustmentBatch.mutationOptions({
+      onSuccess: async () => {
+        toast.success(`Adjustment created successfully`);
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: orpc.order.getOrderDetailsByOrderNumber.key(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.adjustments.getAdjustments.key(),
+          }),
+        ]);
+        form.reset();
+        router.push(`/adjustments`);
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    }),
+  );
 
   const handleSubmit = (data: AdjustmentFormValues) => {
     createAdjustment.mutate({

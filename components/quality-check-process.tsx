@@ -14,7 +14,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
@@ -89,13 +90,17 @@ export function QualityCheckProcess({
   );
 
   const router = useRouter();
-  const apiUtils = api.useUtils();
-  const { mutate: updateQualityCheckStatus, isPending } =
-    api.qualityCheck.updateQualityCheckStatus.useMutation({
+  const queryClient = useQueryClient();
+  const { mutate: updateQualityCheckStatus, isPending } = useMutation(
+    orpc.qualityCheck.updateQualityCheckStatus.mutationOptions({
       onSuccess: async () => {
         await Promise.all([
-          apiUtils.order.getOrderDetailsByOrderNumber.invalidate(),
-          apiUtils.qualityCheck.getOrderItems.invalidate(),
+          queryClient.invalidateQueries({
+            queryKey: orpc.order.getOrderDetailsByOrderNumber.key(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.qualityCheck.getOrderItems.key(),
+          }),
         ]);
         toast.success("Quality check status updated");
         router.replace(`/quality-check/${orderNumber}`);
@@ -105,7 +110,8 @@ export function QualityCheckProcess({
           description: error.message,
         });
       },
-    });
+    }),
+  );
 
   const onSubmit = (data: QualityCheckFormValues) => {
     updateQualityCheckStatus({

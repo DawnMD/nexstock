@@ -9,12 +9,15 @@ import {
   CommandInput,
   CommandSeparator,
 } from "@/components/ui/command";
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { PackageIcon } from "lucide-react";
 import Link from "next/link";
 
 export function ReceivedItemsOrderSearch() {
-  const [orders] = api.receive.getAllOrderNumbers.useSuspenseQuery();
+  const { data: orders } = useSuspenseQuery(
+    orpc.receive.getAllOrderNumbers.queryOptions(),
+  );
 
   return (
     <Command>

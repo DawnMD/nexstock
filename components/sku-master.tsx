@@ -29,7 +29,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { api, type RouterOutputs } from "@/trpc/react";
+import { orpc, type RouterInputs, type RouterOutputs } from "@/orpc/client";
+import { applyOptimisticList, rollbackOptimistic } from "@/orpc/optimistic";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
@@ -79,6 +85,7 @@ const formSchema = z.object({
 type FormInput = z.input<typeof formSchema>;
 type FormOutput = z.output<typeof formSchema>;
 type SkuRow = RouterOutputs["sku"]["getSkus"][number];
+type SkuInput = RouterInputs["sku"]["updateSku"];
 
 function toFormValues(sku: SkuRow): FormInput {
   return {
@@ -94,6 +101,48 @@ function toFormValues(sku: SkuRow): FormInput {
     storageType: sku.storageType ?? "",
     storageZone: sku.storageZone ?? "",
     isActive: sku.isActive,
+  };
+}
+
+/**
+ * The row the table should show while the write is in flight.
+ *
+ * Everything the form carries comes from the form; everything it does not comes
+ * from the row being edited, or — for a new SKU — from what the server is going
+ * to pick anyway. `id` and the audit columns are placeholders: the table keys on
+ * the SKU code and shows neither, and the `onSettled` invalidate replaces the
+ * whole row a moment later.
+ */
+function toOptimisticRow(values: SkuInput, previous: SkuRow | null): SkuRow {
+  const now = new Date();
+
+  return {
+    sku: values.sku,
+    description: values.description,
+    department: values.department,
+    // The `?? …` fallbacks mirror the schema's own defaults, so an omitted
+    // field lands on the same value the server will store.
+    uom: values.uom ?? null,
+    weight: values.weight ?? null,
+    cbm: values.cbm ?? null,
+    qualityCheck: values.qualityCheck ?? false,
+    hasShelfLife: values.hasShelfLife ?? false,
+    shelfLifeDays: values.shelfLifeDays ?? null,
+    storageType: values.storageType ?? null,
+    storageZone: values.storageZone ?? null,
+    isActive: values.isActive ?? true,
+    length: values.length ?? previous?.length ?? null,
+    width: values.width ?? previous?.width ?? null,
+    height: values.height ?? previous?.height ?? null,
+    // Not on the form.
+    id: previous?.id ?? -1,
+    lot: previous?.lot ?? null,
+    lotExpiryDate: previous?.lotExpiryDate ?? null,
+    onHand: previous?.onHand ?? 0,
+    createdAt: previous?.createdAt ?? now,
+    createdBy: previous?.createdBy ?? "",
+    updatedBy: previous?.updatedBy ?? "",
+    updatedAt: now,
   };
 }
 
@@ -121,7 +170,7 @@ function SkuDialog({
   onOpenChange: (open: boolean) => void;
   editing: SkuRow | null;
 }) {
-  const apiUtils = api.useUtils();
+  const queryClient = useQueryClient();
   const isEdit = editing !== null;
 
   const form = useForm<FormInput, unknown, FormOutput>({
@@ -136,24 +185,50 @@ function SkuDialog({
     name: "hasShelfLife",
   });
 
-  const onSettled = async () => {
-    await apiUtils.sku.getSkus.invalidate();
+  const settle = async () => {
+    await queryClient.invalidateQueries({ queryKey: orpc.sku.getSkus.key() });
     onOpenChange(false);
   };
 
-  const createSku = api.sku.createSku.useMutation({
-    onSuccess: async () => {
-      toast.success("SKU created");
-      await onSettled();
-    },
-  });
+  const createSku = useMutation(
+    orpc.sku.createSku.mutationOptions({
+      // The catalogue is plain reference data — no stock ledger behind it — so
+      // the new row is fully known from the form and can go in immediately.
+      onMutate: async (values) => ({
+        snapshot: await applyOptimisticList<SkuRow>(
+          queryClient,
+          orpc.sku.getSkus.key(),
+          (rows) =>
+            [...rows, toOptimisticRow(values, null)].sort((a, b) =>
+              a.sku.localeCompare(b.sku),
+            ),
+        ),
+      }),
+      onError: (_error, _values, context) =>
+        rollbackOptimistic(queryClient, context?.snapshot),
+      onSuccess: () => toast.success("SKU created"),
+      onSettled: settle,
+    }),
+  );
 
-  const updateSku = api.sku.updateSku.useMutation({
-    onSuccess: async () => {
-      toast.success("SKU updated");
-      await onSettled();
-    },
-  });
+  const updateSku = useMutation(
+    orpc.sku.updateSku.mutationOptions({
+      onMutate: async (values) => ({
+        snapshot: await applyOptimisticList<SkuRow>(
+          queryClient,
+          orpc.sku.getSkus.key(),
+          (rows) =>
+            rows.map((row) =>
+              row.sku === values.sku ? toOptimisticRow(values, row) : row,
+            ),
+        ),
+      }),
+      onError: (_error, _values, context) =>
+        rollbackOptimistic(queryClient, context?.snapshot),
+      onSuccess: () => toast.success("SKU updated"),
+      onSettled: settle,
+    }),
+  );
 
   const isPending = createSku.isPending || updateSku.isPending;
 
@@ -406,26 +481,46 @@ function SkuDialog({
 }
 
 export function SkuMaster({ search }: { search?: string | null }) {
-  const [skus] = api.sku.getSkus.useSuspenseQuery({ search });
-  const apiUtils = api.useUtils();
+  const { data: skus } = useSuspenseQuery(
+    orpc.sku.getSkus.queryOptions({ input: { search } }),
+  );
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<SkuRow | null>(null);
   const [pendingDelete, setPendingDelete] = useState<SkuRow | null>(null);
 
-  const deleteSku = api.sku.deleteSku.useMutation({
-    onSuccess: async (result) => {
-      toast.success(
-        result.deactivated
-          ? "SKU has history, so it was deactivated rather than deleted"
-          : "SKU deleted",
-      );
-      setPendingDelete(null);
-      await apiUtils.sku.getSkus.invalidate();
-    },
-    onError: (error) => {
-      toast.error("Could not delete SKU", { description: error.message });
-    },
-  });
+  const deleteSku = useMutation(
+    orpc.sku.deleteSku.mutationOptions({
+      // Drop the row on the way out. A SKU with history is deactivated rather
+      // than deleted, and the `onSettled` invalidate brings it back greyed out
+      // — which is the same correction the operator would have seen after the
+      // round trip, just later.
+      onMutate: async ({ sku }) => ({
+        snapshot: await applyOptimisticList<SkuRow>(
+          queryClient,
+          orpc.sku.getSkus.key(),
+          (rows) => rows.filter((row) => row.sku !== sku),
+        ),
+      }),
+      onError: (error, _values, context) => {
+        rollbackOptimistic(queryClient, context?.snapshot);
+        toast.error("Could not delete SKU", { description: error.message });
+      },
+      onSuccess: (result) => {
+        toast.success(
+          result.deactivated
+            ? "SKU has history, so it was deactivated rather than deleted"
+            : "SKU deleted",
+        );
+      },
+      onSettled: async () => {
+        setPendingDelete(null);
+        await queryClient.invalidateQueries({
+          queryKey: orpc.sku.getSkus.key(),
+        });
+      },
+    }),
+  );
 
   return (
     <div className="space-y-4">

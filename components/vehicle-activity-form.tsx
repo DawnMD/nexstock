@@ -18,7 +18,8 @@ import {
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type ActivityType } from "@/generated/prisma/enums";
 import Link from "next/link";
@@ -46,22 +47,30 @@ export function VehicleActivityForm({
   orderNumber: string;
 }) {
   const router = useRouter();
-  const apiUtils = api.useUtils();
+  const queryClient = useQueryClient();
 
-  const updateDockActivity = api.order.updateDockActivity.useMutation({
-    onSuccess: async () => {
-      await Promise.all([
-        apiUtils.order.getTodayDockSchedule.invalidate(),
-        apiUtils.qualityCheck.getOrderItems.invalidate(),
-        apiUtils.qualityCheck.getQualityCheckItems.invalidate(),
-      ]);
-      toast.success("Activity updated successfully");
-      router.back();
-    },
-    onError: (error) => {
-      toast.error(error.message ?? "Failed to update activity");
-    },
-  });
+  const updateDockActivity = useMutation(
+    orpc.order.updateDockActivity.mutationOptions({
+      onSuccess: async () => {
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: orpc.order.getTodayDockSchedule.key(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.qualityCheck.getOrderItems.key(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.qualityCheck.getQualityCheckItems.key(),
+          }),
+        ]);
+        toast.success("Activity updated successfully");
+        router.back();
+      },
+      onError: (error) => {
+        toast.error(error.message ?? "Failed to update activity");
+      },
+    }),
+  );
 
   const form = useForm<z.infer<typeof activitySchema>>({
     resolver: zodResolver(activitySchema),

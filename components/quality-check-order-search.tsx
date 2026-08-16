@@ -9,13 +9,16 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { PackageIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export function QualityCheckOrderSearch() {
   const router = useRouter();
-  const [orders] = api.qualityCheck.getAllOrderNumbers.useSuspenseQuery();
+  const { data: orders } = useSuspenseQuery(
+    orpc.qualityCheck.getAllOrderNumbers.queryOptions(),
+  );
 
   return (
     <Command>

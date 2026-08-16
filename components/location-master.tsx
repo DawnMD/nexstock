@@ -29,7 +29,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { api, type RouterOutputs } from "@/trpc/react";
+import { orpc, type RouterInputs, type RouterOutputs } from "@/orpc/client";
+import { applyOptimisticList, rollbackOptimistic } from "@/orpc/optimistic";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
@@ -79,6 +85,7 @@ const formSchema = z.object({
 type FormInput = z.input<typeof formSchema>;
 type FormOutput = z.output<typeof formSchema>;
 type LocationRow = RouterOutputs["location"]["getLocations"][number];
+type LocationInput = RouterInputs["location"]["updateLocation"];
 
 /** The stored row carries audit columns the form doesn't; drop them. */
 function toFormValues(location: LocationRow): FormInput {
@@ -94,6 +101,42 @@ function toFormValues(location: LocationRow): FormInput {
       location.weightCapacity == null ? "" : String(location.weightCapacity),
     description: location.description ?? "",
     status: location.status,
+  };
+}
+
+/**
+ * The row the table should show while the write is in flight.
+ *
+ * The form carries everything the table renders; `id` and the audit columns are
+ * placeholders, since the table keys on the location code and shows neither, and
+ * the `onSettled` invalidate replaces the row a moment later.
+ */
+function toOptimisticRow(
+  values: LocationInput,
+  previous: LocationRow | null,
+): LocationRow {
+  const now = new Date();
+
+  return {
+    location: values.location,
+    zone: values.zone,
+    aisle: values.aisle,
+    length: values.length,
+    width: values.width,
+    height: values.height,
+    // The `?? …` fallbacks mirror the schema's own defaults, so an omitted
+    // field lands on the same value the server will store.
+    cbm: values.cbm ?? null,
+    weightCapacity: values.weightCapacity ?? null,
+    description: values.description ?? null,
+    status: values.status ?? true,
+    // Not on the form.
+    id: previous?.id ?? -1,
+    onHand: previous?.onHand ?? 0,
+    createdAt: previous?.createdAt ?? now,
+    createdBy: previous?.createdBy ?? "",
+    updatedBy: previous?.updatedBy ?? null,
+    updatedAt: now,
   };
 }
 
@@ -119,7 +162,7 @@ function LocationDialog({
   onOpenChange: (open: boolean) => void;
   editing: LocationRow | null;
 }) {
-  const apiUtils = api.useUtils();
+  const queryClient = useQueryClient();
   const isEdit = editing !== null;
 
   const form = useForm<FormInput, unknown, FormOutput>({
@@ -127,26 +170,58 @@ function LocationDialog({
     values: isEdit ? toFormValues(editing) : emptyLocation,
   });
 
-  const onSettled = async () => {
-    await apiUtils.location.getLocations.invalidate();
+  const settle = async () => {
+    await queryClient.invalidateQueries({
+      queryKey: orpc.location.getLocations.key(),
+    });
     // The putaway destination picker reads the same table.
-    await apiUtils.putaway.getLocations.invalidate();
+    await queryClient.invalidateQueries({
+      queryKey: orpc.putaway.getLocations.key(),
+    });
     onOpenChange(false);
   };
 
-  const createLocation = api.location.createLocation.useMutation({
-    onSuccess: async () => {
-      toast.success("Location created");
-      await onSettled();
-    },
-  });
+  const createLocation = useMutation(
+    orpc.location.createLocation.mutationOptions({
+      // Reference data with no stock ledger behind it, so the new row is fully
+      // known from the form and can go in before the server confirms it.
+      onMutate: async (values) => ({
+        snapshot: await applyOptimisticList<LocationRow>(
+          queryClient,
+          orpc.location.getLocations.key(),
+          (rows) =>
+            [...rows, toOptimisticRow(values, null)].sort((a, b) =>
+              a.location.localeCompare(b.location),
+            ),
+        ),
+      }),
+      onError: (_error, _values, context) =>
+        rollbackOptimistic(queryClient, context?.snapshot),
+      onSuccess: () => toast.success("Location created"),
+      onSettled: settle,
+    }),
+  );
 
-  const updateLocation = api.location.updateLocation.useMutation({
-    onSuccess: async () => {
-      toast.success("Location updated");
-      await onSettled();
-    },
-  });
+  const updateLocation = useMutation(
+    orpc.location.updateLocation.mutationOptions({
+      onMutate: async (values) => ({
+        snapshot: await applyOptimisticList<LocationRow>(
+          queryClient,
+          orpc.location.getLocations.key(),
+          (rows) =>
+            rows.map((row) =>
+              row.location === values.location
+                ? toOptimisticRow(values, row)
+                : row,
+            ),
+        ),
+      }),
+      onError: (_error, _values, context) =>
+        rollbackOptimistic(queryClient, context?.snapshot),
+      onSuccess: () => toast.success("Location updated"),
+      onSettled: settle,
+    }),
+  );
 
   const isPending = createLocation.isPending || updateLocation.isPending;
 
@@ -338,29 +413,50 @@ function LocationDialog({
 }
 
 export function LocationMaster({ search }: { search?: string | null }) {
-  const [locations] = api.location.getLocations.useSuspenseQuery({ search });
-  const apiUtils = api.useUtils();
+  const { data: locations } = useSuspenseQuery(
+    orpc.location.getLocations.queryOptions({ input: { search } }),
+  );
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<LocationRow | null>(null);
   const [pendingDelete, setPendingDelete] = useState<LocationRow | null>(null);
 
-  const deleteLocation = api.location.deleteLocation.useMutation({
-    onSuccess: async (result) => {
-      toast.success(
-        result.deactivated
-          ? "Location has history, so it was deactivated rather than deleted"
-          : "Location deleted",
-      );
-      setPendingDelete(null);
-      await apiUtils.location.getLocations.invalidate();
-      await apiUtils.putaway.getLocations.invalidate();
-    },
-    onError: (error) => {
-      toast.error("Could not delete location", {
-        description: error.message,
-      });
-    },
-  });
+  const deleteLocation = useMutation(
+    orpc.location.deleteLocation.mutationOptions({
+      // Drop the row on the way out. A location with history is deactivated
+      // rather than deleted, and the `onSettled` invalidate brings it back
+      // greyed out — the same correction, just arriving later.
+      onMutate: async ({ location }) => ({
+        snapshot: await applyOptimisticList<LocationRow>(
+          queryClient,
+          orpc.location.getLocations.key(),
+          (rows) => rows.filter((row) => row.location !== location),
+        ),
+      }),
+      onError: (error, _values, context) => {
+        rollbackOptimistic(queryClient, context?.snapshot);
+        toast.error("Could not delete location", {
+          description: error.message,
+        });
+      },
+      onSuccess: (result) => {
+        toast.success(
+          result.deactivated
+            ? "Location has history, so it was deactivated rather than deleted"
+            : "Location deleted",
+        );
+      },
+      onSettled: async () => {
+        setPendingDelete(null);
+        await queryClient.invalidateQueries({
+          queryKey: orpc.location.getLocations.key(),
+        });
+        await queryClient.invalidateQueries({
+          queryKey: orpc.putaway.getLocations.key(),
+        });
+      },
+    }),
+  );
 
   return (
     <div className="space-y-4">

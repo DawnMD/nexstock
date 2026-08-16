@@ -1,6 +1,9 @@
 "use client";
 
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import { TableSkeleton } from "@/components/skeletons";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { Suspense } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -22,7 +25,9 @@ function Empty({ message }: { message: string }) {
 }
 
 function BySkuTable({ search }: { search?: string | null }) {
-  const [rows] = api.inventory.getBySku.useSuspenseQuery({ search });
+  const { data: rows } = useSuspenseQuery(
+    orpc.inventory.getBySku.queryOptions({ input: { search } }),
+  );
 
   if (rows.length === 0) {
     return <Empty message="No stock on hand for this search." />;
@@ -68,7 +73,9 @@ function BySkuTable({ search }: { search?: string | null }) {
 }
 
 function ByLocationTable({ search }: { search?: string | null }) {
-  const [rows] = api.inventory.getByLocation.useSuspenseQuery({ search });
+  const { data: rows } = useSuspenseQuery(
+    orpc.inventory.getByLocation.queryOptions({ input: { search } }),
+  );
 
   if (rows.length === 0) {
     return <Empty message="No stock on hand for this search." />;
@@ -114,7 +121,9 @@ function ByLocationTable({ search }: { search?: string | null }) {
 }
 
 function DetailTable({ search }: { search?: string | null }) {
-  const [rows] = api.inventory.getBalances.useSuspenseQuery({ search });
+  const { data: rows } = useSuspenseQuery(
+    orpc.inventory.getBalances.queryOptions({ input: { search } }),
+  );
 
   if (rows.length === 0) {
     return <Empty message="No stock on hand for this search." />;
@@ -163,7 +172,9 @@ function DetailTable({ search }: { search?: string | null }) {
 }
 
 function ByZoneTable() {
-  const [rows] = api.inventory.getByZone.useSuspenseQuery();
+  const { data: rows } = useSuspenseQuery(
+    orpc.inventory.getByZone.queryOptions(),
+  );
 
   if (rows.length === 0) {
     return <Empty message="No stock on hand." />;
@@ -195,6 +206,21 @@ function ByZoneTable() {
   );
 }
 
+/**
+ * Each tab mounts only when it is selected and every one of them is a
+ * `useSuspenseQuery`, so a tab needs a boundary of its own. The page prefetches
+ * all four, but a search that changes the input — or a cold cache on the three
+ * tabs nobody opened yet — would otherwise suspend the whole screen rather than
+ * the panel.
+ */
+function Panel({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<TableSkeleton columns={5} rows={8} />}>
+      {children}
+    </Suspense>
+  );
+}
+
 export function InventoryViews({ search }: { search?: string | null }) {
   return (
     <Tabs defaultValue="sku" className="w-full">
@@ -206,16 +232,24 @@ export function InventoryViews({ search }: { search?: string | null }) {
       </TabsList>
       <div className="bg-card mt-4 rounded-lg border">
         <TabsContent value="sku">
-          <BySkuTable search={search} />
+          <Panel>
+            <BySkuTable search={search} />
+          </Panel>
         </TabsContent>
         <TabsContent value="location">
-          <ByLocationTable search={search} />
+          <Panel>
+            <ByLocationTable search={search} />
+          </Panel>
         </TabsContent>
         <TabsContent value="zone">
-          <ByZoneTable />
+          <Panel>
+            <ByZoneTable />
+          </Panel>
         </TabsContent>
         <TabsContent value="detail">
-          <DetailTable search={search} />
+          <Panel>
+            <DetailTable search={search} />
+          </Panel>
         </TabsContent>
       </div>
     </Tabs>

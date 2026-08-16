@@ -11,16 +11,21 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { PackageIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function SkuSearch({ orderNumber }: { orderNumber: string }) {
   const [open, setOpen] = useState(false);
-  const [orderItems] = api.qualityCheck.getOrderItems.useSuspenseQuery({
-    orderNumber,
-  });
+  const { data: orderItems } = useSuspenseQuery(
+    orpc.qualityCheck.getOrderItems.queryOptions({
+      input: {
+        orderNumber,
+      },
+    }),
+  );
   const router = useRouter();
 
   if (!orderItems?.items.length) {

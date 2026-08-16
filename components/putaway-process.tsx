@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,12 +30,16 @@ interface PutawayProcessProps {
 
 export function PutawayProcess({ lpn }: PutawayProcessProps) {
   const router = useRouter();
-  const apiUtils = api.useUtils();
+  const queryClient = useQueryClient();
   const [toLocation, setToLocation] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
 
-  const [lpnDetails] = api.putaway.getLPNDetails.useSuspenseQuery({ lpn });
-  const [locations] = api.putaway.getLocations.useSuspenseQuery();
+  const { data: lpnDetails } = useSuspenseQuery(
+    orpc.putaway.getLPNDetails.queryOptions({ input: { lpn } }),
+  );
+  const { data: locations } = useSuspenseQuery(
+    orpc.putaway.getLocations.queryOptions(),
+  );
 
   // Where this pallet's stock actually is, which is not the same as where it was
   // received. This screen used to send `lpnDetails.location` — the receiving bay,
@@ -67,34 +76,44 @@ export function PutawayProcess({ lpn }: PutawayProcessProps) {
     if (toLocation === location) setToLocation("");
   };
 
-  const createPutaway = api.putaway.createPutaway.useMutation({
-    onSuccess: async (putaway) => {
-      toast.success(
-        `Putaway created successfully! ${putaway.quantity} units moved from ${putaway.fromLocation} to ${putaway.toLocation}`,
-        {
-          description: `LPN: ${lpnDetails.lpn} | SKU: ${lpnDetails.sku}`,
+  const createPutaway = useMutation(
+    orpc.putaway.createPutaway.mutationOptions({
+      onSuccess: async (putaway) => {
+        toast.success(
+          `Putaway created successfully! ${putaway.quantity} units moved from ${putaway.fromLocation} to ${putaway.toLocation}`,
+          {
+            description: `LPN: ${lpnDetails.lpn} | SKU: ${lpnDetails.sku}`,
+            duration: 5000,
+          },
+        );
+        // The worklist is cached for 30s, so without this the LPN that was just
+        // moved is still sitting on /putaway when the redirect lands.
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: orpc.putaway.getAllLPNs.key(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.putaway.getLPNDetails.key({ input: { lpn } }),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.putaway.searchLPNs.key(),
+          }),
+          // The destination's free capacity just changed, and it is shown in this
+          // picker.
+          queryClient.invalidateQueries({
+            queryKey: orpc.putaway.getLocations.key(),
+          }),
+        ]);
+        router.push("/putaway");
+      },
+      onError: (error) => {
+        toast.error("Failed to create putaway", {
+          description: error.message,
           duration: 5000,
-        },
-      );
-      // The worklist is cached for 30s, so without this the LPN that was just
-      // moved is still sitting on /putaway when the redirect lands.
-      await Promise.all([
-        apiUtils.putaway.getAllLPNs.invalidate(),
-        apiUtils.putaway.getLPNDetails.invalidate({ lpn }),
-        apiUtils.putaway.searchLPNs.invalidate(),
-        // The destination's free capacity just changed, and it is shown in this
-        // picker.
-        apiUtils.putaway.getLocations.invalidate(),
-      ]);
-      router.push("/putaway");
-    },
-    onError: (error) => {
-      toast.error("Failed to create putaway", {
-        description: error.message,
-        duration: 5000,
-      });
-    },
-  });
+        });
+      },
+    }),
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

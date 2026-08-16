@@ -7,16 +7,20 @@ import { DockBooking } from "@/components/dock-booking";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon, PackageIcon, TruckIcon } from "lucide-react";
 import { notFound, useRouter } from "next/navigation";
 import { getStatusVariant } from "@/lib/utils";
 
 export function OrderDetail({ orderNumber }: { orderNumber: string }) {
-  const [orderDetails] =
-    api.order.getOrderDetailsByOrderNumber.useSuspenseQuery({
-      orderNumber,
-    });
+  const { data: orderDetails } = useSuspenseQuery(
+    orpc.order.getOrderDetailsByOrderNumber.queryOptions({
+      input: {
+        orderNumber,
+      },
+    }),
+  );
 
   const router = useRouter();
 

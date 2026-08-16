@@ -1,6 +1,7 @@
 "use client";
 
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -41,11 +42,15 @@ export function InventoryMovements({
   lpn?: string;
   location?: string;
 }) {
-  const [movements] = api.inventory.getMovements.useSuspenseQuery({
-    sku,
-    lpn,
-    location,
-  });
+  const { data: movements } = useSuspenseQuery(
+    orpc.inventory.getMovements.queryOptions({
+      input: {
+        sku,
+        lpn,
+        location,
+      },
+    }),
+  );
 
   if (movements.length === 0) {
     return (

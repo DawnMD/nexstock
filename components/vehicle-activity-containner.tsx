@@ -8,8 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { appRouter } from "@/server/api/root";
-import type { inferRouterOutputs } from "@trpc/server";
+import type { RouterOutputs } from "@/orpc/client";
 import { format } from "date-fns";
 import { ArrowLeftIcon, TruckIcon, UserIcon } from "lucide-react";
 
@@ -19,9 +18,7 @@ export function VehicleActivityContainer({
 }: {
   children: React.ReactNode;
   dockBookingDetails: NonNullable<
-    inferRouterOutputs<
-      typeof appRouter
-    >["order"]["getDockBookingByVehicleNumberAndOrderNumber"]
+    RouterOutputs["order"]["getDockBookingByVehicleNumberAndOrderNumber"]
   >;
 }) {
   return (

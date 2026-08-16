@@ -8,7 +8,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { api } from "@/trpc/react";
+import { orpc } from "@/orpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -21,9 +22,13 @@ export function DashboardStats({ initialDate }: DashboardStatsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
-  const [stats] = api.order.getOrderStats.useSuspenseQuery({
-    date: initialDate,
-  });
+  const { data: stats } = useSuspenseQuery(
+    orpc.order.getOrderStats.queryOptions({
+      input: {
+        date: initialDate,
+      },
+    }),
+  );
 
   const handleDateChange = (date?: Date) => {
     const dateString = format(date ?? new Date(), "yyyy-MM-dd");
