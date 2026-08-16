@@ -2,7 +2,7 @@
  * The reports screen and its CSV export.
  *
  * The export is worth an end-to-end test specifically because it is a route
- * handler rather than a tRPC procedure — nothing else in the suite exercises
+ * handler rather than an oRPC procedure — nothing else in the suite exercises
  * that path, and "the browser gets a file with the right headers" is not
  * something a unit test can see.
  */

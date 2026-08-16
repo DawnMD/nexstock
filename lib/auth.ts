@@ -57,7 +57,7 @@ export const auth = betterAuth({
   },
 
   session: {
-    // Every page render and every tRPC call resolves a session. Without this the
+    // Every page render and every oRPC call resolves a session. Without this the
     // app would issue a DB round-trip per request; with it, the session rides in a
     // signed cookie and is re-read from Postgres at most once every 5 minutes.
     // Trade-off: revoking a session can lag by up to `maxAge`.

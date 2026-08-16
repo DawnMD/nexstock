@@ -34,13 +34,13 @@ Orders → Dock booking → Quality check → Receive → Putaway → Adjustment
 Sales orders → Allocate → Pick → Pack → Ship
 ```
 
-| Step             | Route                                        | What happens                                                                                                                                   |
-| ---------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Sales orders** | `/sales-orders`, `/sales-orders/[orderNumber]` | Orders going out to a `Customer`, each with line items.                                                                                        |
-| **Allocate**     | on the sales order screen                    | Reserves specific pallets, FEFO then FIFO, producing one `PickTask` per balance drawn against. Nothing moves; open reservations are netted off so two orders cannot be promised the same stock. |
-| **Pick**         | `/pick`                                      | The worklist, in aisle order. Confirming moves stock out of the rack and into the dispatch bay — a net-zero pair, like a putaway. Short picks are recorded as such. |
-| **Pack**         | `/ship?order=…`                              | Boxes picked lines into a `Carton`. Writes no stock movement: the units are already in the bay, and a carton says how they are boxed, not where they are. |
-| **Ship**         | `/ship?order=…`                              | Dispatches cartons on a `Shipment`. The only operation in NexStock that reduces stock on hand without being a write-off.                       |
+| Step             | Route                                          | What happens                                                                                                                                                                                    |
+| ---------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Sales orders** | `/sales-orders`, `/sales-orders/[orderNumber]` | Orders going out to a `Customer`, each with line items.                                                                                                                                         |
+| **Allocate**     | on the sales order screen                      | Reserves specific pallets, FEFO then FIFO, producing one `PickTask` per balance drawn against. Nothing moves; open reservations are netted off so two orders cannot be promised the same stock. |
+| **Pick**         | `/pick`                                        | The worklist, in aisle order. Confirming moves stock out of the rack and into the dispatch bay — a net-zero pair, like a putaway. Short picks are recorded as such.                             |
+| **Pack**         | `/ship?order=…`                                | Boxes picked lines into a `Carton`. Writes no stock movement: the units are already in the bay, and a carton says how they are boxed, not where they are.                                       |
+| **Ship**         | `/ship?order=…`                                | Dispatches cartons on a `Shipment`. The only operation in NexStock that reduces stock on hand without being a write-off.                                                                        |
 
 ## Reporting
 
@@ -52,18 +52,18 @@ CSV export beside each one:
 | **Throughput**           | Units received and shipped per day. Two charts, never one with two y-axes.                                                           |
 | **Stock aging**          | On-hand bucketed by age, measured from the receipt that brought each pallet in — so relocating a pallet does not make it look new.   |
 | **Location utilisation** | Volume used against each rack's rating. An unrated rack reports nothing rather than 0%; "unrated" and "empty" are different answers. |
-| **Reject rate by SKU**   | Rejected over received across every line, so a SKU that consistently arrives damaged stands out from one bad pallet.                  |
-| **Dock turnaround**      | Check-in to check-out per vehicle. `DockActivity` has recorded these timestamps since the schema was written and nothing read them.   |
+| **Reject rate by SKU**   | Rejected over received across every line, so a SKU that consistently arrives damaged stands out from one bad pallet.                 |
+| **Dock turnaround**      | Check-in to check-out per vehicle. `DockActivity` has recorded these timestamps since the schema was written and nothing read them.  |
 
-Export is a route handler (`/api/reports/[report]`) rather than a tRPC
+Export is a route handler (`/api/reports/[report]`) rather than an oRPC
 procedure, because the browser has to be handed a file — but the data comes from
-the same procedures the screens render, through a server-side caller, so a report
-and its export cannot drift apart.
+the same procedures the screens render, through a server-side router client, so a
+report and its export cannot drift apart.
 
 ## Stack
 
 - [Next.js 16](https://nextjs.org) (App Router, React 19, Turbopack in dev)
-- [tRPC 11](https://trpc.io) + [TanStack Query](https://tanstack.com/query)
+- [oRPC 1](https://orpc.dev) + [TanStack Query](https://tanstack.com/query)
 - [Prisma 7](https://prisma.io) on Postgres — [Neon](https://neon.tech) via `@prisma/adapter-neon`, or any plain Postgres via `@prisma/adapter-pg`; the connection string decides
 - [Better Auth](https://better-auth.com) for authentication (self-hosted sessions, email + password)
 - [Tailwind CSS 4](https://tailwindcss.com) + [shadcn/ui](https://ui.shadcn.com) (Base UI primitives)
@@ -88,14 +88,14 @@ Copy the example file and fill in real values:
 cp .env.example .env
 ```
 
-| Variable                            | Description                                                                                                                          |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `DATABASE_URL`                      | Connection string used by Prisma Client at runtime. On Neon this is the **pooled** one — the host contains `-pooler`.                |
-| `DATABASE_URL_UNPOOLED`             | Direct connection string. On Neon this is the same host without `-pooler`. Used by the Prisma CLI for migrations and by the `prisma/` scripts. |
-| `BETTER_AUTH_SECRET`                | 32+ character random string that signs session cookies. Generate one with `npx auth@latest secret`.                                  |
-| `BETTER_AUTH_URL`                   | Optional. Public origin, e.g. `https://wms.example.com`. Required when serving from anywhere other than `localhost:3000` or `*.vercel.app` — without it Better Auth rejects the request as an unknown host and sign-in 500s. |
-| `RESEND_API_KEY`                    | [Resend](https://resend.com) API key. Sign-up is gated on a verification email, so this has to be a real key.                        |
-| `EMAIL_FROM`                        | `From` header on outbound mail. Defaults to `NexStock <onboarding@resend.dev>`, which only delivers to the Resend account owner.     |
+| Variable                | Description                                                                                                                                                                                                                  |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`          | Connection string used by Prisma Client at runtime. On Neon this is the **pooled** one — the host contains `-pooler`.                                                                                                        |
+| `DATABASE_URL_UNPOOLED` | Direct connection string. On Neon this is the same host without `-pooler`. Used by the Prisma CLI for migrations and by the `prisma/` scripts.                                                                               |
+| `BETTER_AUTH_SECRET`    | 32+ character random string that signs session cookies. Generate one with `npx auth@latest secret`.                                                                                                                          |
+| `BETTER_AUTH_URL`       | Optional. Public origin, e.g. `https://wms.example.com`. Required when serving from anywhere other than `localhost:3000` or `*.vercel.app` — without it Better Auth rejects the request as an unknown host and sign-in 500s. |
+| `RESEND_API_KEY`        | [Resend](https://resend.com) API key. Sign-up is gated on a verification email, so this has to be a real key.                                                                                                                |
+| `EMAIL_FROM`            | `From` header on outbound mail. Defaults to `NexStock <onboarding@resend.dev>`, which only delivers to the Resend account owner.                                                                                             |
 
 Both connection strings are on the Neon dashboard under **Connect** — toggle
 _Connection pooling_ to switch between them. Keep `?sslmode=require`; if a query
@@ -158,7 +158,7 @@ cannot be used to enumerate accounts.
 `pnpm user:create demo@example.com "Demo" "password" --demo` creates an account
 that can browse every screen and change nothing. It is a real, verified user, so
 the read paths are not special-cased anywhere; what stops it writing is
-`writeProcedure` in `server/api/trpc.ts`, which every mutation is built on and
+`writeProcedure` in `server/api/orpc.ts`, which every mutation is built on and
 which refuses a caller whose `isDemo` flag is set. The banner in the layout only
 explains the refusal — it is not what enforces it.
 
@@ -172,7 +172,7 @@ not acceptable for a deployment, put it behind a network boundary or set
 `pnpm user:create`, which still works and marks the address verified.
 
 Sign in at `/sign-in`; every page under `app/(inbound)/` calls
-`requireSession()` and every mutating tRPC procedure is a `privateProcedure`.
+`requireSession()` and every mutating oRPC procedure is a `writeProcedure`.
 
 ## Scripts
 
@@ -222,7 +222,7 @@ pnpm test
 ### End-to-end
 
 `pnpm test:e2e` drives the real app in Chromium — a production build, a real
-database, a real session — which is what proves the tRPC routers and the screens
+database, a real session — which is what proves the oRPC routers and the screens
 are wired to the services underneath them. Point `.env` at a seeded database,
 set `BETTER_AUTH_URL` to the port Playwright serves on, and run it:
 
@@ -259,8 +259,8 @@ components/      React components; components/ui/ is shadcn
 server/services/ the business logic: every stock movement goes through here
                  inbound: receiving, quality, putaway, adjustments
                  outbound: allocation, picking (pack/ship), sales-orders
-server/api/      tRPC routers, which are thin shells over the services
-trpc/            tRPC client/server wiring and the React Query client
+server/api/      oRPC routers, which are thin shells over the services
+orpc/            oRPC client/server wiring and the React Query client
 prisma/          schema.prisma, migrations, seed.ts
 tests/           Vitest suites, run against a real Postgres
 generated/       Prisma Client, generated from the schema (gitignored)

@@ -11,7 +11,7 @@ loadEnv({ path: [".env.local", ".env"], quiet: true });
 /**
  * End-to-end tests drive the real app: a Next production build, a real Postgres
  * behind it, and a real Better Auth session. They cover what the Vitest suite
- * cannot — that the tRPC routers and the React screens are actually wired to the
+ * cannot — that the oRPC routers and the React screens are actually wired to the
  * services underneath them.
  *
  * `e2e/global-setup.ts` seeds the database and signs an operator in once; every
