@@ -1,10 +1,36 @@
 import { calculateOrderStats } from "@/lib/order-utils";
-import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
+import {
+  createTRPCRouter,
+  privateProcedure,
+  writeProcedure,
+} from "@/server/api/trpc";
 import type { Prisma } from "@/generated/prisma/client";
 import { ActivityType } from "@/generated/prisma/client";
-import { TRPCError } from "@trpc/server";
+import {
+  createDockBooking,
+  deleteDockBooking,
+  recordDockActivity,
+  updateDockBooking,
+} from "@/server/services/dock";
 import { endOfDay, startOfDay } from "date-fns";
 import { z } from "zod";
+
+/**
+ * Shared by create and update. `weight`/`cbm`/`queue` are bounded here as well
+ * as in the service: this is what puts the message under the right field in the
+ * booking form, and the service is what holds when something else calls it.
+ */
+const dockBookingFields = {
+  dockId: z.number().int().positive(),
+  vehicleTypeId: z.number().int().positive(),
+  vehicleNumber: z.string().min(1, "Vehicle number is required"),
+  weight: z.number().int().nonnegative(),
+  queue: z.number().int().positive(),
+  cbm: z.number().int().nonnegative(),
+  driverName: z.string().min(1, "Driver name is required"),
+  driverPhone: z.string().optional(),
+  eta: z.date().optional(),
+};
 
 export const orderRouter = createTRPCRouter({
   getPaginatedOrders: privateProcedure
@@ -16,68 +42,62 @@ export const orderRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      try {
-        const limit = input.limit;
-        const { pageIndex, search } = input;
+      const limit = input.limit;
+      const { pageIndex, search } = input;
 
-        const where: Prisma.OrderWhereInput = search
-          ? {
-              OR: [
-                { orderNumber: { contains: search, mode: "insensitive" } },
-                {
-                  vendor: {
-                    reference: { contains: search, mode: "insensitive" },
-                  },
-                },
-              ],
-            }
-          : {};
-
-        const skip = pageIndex * limit;
-
-        const [items, totalCount] = await Promise.all([
-          ctx.db.order.findMany({
-            where,
-            skip,
-            take: limit,
-            include: {
-              vendor: {
-                select: {
-                  id: true,
-                  name: true,
-                  reference: true,
+      const where: Prisma.OrderWhereInput = search
+        ? {
+            OR: [
+              { orderNumber: { contains: search, mode: "insensitive" } },
+              {
+                vendor: {
+                  reference: { contains: search, mode: "insensitive" },
                 },
               },
-            },
-            orderBy: {
-              createdAt: "desc", // Always show most recent orders first
-            },
-          }),
-          ctx.db.order.count({ where }),
-        ]);
+            ],
+          }
+        : {};
 
-        // Calculate pagination metadata
-        const hasNextPage = skip + limit < totalCount;
-        const hasPreviousPage = pageIndex > 0;
-        const currentPage = pageIndex + 1;
+      const skip = pageIndex * limit;
 
-        return {
-          items,
-          pagination: {
-            hasNextPage,
-            hasPreviousPage,
-            totalCount,
-            currentPage,
-            totalPages: Math.ceil(totalCount / limit),
-            limit,
-            pageIndex,
+      const [items, totalCount] = await Promise.all([
+        ctx.db.order.findMany({
+          where,
+          skip,
+          take: limit,
+          include: {
+            vendor: {
+              select: {
+                id: true,
+                name: true,
+                reference: true,
+              },
+            },
           },
-        };
-      } catch (error) {
-        throw new Error(
-          `Failed to fetch paginated orders: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
-      }
+          orderBy: {
+            createdAt: "desc", // Always show most recent orders first
+          },
+        }),
+        ctx.db.order.count({ where }),
+      ]);
+
+      // Calculate pagination metadata
+      const hasNextPage = skip + limit < totalCount;
+      const hasPreviousPage = pageIndex > 0;
+      const currentPage = pageIndex + 1;
+
+      return {
+        items,
+        pagination: {
+          hasNextPage,
+          hasPreviousPage,
+          totalCount,
+          currentPage,
+          totalPages: Math.ceil(totalCount / limit),
+          limit,
+          pageIndex,
+        },
+      };
     }),
   getOrderDetailsByOrderNumber: privateProcedure
     .input(
@@ -152,6 +172,9 @@ export const orderRouter = createTRPCRouter({
               unloadTime: true,
             },
           },
+          // Drives the delete confirmation: a booking with activities against it
+          // can't be removed, and the dialog says so before the operator tries.
+          _count: { select: { activities: true } },
         },
         orderBy: { createdAt: "desc" },
       });
@@ -184,74 +207,21 @@ export const orderRouter = createTRPCRouter({
     return vehicleTypes;
   }),
 
-  deleteDockBooking: privateProcedure
-    .input(z.object({ id: z.number() }))
+  deleteDockBooking: writeProcedure
+    .input(z.object({ id: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
-      const deletedBooking = await ctx.db.dockBooking.delete({
-        where: { id: input.id },
-        select: {
-          id: true,
-        },
-      });
-      return deletedBooking;
+      return await ctx.db.$transaction((tx) => deleteDockBooking(tx, input.id));
     }),
 
-  createDockBooking: privateProcedure
+  createDockBooking: writeProcedure
     .input(
       z.object({
-        orderNumber: z.string(),
-        dockId: z.number(),
-        vehicleTypeId: z.number(),
-        vehicleNumber: z.string(),
-        weight: z.number(),
-        queue: z.number(),
-        cbm: z.number(),
-        driverName: z.string(),
-        driverPhone: z.string().optional(),
-        eta: z.date().optional(),
+        orderNumber: z.string().min(1),
+        ...dockBookingFields,
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const order = await ctx.db.order.findUnique({
-        where: { orderNumber: input.orderNumber },
-      });
-
-      if (!order) {
-        throw new Error("Order not found");
-      }
-
-      const dockBooking = await ctx.db.dockBooking.create({
-        data: {
-          orderId: order.orderNumber,
-          dockId: input.dockId,
-          vehicleTypeId: input.vehicleTypeId,
-          vehicleNumber: input.vehicleNumber,
-          weight: input.weight,
-          queue: input.queue,
-          cbm: input.cbm,
-          driverName: input.driverName,
-          driverPhone: input.driverPhone,
-          eta: input.eta,
-        },
-        include: {
-          dock: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          vehicleType: {
-            select: {
-              id: true,
-              type: true,
-              description: true,
-              unloadTime: true,
-            },
-          },
-        },
-      });
-
-      return dockBooking;
+      return await ctx.db.$transaction((tx) => createDockBooking(tx, input));
     }),
   getOrderStats: privateProcedure
     .input(
@@ -303,9 +273,14 @@ export const orderRouter = createTRPCRouter({
             },
           ],
         }),
-        createdAt: {
+        // Filter on `eta`, not `createdAt`. This is the *schedule*: the question
+        // is which vehicles are due on the chosen day, not which bookings
+        // happened to be typed in that day. `getOrderStats` above already keys
+        // off `eta`, so the two date pickers used to disagree — picking the same
+        // day on /dashboard and /dock-booking returned different bookings.
+        eta: {
           gte: startOfDay(selectedDate),
-          lt: endOfDay(selectedDate),
+          lte: endOfDay(selectedDate),
         },
       };
 
@@ -369,95 +344,37 @@ export const orderRouter = createTRPCRouter({
       });
       return dockBooking;
     }),
-  updateDockActivity: privateProcedure
+  updateDockActivity: writeProcedure
     .input(
       z.object({
-        vehicleNumber: z.string(),
-        activity: z.nativeEnum(ActivityType),
+        vehicleNumber: z.string().min(1),
+        activity: z.enum(ActivityType),
         notes: z.string().optional(),
         containerCondition: z.boolean().optional(),
-        orderNumber: z.string(),
+        orderNumber: z.string().min(1),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Find the dock booking by vehicle number
-      const dockBooking = await ctx.db.dockBooking.findFirst({
-        where: {
-          AND: [
-            { vehicleNumber: input.vehicleNumber },
-            { orderId: input.orderNumber },
-          ],
-        },
-      });
-
-      if (!dockBooking) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `Dock booking not found for vehicle number ${input.vehicleNumber}`,
-        });
-      }
-
-      // Create a new dock activity
-      const dockActivity = await ctx.db.dockActivity.create({
-        data: {
+      return await ctx.db.$transaction((tx) =>
+        recordDockActivity(tx, {
+          orderNumber: input.orderNumber,
+          vehicleNumber: input.vehicleNumber,
           activityType: input.activity,
-          dockBookingId: dockBooking.id,
-          createdBy: ctx.userId,
-          updatedBy: ctx.userId,
           notes: input.notes,
           containerCondition: input.containerCondition,
-        },
-      });
-
-      return dockActivity;
+          createdBy: ctx.userId,
+        }),
+      );
     }),
-  updateDockBooking: privateProcedure
+  updateDockBooking: writeProcedure
     .input(
       z.object({
-        id: z.number(),
-        dockId: z.number(),
-        vehicleTypeId: z.number(),
-        vehicleNumber: z.string(),
-        weight: z.number(),
-        queue: z.number(),
-        cbm: z.number(),
-        driverName: z.string(),
-        driverPhone: z.string().optional(),
-        eta: z.date().optional(),
+        id: z.number().int().positive(),
+        orderNumber: z.string().min(1),
+        ...dockBookingFields,
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const updatedBooking = await ctx.db.dockBooking.update({
-        where: { id: input.id },
-        data: {
-          dockId: input.dockId,
-          vehicleTypeId: input.vehicleTypeId,
-          vehicleNumber: input.vehicleNumber,
-          weight: input.weight,
-          queue: input.queue,
-          cbm: input.cbm,
-          driverName: input.driverName,
-          driverPhone: input.driverPhone,
-          eta: input.eta,
-        },
-        include: {
-          dock: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          vehicleType: {
-            select: {
-              id: true,
-              type: true,
-              description: true,
-              unloadTime: true,
-            },
-          },
-        },
-      });
-
-      return updatedBooking;
+      return await ctx.db.$transaction((tx) => updateDockBooking(tx, input));
     }),
 });

@@ -1,4 +1,8 @@
-import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
+import {
+  createTRPCRouter,
+  privateProcedure,
+  writeProcedure,
+} from "@/server/api/trpc";
 import { applyAdjustmentBatch } from "@/server/services/adjustments";
 import type { Prisma } from "@/generated/prisma/client";
 import { AdjustmentType } from "@/generated/prisma/client";
@@ -104,7 +108,7 @@ export const adjustmentsRouter = createTRPCRouter({
         },
       };
     }),
-  createAdjustmentBatch: privateProcedure
+  createAdjustmentBatch: writeProcedure
     .input(
       z.object({
         adjustments: z

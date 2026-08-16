@@ -1,4 +1,8 @@
-import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
+import {
+  createTRPCRouter,
+  privateProcedure,
+  writeProcedure,
+} from "@/server/api/trpc";
 import { balancesForLpn, getBalance } from "@/server/services/inventory";
 import { createPutaway } from "@/server/services/putaway";
 import { TRPCError } from "@trpc/server";
@@ -154,7 +158,7 @@ export const putawayRouter = createTRPCRouter({
     });
   }),
 
-  createPutaway: privateProcedure
+  createPutaway: writeProcedure
     .input(
       z.object({
         lpn: z.string().min(1),

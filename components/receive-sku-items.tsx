@@ -36,7 +36,7 @@ export function ReceiveSkuItems({ orderNumber }: { orderNumber: string }) {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {orderItems.items.map((sku) => (
-        <Card key={sku.Sku.sku} className="relative">
+        <Card key={sku.id} className="relative">
           <CardHeader className="flex items-center gap-2 pb-3">
             <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg">
               <PackageIcon className="text-primary h-4 w-4" />

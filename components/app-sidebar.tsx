@@ -1,6 +1,6 @@
 "use client";
 
-import { NavMain } from "@/components/nav-main";
+import { NavMain, type NavSection } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -25,68 +25,52 @@ import {
   IconMapPin,
   IconRuler,
   IconTag,
+  IconFileInvoice,
+  IconChecklist,
+  IconSend,
+  IconChartBar,
 } from "@tabler/icons-react";
 import Link from "next/link";
 
-export const data = {
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: IconDashboard,
-    },
-    {
-      title: "Orders",
-      url: "/orders",
-      icon: IconPackage,
-    },
-    {
-      title: "Dock Booking List",
-      url: "/dock-booking",
-      icon: IconTruck,
-    },
-    {
-      title: "Quality Check",
-      url: "/quality-check",
-      icon: IconSearch,
-    },
-    {
-      title: "Receive",
-      url: "/receive",
-      icon: IconShoppingCart,
-    },
-    {
-      title: "Putaway",
-      url: "/putaway",
-      icon: IconMapPin,
-    },
-    {
-      title: "Inventory",
-      url: "/inventory",
-      icon: IconBuildingWarehouse,
-    },
-    {
-      title: "Adjustments",
-      url: "/adjustments",
-      icon: IconAdjustments,
-    },
-    {
-      title: "LPN List",
-      url: "/lpn-list",
-      icon: IconClipboardList,
-    },
-    {
-      title: "SKUs",
-      url: "/skus",
-      icon: IconTag,
-    },
-    {
-      title: "Locations",
-      url: "/locations",
-      icon: IconRuler,
-    },
-  ],
-};
+/**
+ * Grouped rather than flat: the list is long enough now that "which of these is
+ * outbound?" was a real question, and the two directions share a lot of noun
+ * vocabulary (orders, items, locations).
+ */
+export const navSections: NavSection[] = [
+  {
+    items: [{ title: "Dashboard", url: "/dashboard", icon: IconDashboard }],
+  },
+  {
+    label: "Inbound",
+    items: [
+      { title: "Orders", url: "/orders", icon: IconPackage },
+      { title: "Dock Booking List", url: "/dock-booking", icon: IconTruck },
+      { title: "Quality Check", url: "/quality-check", icon: IconSearch },
+      { title: "Receive", url: "/receive", icon: IconShoppingCart },
+      { title: "Putaway", url: "/putaway", icon: IconMapPin },
+      { title: "LPN List", url: "/lpn-list", icon: IconClipboardList },
+      { title: "Adjustments", url: "/adjustments", icon: IconAdjustments },
+    ],
+  },
+  {
+    label: "Outbound",
+    items: [
+      { title: "Sales Orders", url: "/sales-orders", icon: IconFileInvoice },
+      { title: "Pick List", url: "/pick", icon: IconChecklist },
+      { title: "Ship", url: "/ship", icon: IconSend },
+    ],
+  },
+  {
+    label: "Warehouse",
+    items: [
+      { title: "Inventory", url: "/inventory", icon: IconBuildingWarehouse },
+      { title: "SKUs", url: "/skus", icon: IconTag },
+      { title: "Locations", url: "/locations", icon: IconRuler },
+      { title: "Reports", url: "/reports", icon: IconChartBar },
+    ],
+  },
+];
 
 export function AppSidebar({
   user,
@@ -110,7 +94,7 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain sections={navSections} />
         <ThemeToggle className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

@@ -71,6 +71,14 @@ export async function applyAdjustmentBatch(
     const delta = isAddition ? adjustment.quantity : -adjustment.quantity;
     const newReceivedQuantity = orderItem.receivedQuantity + delta;
 
+    // Deliberately no upper bound, in contrast to `receiveStock`, which refuses
+    // to take more than was ordered. A vendor really can ship more than the
+    // purchase order says, and correcting the books to match what is physically
+    // on the dock is the entire point of an overage adjustment — capping it here
+    // would leave the count wrong and the stock unaccounted for. Over-received
+    // lines are visible on the order detail screen, which shows received against
+    // ordered.
+    //
     // A shortage can only write off stock that is actually on hand.
     if (newReceivedQuantity < 0) {
       throw badRequest(

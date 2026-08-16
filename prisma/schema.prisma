@@ -58,11 +58,23 @@ enum AdjustmentType {
 enum MovementReason {
     RECEIPT
     QC_REJECT
+    /// Puts back what a `QC_REJECT` took out, when an inspection is reset. The
+    /// ledger is append-only, so a mistaken rejection is corrected by a
+    /// compensating entry rather than by deleting the original.
+    QC_REVERSAL
     ADJUSTMENT_ADD
     ADJUSTMENT_SUB
     PUTAWAY_OUT
     PUTAWAY_IN
     TRANSFER
+    /// Outbound. A pick is a net-zero pair like a putaway — stock leaves its
+    /// storage location and lands in the dispatch bay — and only `SHIP` actually
+    /// takes units out of the warehouse.
+    PICK_OUT
+    PICK_IN
+    SHIP
+    /// Puts back what a `PICK_OUT`/`PICK_IN` pair moved, when a pick is undone.
+    PICK_REVERSAL
 }
 
 /// Which table `InventoryMovement.refId` points at. The referenced ids are a mix
@@ -72,6 +84,36 @@ enum MovementRefType {
     PUTAWAY
     ADJUSTMENT
     QUALITY_CHECK
+    PICK_TASK
+    SHIPMENT
+}
+
+enum SalesOrderStatus {
+    NEW
+    ALLOCATED
+    PICKING
+    PICKED
+    SHIPPED
+    CANCELLED
+}
+
+enum SalesOrderItemStatus {
+    PENDING
+    ALLOCATED
+    PICKED
+    SHIPPED
+    SHORT
+}
+
+enum PickTaskStatus {
+    PENDING
+    PICKED
+    CANCELLED
+}
+
+enum ShipmentStatus {
+    DRAFT
+    SHIPPED
 }
 
 /// Better Auth core tables. The shape is dictated by `better-auth` — cross-checked
@@ -85,6 +127,13 @@ model User {
     image         String?
     createdAt     DateTime @default(now())
     updatedAt     DateTime @updatedAt
+
+    /// Read-only when true. The public demo signs in as such an account so a
+    /// visitor can walk every screen without being able to move anyone's stock;
+    /// `writeProcedure` in `server/api/trpc.ts` is what enforces it. Not part of
+    /// Better Auth's own schema — an app concern added alongside it, which is
+    /// why it is a plain column with a safe default rather than a role model.
+    isDemo Boolean @default(false)
 
     sessions Session[]
     accounts Account[]
@@ -105,6 +154,13 @@ model User {
     adjustments           Adjustment[]        @relation("AdjustmentAdjustedBy")
     putaways              Putaway[]           @relation("PutawayPutawayBy")
     inventoryMovements    InventoryMovement[] @relation("InventoryMovementCreatedBy")
+
+    // Outbound
+    salesOrdersCreated SalesOrder[] @relation("SalesOrderCreatedBy")
+    salesOrdersUpdated SalesOrder[] @relation("SalesOrderUpdatedBy")
+    pickTasks          PickTask[]   @relation("PickTaskPickedBy")
+    cartonsPacked      Carton[]     @relation("CartonPackedBy")
+    shipments          Shipment[]   @relation("ShipmentShippedBy")
 }
 
 model Session {
@@ -315,6 +371,7 @@ model Sku {
 
     inventoryMovements InventoryMovement[]
     inventoryBalances  InventoryBalance[]
+    salesOrderItems    SalesOrderItem[]    @relation("SalesOrderItemSku")
 
     @@index([sku])
     @@index([createdBy])
@@ -410,6 +467,7 @@ model Location {
 
     inventoryMovements InventoryMovement[] @relation("InventoryMovementLocation")
     inventoryBalances  InventoryBalance[]  @relation("InventoryBalanceLocation")
+    pickTasks          PickTask[]          @relation("PickTaskLocation")
 
     @@index([location])
     @@index([createdBy])
@@ -482,6 +540,164 @@ model InventoryMovement {
     @@index([refType, refId])
     @@index([createdAt])
     @@index([createdBy])
+}
+
+/// Who goods are going out to. The outbound mirror of `Vendor`.
+model Customer {
+    id          Int      @id @default(autoincrement())
+    name        String
+    reference   String   @unique
+    contactName String?
+    address     String?
+    city        String?
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    salesOrders SalesOrder[]
+
+    @@index([reference])
+}
+
+/// An order going out, the outbound counterpart of `Order`.
+///
+/// The lifecycle is allocate → pick → ship. Allocation reserves specific stock
+/// (a `PickTask` per balance it draws against), picking moves that stock into
+/// the dispatch bay, and shipping takes it out of the warehouse. Only the last
+/// step reduces what the business owns.
+model SalesOrder {
+    id                Int              @id @default(autoincrement())
+    orderNumber       String           @unique
+    customerReference String
+    customer          Customer         @relation(fields: [customerReference], references: [reference])
+    status            SalesOrderStatus @default(NEW)
+    requestedShipDate DateTime?
+    notes             String?
+    createdAt         DateTime         @default(now())
+    createdBy         String
+    createdByUser     User             @relation("SalesOrderCreatedBy", fields: [createdBy], references: [id], onDelete: Restrict)
+    updatedAt         DateTime         @updatedAt
+    updatedBy         String
+    updatedByUser     User             @relation("SalesOrderUpdatedBy", fields: [updatedBy], references: [id], onDelete: Restrict)
+
+    items     SalesOrderItem[]
+    pickTasks PickTask[]
+    shipments Shipment[]
+
+    @@index([customerReference, status])
+    @@index([createdBy])
+    @@index([updatedBy])
+}
+
+model SalesOrderItem {
+    id      Int        @id @default(autoincrement())
+    order   SalesOrder @relation(fields: [orderId], references: [orderNumber], onDelete: Cascade)
+    orderId String
+
+    sku   String
+    skuRef Sku @relation("SalesOrderItemSku", fields: [sku], references: [sku], onDelete: Restrict)
+
+    orderedQuantity Int @default(0)
+    /// Reserved against real balances but still sitting in storage.
+    allocatedQuantity Int @default(0)
+    /// Moved into the dispatch bay.
+    pickedQuantity Int @default(0)
+    /// Gone.
+    shippedQuantity Int @default(0)
+
+    status    SalesOrderItemStatus @default(PENDING)
+    createdAt DateTime             @default(now())
+    updatedAt DateTime             @updatedAt
+
+    pickTasks PickTask[]
+
+    @@index([orderId, sku])
+    @@index([sku])
+}
+
+/// One line of work for a picker: take this quantity of this SKU off this
+/// pallet in this location.
+///
+/// Allocation produces these rather than a single "reserve N units" number,
+/// because the stock for one order line can be spread across several pallets and
+/// locations, and the picker has to be told which. The split is decided by
+/// `allocateSalesOrder`, FEFO then FIFO.
+model PickTask {
+    id Int @id @default(autoincrement())
+
+    order   SalesOrder @relation(fields: [orderId], references: [orderNumber], onDelete: Cascade)
+    orderId String
+
+    orderItem   SalesOrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+    orderItemId Int
+
+    sku          String
+    lpn          String
+    lot          String @default("")
+    fromLocation String
+    locationRef  Location @relation("PickTaskLocation", fields: [fromLocation], references: [location], onDelete: Restrict)
+
+    quantity       Int
+    pickedQuantity Int            @default(0)
+    status         PickTaskStatus @default(PENDING)
+
+    pickedBy     String?
+    pickedByUser User?   @relation("PickTaskPickedBy", fields: [pickedBy], references: [id], onDelete: SetNull)
+    pickedAt     DateTime?
+
+    /// Set when the picked stock is packed. A carton is a grouping for dispatch,
+    /// not a stock movement — the units are already in the dispatch bay.
+    carton   Carton? @relation(fields: [cartonId], references: [id], onDelete: SetNull)
+    cartonId Int?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([orderId, status])
+    @@index([sku, lpn, fromLocation])
+    @@index([pickedBy])
+    @@index([cartonId])
+}
+
+model Carton {
+    id           Int      @id @default(autoincrement())
+    cartonNumber String   @unique
+    weight       Float?
+    packedBy     String
+    packedByUser User     @relation("CartonPackedBy", fields: [packedBy], references: [id], onDelete: Restrict)
+    packedAt     DateTime @default(now())
+
+    shipment   Shipment? @relation(fields: [shipmentId], references: [id], onDelete: SetNull)
+    shipmentId Int?
+
+    contents  PickTask[]
+    createdAt DateTime   @default(now())
+    updatedAt DateTime   @updatedAt
+
+    @@index([shipmentId])
+    @@index([packedBy])
+}
+
+/// Goods leaving the building. Confirming one is the only thing in the whole
+/// system that reduces total stock on hand without a write-off.
+model Shipment {
+    id             Int            @id @default(autoincrement())
+    shipmentNumber String         @unique
+    order          SalesOrder     @relation(fields: [orderId], references: [orderNumber], onDelete: Restrict)
+    orderId        String
+    carrier        String
+    trackingNumber String?
+    status         ShipmentStatus @default(DRAFT)
+
+    shippedBy     String?
+    shippedByUser User?     @relation("ShipmentShippedBy", fields: [shippedBy], references: [id], onDelete: SetNull)
+    shippedAt     DateTime?
+
+    cartons   Carton[]
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([orderId, status])
+    @@index([shippedBy])
 }
 
 /// Materialised stock on hand for one (sku, location, lot, lpn) key.

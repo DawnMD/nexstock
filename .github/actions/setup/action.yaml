@@ -1,0 +1,31 @@
+# Shared by every CI job. Each one used to repeat this block verbatim, so the
+# five copies drifted and a version bump meant five edits.
+name: Setup
+description: Install Node, pnpm and this project's dependencies.
+
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@v4
+      with:
+        run_install: false
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 24
+        # Handles the pnpm store cache itself, which the hand-rolled
+        # `actions/cache` step it replaces was doing by hand.
+        cache: pnpm
+
+    # `env.ts` validates at import time and `next build` needs values that pass
+    # its schema. These are placeholders; nothing in the lint, prettier, tsc or
+    # build jobs reaches a database or sends mail. The test job additionally sets
+    # DATABASE_URL_UNPOOLED as a job-level env var, and that wins: dotenv does
+    # not overwrite variables already present in `process.env`.
+    - name: Provide placeholder environment
+      shell: bash
+      run: cp .env.example .env
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile

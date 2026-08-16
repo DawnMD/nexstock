@@ -13,14 +13,15 @@ const VERIFICATION_TOKEN_TTL_SECONDS = 60 * 60;
 export const auth = betterAuth({
   database: prismaAdapter(db, { provider: "postgresql" }),
   secret: env.BETTER_AUTH_SECRET,
-  baseURL: {
-		allowedHosts: [
-			"localhost:3000",
-			"localhost:5173",
-			"*.vercel.app",
-		],
-		protocol: env.NODE_ENV === "development" ? "http" : "https",
-	},
+  // An explicit origin wins when it is set, which is what a deployment on a
+  // custom domain (or an end-to-end run on its own port) needs: the allowed-host
+  // list below is a fixed set, and Better Auth answers any request from outside
+  // it with a 500, so every sign-in fails. Falling back to the list keeps
+  // localhost and Vercel previews working with no configuration.
+  baseURL: env.BETTER_AUTH_URL ?? {
+    allowedHosts: ["localhost:3000", "localhost:5173", "*.vercel.app"],
+    protocol: env.NODE_ENV === "development" ? "http" : "https",
+  },
 
   emailAndPassword: {
     enabled: true,
@@ -66,5 +67,4 @@ export const auth = betterAuth({
   // Lets Better Auth set cookies from Server Actions. The app has none today, but
   // this is the documented Next.js baseline and costs nothing.
   plugins: [nextCookies()],
-  
 });

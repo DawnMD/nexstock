@@ -74,6 +74,7 @@ export function ReceiveSkuProcess({
   const [vehicles] = api.receive.getOrderVehicles.useSuspenseQuery({
     orderNumber,
   });
+  const [locations] = api.putaway.getLocations.useSuspenseQuery();
 
   const form = useForm<ReceiveSkuFormValues>({
     resolver: zodResolver(ReceiveSkuFormSchema),
@@ -187,9 +188,35 @@ export function ReceiveSkuProcess({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Location</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter storage location" {...field} />
-                </FormControl>
+                {/* `ReceiveItem.location` is a foreign key and `receiveStock`
+                    rejects anything that isn't an active location, so this is a
+                    picker rather than the free-text box it used to be — a typo
+                    became a server error the operator couldn't act on. */}
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a location" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {locations.map((location) => (
+                      <SelectItem
+                        key={location.location}
+                        value={location.location}
+                      >
+                        <div className="flex w-full items-center justify-between space-x-4">
+                          <span className="font-mono">{location.location}</span>
+                          <span className="text-muted-foreground text-xs">
+                            {location.zone} - {location.aisle}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}

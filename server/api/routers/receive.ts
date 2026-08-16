@@ -1,4 +1,8 @@
-import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
+import {
+  createTRPCRouter,
+  privateProcedure,
+  writeProcedure,
+} from "@/server/api/trpc";
 import { receiveStock } from "@/server/services/receiving";
 import { z } from "zod";
 
@@ -129,7 +133,7 @@ export const receiveRouter = createTRPCRouter({
       return receivedItems;
     }),
 
-  updateReceiveStatus: privateProcedure
+  updateReceiveStatus: writeProcedure
     .input(
       z.object({
         id: z.number(),

@@ -14,16 +14,28 @@ import {
   PaymentStatus,
   PrismaClient,
 } from "../generated/prisma/client";
-import { PrismaNeon } from "@prisma/adapter-neon";
+import { allocateSalesOrder } from "../server/services/allocation";
+import {
+  confirmPick,
+  confirmShipment,
+  packCarton,
+} from "../server/services/picking";
+import { createPutaway } from "../server/services/putaway";
+import { createSalesOrder } from "../server/services/sales-orders";
+import { createAdapter } from "../lib/prisma-adapter";
 import { loadDirectUrl } from "./script-env";
 
 const prisma = new PrismaClient({
-  adapter: new PrismaNeon({ connectionString: loadDirectUrl() }),
+  adapter: createAdapter(loadDirectUrl()),
 });
 
 // Inbound staging bay. Receiving drops stock here and putaway moves it out, so
 // this location has to exist for the ReceiveItem.location foreign key to hold.
 const STAGING_LOCATION = "STAGE";
+// Outbound counterpart of STAGE: picked stock waits here for its truck, and
+// shipping is what finally takes it out. PickTask and the SHIP movements both
+// point at it, so it has to exist before anything can be picked.
+const DISPATCH_LOCATION = "DISPATCH";
 
 // Helper functions for generating realistic data
 const businessUnits = [
@@ -396,6 +408,12 @@ async function main() {
   // Every relation in the schema uses Prisma's default `Restrict`, so these have
   // to run children-first or re-seeding dies on a foreign-key violation.
   // The inventory tables reference Sku and Location, so they go first of all.
+  await prisma.pickTask.deleteMany();
+  await prisma.carton.deleteMany();
+  await prisma.shipment.deleteMany();
+  await prisma.salesOrderItem.deleteMany();
+  await prisma.salesOrder.deleteMany();
+  await prisma.customer.deleteMany();
   await prisma.inventoryBalance.deleteMany();
   await prisma.inventoryMovement.deleteMany();
   await prisma.adjustment.deleteMany();
@@ -493,8 +511,26 @@ async function main() {
       });
     }),
   );
+  const dispatchLocation = await prisma.location.create({
+    data: {
+      location: DISPATCH_LOCATION,
+      status: true,
+      length: 2000,
+      width: 1000,
+      height: 400,
+      cbm: 800,
+      weightCapacity: 50000,
+      zone: "DISPATCH",
+      aisle: "0",
+      description:
+        "Outbound dispatch bay - picked stock waits here for its truck",
+      createdBy: actorId,
+      updatedBy: actorId,
+    },
+  });
+
   console.log(
-    `Created ${locations.length} storage locations plus ${stagingLocation.location}`,
+    `Created ${locations.length} storage locations plus ${stagingLocation.location} and ${dispatchLocation.location}`,
   );
 
   // Create 50 vendors in batches
@@ -772,6 +808,54 @@ async function main() {
   }
   console.log(`Created ${receiveItemCount} receive items`);
 
+  // Put roughly half of what was received away into storage racks. Without this
+  // every balance sits in the staging bay, which leaves the inventory-by-zone
+  // screen empty and gives outbound allocation nothing to reserve — allocation
+  // deliberately only considers stock somewhere a picker can reach.
+  console.log("Putting stock away...");
+  const stagedReceipts = await prisma.receiveItem.findMany({
+    select: { lpn: true, sku: true, receivedQuantity: true },
+    orderBy: { id: "asc" },
+  });
+
+  let putawayCount = 0;
+
+  for (const [index, receipt] of stagedReceipts.entries()) {
+    if (index % 2 === 1) continue; // leave the rest on the putaway worklist
+
+    const destination = locations[index % locations.length];
+    if (!destination) continue;
+
+    const onHand = await prisma.inventoryBalance.findFirst({
+      where: {
+        lpn: receipt.lpn,
+        sku: receipt.sku,
+        location: STAGING_LOCATION,
+        quantity: { gt: 0 },
+      },
+      select: { quantity: true },
+    });
+    if (!onHand) continue;
+
+    try {
+      await prisma.$transaction((tx) =>
+        createPutaway(tx, {
+          lpn: receipt.lpn,
+          sku: receipt.sku,
+          quantity: onHand.quantity,
+          fromLocation: STAGING_LOCATION,
+          toLocation: destination.location,
+          putawayBy: actorId,
+        }),
+      );
+      putawayCount += 1;
+    } catch {
+      // Racks are rated, and a heavy pallet may not fit the one it was offered.
+      // The seed is illustrative rather than exhaustive, so skip and move on.
+    }
+  }
+  console.log(`Put ${putawayCount} pallets away`);
+
   // Correct a slice of the received lines so the adjustments screen has data.
   // These go through `applyAdjustmentBatch` rather than a raw create for the
   // same reason seeded receipts record a movement above: an adjustment that
@@ -828,6 +912,133 @@ async function main() {
   }
   console.log(`Created ${adjustmentCount} adjustments`);
 
+  // ---- Outbound -------------------------------------------------------------
+  //
+  // Sales orders are seeded against stock that has actually been put away, so
+  // allocation has something real to reserve. They are left at three different
+  // stages — new, allocated, and picked-and-shipped — so every outbound screen
+  // has something on it when the app first loads.
+  console.log("Creating customers and sales orders...");
+
+  const customers = await Promise.all(
+    [
+      { name: "Northwind Retail", reference: "CUST-NORTH", city: "Leeds" },
+      { name: "Harbour Wholesale", reference: "CUST-HARBOUR", city: "Bristol" },
+      {
+        name: "Summit Distribution",
+        reference: "CUST-SUMMIT",
+        city: "Glasgow",
+      },
+    ].map((data) => prisma.customer.create({ data })),
+  );
+
+  // Only SKUs with stock in a storage location can be picked, so the sales
+  // orders are built from what putaway actually left behind.
+  const stored = await prisma.inventoryBalance.findMany({
+    where: { quantity: { gt: 0 }, location: { not: STAGING_LOCATION } },
+    select: { sku: true, quantity: true },
+    orderBy: { quantity: "desc" },
+    take: 12,
+  });
+
+  let salesOrderCount = 0;
+  let pickTaskCount = 0;
+  let shipmentCount = 0;
+
+  if (stored.length >= 3) {
+    for (const [index, customer] of customers.entries()) {
+      const line = stored[index];
+      if (!line) continue;
+
+      const orderNumber = `SO-${String(index + 1).padStart(5, "0")}`;
+      // Well under what is on hand, so allocation fills every line.
+      const orderedQuantity = Math.max(1, Math.floor(line.quantity / 2));
+
+      await prisma.$transaction((tx) =>
+        createSalesOrder(tx, {
+          orderNumber,
+          customerReference: customer.reference,
+          requestedShipDate: new Date(
+            startOfToday.getTime() + (index + 1) * 86_400_000,
+          ),
+          lines: [{ sku: line.sku, orderedQuantity }],
+          createdBy: actorId,
+        }),
+      );
+      salesOrderCount += 1;
+
+      // The first order stays NEW so the allocate button has something to do.
+      if (index === 0) continue;
+
+      await prisma.$transaction((tx) =>
+        allocateSalesOrder(tx, { orderNumber }),
+      );
+      const tasks = await prisma.pickTask.findMany({
+        where: { orderId: orderNumber },
+      });
+      pickTaskCount += tasks.length;
+
+      // The second order stops at ALLOCATED, leaving work on the pick list.
+      if (index === 1) continue;
+
+      // The third goes all the way out of the door.
+      for (const task of tasks) {
+        await prisma.$transaction((tx) =>
+          confirmPick(tx, {
+            pickTaskId: task.id,
+            pickedQuantity: task.quantity,
+            pickedBy: actorId,
+          }),
+        );
+      }
+
+      const picked = await prisma.pickTask.findMany({
+        where: { orderId: orderNumber, pickedQuantity: { gt: 0 } },
+        select: { id: true },
+      });
+
+      if (picked.length > 0) {
+        const carton = await prisma.$transaction((tx) =>
+          packCarton(tx, {
+            cartonNumber: `CTN-${String(index).padStart(5, "0")}`,
+            pickTaskIds: picked.map((task) => task.id),
+            weight: 18.5,
+            packedBy: actorId,
+          }),
+        );
+
+        await prisma.$transaction((tx) =>
+          confirmShipment(tx, {
+            shipmentNumber: `SHP-${String(index).padStart(5, "0")}`,
+            orderNumber,
+            carrier: "Fastline Logistics",
+            trackingNumber: `FL${Date.now()}${index}`,
+            cartonIds: [carton.id],
+            shippedBy: actorId,
+          }),
+        );
+        shipmentCount += 1;
+      }
+    }
+  }
+
+  console.log(
+    `Created ${salesOrderCount} sales orders, ${pickTaskCount} pick tasks, ${shipmentCount} shipments`,
+  );
+
+  // A read-only account for the public demo, so a visitor can walk every screen
+  // without being able to move anyone's stock. It has no password here — mint
+  // one with `pnpm user:create <email> "<name>" "<password>" --demo` — but
+  // seeding the flag means a demo account created that way, or an existing one,
+  // survives a re-seed with its read-only status intact.
+  const demoUsers = await prisma.user.updateMany({
+    where: { email: { endsWith: "@demo.nexstock.app" } },
+    data: { isDemo: true },
+  });
+  if (demoUsers.count > 0) {
+    console.log(`Marked ${demoUsers.count} demo account(s) read-only`);
+  }
+
   console.log("\n=== SEEDING COMPLETE ===");
   console.log(`Vendors: ${vendors.length}`);
   console.log(`SKUs: ${skus.length}`);
@@ -838,7 +1049,9 @@ async function main() {
   console.log(`Dock Bookings: ${dockBookings.length}`);
   console.log(`Dock Activities: ${dockActivityCount}`);
   console.log(`Receive Items: ${receiveItemCount}`);
+  console.log(`Putaways: ${putawayCount}`);
   console.log(`Adjustments: ${adjustmentCount}`);
+  console.log(`Sales Orders: ${salesOrderCount} (${shipmentCount} shipped)`);
   console.log(
     `Inventory: ${await prisma.inventoryMovement.count()} movements across ${await prisma.inventoryBalance.count()} balances`,
   );

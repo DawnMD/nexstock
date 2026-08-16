@@ -1,5 +1,12 @@
-import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
-import { recordQualityCheck } from "@/server/services/quality";
+import {
+  createTRPCRouter,
+  privateProcedure,
+  writeProcedure,
+} from "@/server/api/trpc";
+import {
+  recordQualityCheck,
+  resetQualityCheck,
+} from "@/server/services/quality";
 import { OrderStatus } from "@/generated/prisma/client";
 import { z } from "zod";
 
@@ -93,7 +100,7 @@ export const qualityCheckRouter = createTRPCRouter({
         },
       });
     }),
-  updateQualityCheckStatus: privateProcedure
+  updateQualityCheckStatus: writeProcedure
     .input(
       z
         .object({
@@ -123,4 +130,14 @@ export const qualityCheckRouter = createTRPCRouter({
         );
       },
     ),
+  resetQualityCheck: writeProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.db.$transaction((tx) =>
+        resetQualityCheck(tx, {
+          orderItemId: input.id,
+          resetBy: ctx.userId,
+        }),
+      );
+    }),
 });

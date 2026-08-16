@@ -61,6 +61,23 @@
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
+
+  /* Data visualisation.
+   *
+   * Validated with the dataviz palette validator against this surface: the two
+   * categorical slots clear the CVD and normal-vision floors in both modes, and
+   * the aging ramp is an ordinal one-hue scale whose light end still clears
+   * 2:1 against the surface, so "newest" is a visible mark rather than a fade.
+   * Inbound is blue and outbound orange — colour follows the direction stock is
+   * moving, not the chart's position on the page. */
+  --viz-inbound: #2a78d6;
+  --viz-outbound: #eb6834;
+  --viz-ordinal-1: #86b6ef;
+  --viz-ordinal-2: #5598e7;
+  --viz-ordinal-3: #2a78d6;
+  --viz-ordinal-4: #1c5cab;
+  --viz-axis: oklch(0.556 0 0);
+  --viz-grid: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.646 0.222 41.116);
@@ -95,6 +112,17 @@
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
+
+  /* Selected for the dark surface rather than flipped: the same hues re-stepped
+   * into the dark lightness band and re-validated as a set. */
+  --viz-inbound: #3987e5;
+  --viz-outbound: #d95926;
+  --viz-ordinal-1: #6da7ec;
+  --viz-ordinal-2: #3987e5;
+  --viz-ordinal-3: #256abf;
+  --viz-ordinal-4: #184f95;
+  --viz-axis: oklch(0.708 0 0);
+  --viz-grid: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
   --chart-1: oklch(0.488 0.243 264.376);

@@ -1,12 +1,14 @@
 import { env } from "@/env";
 import { PrismaClient } from "@/generated/prisma/client";
-import { PrismaNeon } from "@prisma/adapter-neon";
+import { createAdapter } from "@/lib/prisma-adapter";
 
-// `DATABASE_URL` must be Neon's *pooled* connection string (the host contains
-// `-pooler`). Migrations run against `DATABASE_URL_UNPOOLED` instead — see prisma.config.ts.
+// Against Neon, `DATABASE_URL` must be the *pooled* connection string (the host
+// contains `-pooler`). Migrations run against `DATABASE_URL_UNPOOLED` instead —
+// see prisma.config.ts. `createAdapter` picks the driver from the URL, so a
+// local Postgres works here too.
 const createPrismaClient = () =>
   new PrismaClient({
-    adapter: new PrismaNeon({ connectionString: env.DATABASE_URL }),
+    adapter: createAdapter(env.DATABASE_URL),
     log:
       env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
   });

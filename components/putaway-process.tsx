@@ -31,10 +31,46 @@ export function PutawayProcess({ lpn }: PutawayProcessProps) {
 
   const [lpnDetails] = api.putaway.getLPNDetails.useSuspenseQuery({ lpn });
   const [locations] = api.putaway.getLocations.useSuspenseQuery();
+
+  // Where this pallet's stock actually is, which is not the same as where it was
+  // received. This screen used to send `lpnDetails.location` — the receiving bay,
+  // a column that never changes — as the source of every move, so once a pallet
+  // had been put away its balance in the bay was 0 and it could never be moved
+  // again. `createPutaway` has always supported relocating from storage; nothing
+  // in the UI could reach it.
+  const sources = lpnDetails.currentLocations;
+  const [fromLocation, setFromLocation] = useState<string>(
+    () => sources[0]?.location ?? lpnDetails.location,
+  );
+
+  const selectedSource = sources.find(
+    (balance) => balance.location === fromLocation,
+  );
+  const available = selectedSource?.quantity ?? 0;
+  const onHand = sources.reduce((sum, balance) => sum + balance.quantity, 0);
+
+  const [quantity, setQuantity] = useState<string>(() =>
+    String(sources[0]?.quantity ?? 0),
+  );
+  const parsedQuantity = Number(quantity);
+  const quantityIsValid =
+    Number.isInteger(parsedQuantity) &&
+    parsedQuantity > 0 &&
+    parsedQuantity <= available;
+
+  const handleSourceChange = (location: string) => {
+    setFromLocation(location);
+    // Default to moving the whole pallet, which is the common case; the operator
+    // can still type a smaller number for a split.
+    const balance = sources.find((entry) => entry.location === location);
+    setQuantity(String(balance?.quantity ?? 0));
+    if (toLocation === location) setToLocation("");
+  };
+
   const createPutaway = api.putaway.createPutaway.useMutation({
-    onSuccess: async () => {
+    onSuccess: async (putaway) => {
       toast.success(
-        `Putaway created successfully! ${lpnDetails.remainingQuantity} units moved from ${lpnDetails.location} to ${toLocation}`,
+        `Putaway created successfully! ${putaway.quantity} units moved from ${putaway.fromLocation} to ${putaway.toLocation}`,
         {
           description: `LPN: ${lpnDetails.lpn} | SKU: ${lpnDetails.sku}`,
           duration: 5000,
@@ -46,6 +82,9 @@ export function PutawayProcess({ lpn }: PutawayProcessProps) {
         apiUtils.putaway.getAllLPNs.invalidate(),
         apiUtils.putaway.getLPNDetails.invalidate({ lpn }),
         apiUtils.putaway.searchLPNs.invalidate(),
+        // The destination's free capacity just changed, and it is shown in this
+        // picker.
+        apiUtils.putaway.getLocations.invalidate(),
       ]);
       router.push("/putaway");
     },
@@ -65,11 +104,16 @@ export function PutawayProcess({ lpn }: PutawayProcessProps) {
       return;
     }
 
+    if (!quantityIsValid) {
+      toast.error(`Enter a whole quantity between 1 and ${available}`);
+      return;
+    }
+
     createPutaway.mutate({
       lpn: lpnDetails.lpn,
       sku: lpnDetails.sku,
-      quantity: lpnDetails.remainingQuantity,
-      fromLocation: lpnDetails.location,
+      quantity: parsedQuantity,
+      fromLocation,
       toLocation,
       notes,
     });
@@ -109,12 +153,10 @@ export function PutawayProcess({ lpn }: PutawayProcessProps) {
             </div>
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm font-medium">
-                Quantity
+                On Hand
               </Label>
               <div className="flex items-center gap-2">
-                <span className="text-lg font-semibold">
-                  {lpnDetails.remainingQuantity}
-                </span>
+                <span className="text-lg font-semibold">{onHand}</span>
                 <Badge variant="secondary">{lpnDetails.uom}</Badge>
                 {lpnDetails.putawayQuantity > 0 && (
                   <span className="text-muted-foreground text-xs">
@@ -128,9 +170,31 @@ export function PutawayProcess({ lpn }: PutawayProcessProps) {
               <Label className="text-muted-foreground text-sm font-medium">
                 Current Location
               </Label>
-              <div className="flex items-center gap-2">
-                <MapPinIcon className="h-4 w-4" />
-                <span>{lpnDetails.location}</span>
+              {/* The stock, not the bay it arrived in. `lpnDetails.location` is
+                  the receiving location and never changes, so it answered "where
+                  is this pallet?" with the wrong place the moment it moved. */}
+              <div className="flex flex-col gap-1">
+                {sources.length === 0 ? (
+                  <div className="flex items-center gap-2">
+                    <MapPinIcon className="h-4 w-4" />
+                    <span className="text-muted-foreground">
+                      No stock on hand
+                    </span>
+                  </div>
+                ) : (
+                  sources.map((balance) => (
+                    <div
+                      key={balance.location}
+                      className="flex items-center gap-2"
+                    >
+                      <MapPinIcon className="h-4 w-4" />
+                      <span className="font-mono">{balance.location}</span>
+                      <span className="text-muted-foreground text-xs">
+                        {balance.quantity}
+                      </span>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
             <div className="space-y-2">
@@ -181,16 +245,49 @@ export function PutawayProcess({ lpn }: PutawayProcessProps) {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="fromLocation">Move From</Label>
+                <Select
+                  value={fromLocation}
+                  onValueChange={(value) => handleSourceChange(value ?? "")}
+                >
+                  <SelectTrigger className="w-full" id="fromLocation">
+                    <SelectValue placeholder="Select source" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sources.map((balance) => (
+                      <SelectItem
+                        key={balance.location}
+                        value={balance.location}
+                      >
+                        <div className="flex w-full items-center justify-between space-x-4">
+                          <span className="font-mono">{balance.location}</span>
+                          <span className="text-muted-foreground text-xs">
+                            {balance.quantity} on hand
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="quantity">Quantity to Putaway</Label>
+                {/* Editable: `createPutaway` accepts any quantity up to the
+                    balance at the source, so a pallet can be split across racks.
+                    This was pinned read-only to the full remaining balance. */}
                 <Input
                   id="quantity"
                   type="number"
-                  value={lpnDetails.remainingQuantity}
-                  readOnly
-                  className="bg-muted"
+                  min={1}
+                  max={available}
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
                 />
+                <p className="text-muted-foreground text-xs">
+                  {available} available in {fromLocation}
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="toLocation">Destination Location</Label>
@@ -198,15 +295,13 @@ export function PutawayProcess({ lpn }: PutawayProcessProps) {
                   value={toLocation}
                   onValueChange={(value) => setToLocation(value ?? "")}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full" id="toLocation">
                     <SelectValue placeholder="Select location" />
                   </SelectTrigger>
                   <SelectContent>
                     {/* Stock cannot be put away where it already is. */}
                     {locations
-                      .filter(
-                        (location) => location.location !== lpnDetails.location,
-                      )
+                      .filter((location) => location.location !== fromLocation)
                       .map((location) => (
                         <SelectItem
                           key={location.location}
@@ -246,16 +341,14 @@ export function PutawayProcess({ lpn }: PutawayProcessProps) {
               <Button
                 type="submit"
                 disabled={
-                  createPutaway.isPending ||
-                  !toLocation ||
-                  lpnDetails.remainingQuantity <= 0
+                  createPutaway.isPending || !toLocation || !quantityIsValid
                 }
                 className="flex-1"
               >
                 {createPutaway.isPending
                   ? "Creating..."
-                  : lpnDetails.remainingQuantity <= 0
-                    ? "Fully put away"
+                  : sources.length === 0
+                    ? "No stock left on this pallet"
                     : "Create Putaway"}
               </Button>
               <Button

@@ -71,6 +71,11 @@ export async function syncOrderStatus(
  * `receivedQuantity`, both pass their ceiling check, and one write would be
  * lost. Every mutation that reads a quantity and then writes it takes this lock
  * first, which serialises them on the row.
+ *
+ * A missing row matches nothing and so locks nothing — this is deliberately
+ * silent rather than throwing. Every caller follows it with a `findUnique` and
+ * its own `notFound`, which is where a bad id gets reported; that ordering is
+ * load-bearing, so keep the lookup after the lock rather than before it.
  */
 export async function lockOrderItem(
   tx: Prisma.TransactionClient,

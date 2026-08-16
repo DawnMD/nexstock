@@ -1,5 +1,7 @@
 import { AppSidebar } from "@/components/app-sidebar";
+import { DemoBanner } from "@/components/demo-banner";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { db } from "@/server/db";
 import { requireSession } from "@/lib/session";
 import { SIDEBAR_COOKIE_NAME } from "@/lib/sidebar-cookie";
 import { cookies } from "next/headers";
@@ -19,6 +21,14 @@ export default async function MainAppLayout({
   // keeps the default.
   const sidebarOpen =
     (await cookies()).get(SIDEBAR_COOKIE_NAME)?.value !== "false";
+
+  // Read from the database rather than the session, for the same reason
+  // `writeProcedure` does: sessions are cached for five minutes, and this should
+  // reflect the account's current state.
+  const account = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { isDemo: true },
+  });
 
   // Better Auth's `name` is a required column but can be an empty string, so fall
   // back through the email local part before giving up.
@@ -40,7 +50,10 @@ export default async function MainAppLayout({
       }
     >
       <AppSidebar variant="inset" user={userData} />
-      <SidebarInset>{children}</SidebarInset>
+      <SidebarInset>
+        {account?.isDemo && <DemoBanner />}
+        {children}
+      </SidebarInset>
     </SidebarProvider>
   );
 }

@@ -1,4 +1,8 @@
-import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
+import {
+  createTRPCRouter,
+  privateProcedure,
+  writeProcedure,
+} from "@/server/api/trpc";
 import { createSku, deleteSku, updateSku } from "@/server/services/skus";
 import { z } from "zod";
 
@@ -59,7 +63,7 @@ export const skuRouter = createTRPCRouter({
       }));
     }),
 
-  createSku: privateProcedure
+  createSku: writeProcedure
     .input(
       z.object({
         sku: z.string().min(1, "SKU code is required"),
@@ -72,7 +76,7 @@ export const skuRouter = createTRPCRouter({
       );
     }),
 
-  updateSku: privateProcedure
+  updateSku: writeProcedure
     .input(
       z.object({
         sku: z.string().min(1),
@@ -85,7 +89,7 @@ export const skuRouter = createTRPCRouter({
       );
     }),
 
-  deleteSku: privateProcedure
+  deleteSku: writeProcedure
     .input(z.object({ sku: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.db.$transaction((tx) => deleteSku(tx, input.sku));

@@ -12,13 +12,26 @@ import { config as loadEnv } from "dotenv";
 // `prisma/script-env.ts` and `prisma.config.ts`.
 loadEnv({ path: [".env.local", ".env"], quiet: true });
 
-const [email, name, password] = process.argv.slice(2);
+const args = process.argv.slice(2);
+// `--demo` marks the account read-only: it can browse every screen and every
+// mutation is refused server-side. This is what the public demo signs in as.
+const isDemo = args.includes("--demo");
+const [email, name, password] = args.filter((arg) => arg !== "--demo");
 if (!email || !name || !password) {
-  throw new Error('Usage: pnpm user:create <email> "<name>" "<password>"');
+  throw new Error(
+    'Usage: pnpm user:create <email> "<name>" "<password>" [--demo]',
+  );
 }
 
 // Dynamic import is load-bearing: a static one would be hoisted above
 // `loadEnv()` and `@/env` would throw on the missing DATABASE_URL.
+//
+// This pulls in `lib/email.ts`, which is marked `server-only`. That package
+// resolves to a module that throws unless the `react-server` export condition is
+// set, which Next does and plain Node does not — so this script threw on import
+// and `pnpm user:create` could not run at all. The npm script passes
+// `--conditions=react-server` to tsx; run it that way rather than with bare
+// `tsx` if invoking it directly.
 const { auth } = await import("@/lib/auth");
 
 const ctx = await auth.$context;
@@ -34,4 +47,11 @@ await ctx.internalAdapter.createAccount({
   password: await ctx.password.hash(password),
 });
 
-console.log(`Created ${user.email} (${user.id})`);
+if (isDemo) {
+  const { db } = await import("@/server/db");
+  await db.user.update({ where: { id: user.id }, data: { isDemo: true } });
+}
+
+console.log(
+  `Created ${user.email} (${user.id})${isDemo ? " — read-only demo account" : ""}`,
+);

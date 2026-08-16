@@ -38,6 +38,16 @@ interface OrderLineItemsProps {
   lineItems: LineItem[];
 }
 
+/** Additions less subtractions, i.e. how far a line has been corrected. */
+const netAdjustment = (adjustments: LineItem["adjustments"]) =>
+  adjustments.reduce(
+    (total, adjustment) =>
+      adjustment.adjustmentType === "ADDITION"
+        ? total + adjustment.adjustedQuantity
+        : total - adjustment.adjustedQuantity,
+    0,
+  );
+
 const getStatusIcon = (status: string) => {
   switch (status.toUpperCase()) {
     case "NOT_RECEIVED":
@@ -98,27 +108,36 @@ export function OrderLineItems({ lineItems }: OrderLineItemsProps) {
                       {formatStatusDisplay(item.status)}
                     </Badge>
                   </TableCell>
+                  {/* What the purchase order asked for, unmodified. This used to
+                      add the net adjustment on top, but an adjustment moves
+                      `receivedQuantity` — `applyAdjustmentBatch` never touches
+                      `orderedQuantity` — so the column misreported the order and
+                      double-counted the figure already shown under "Adjusted". */}
                   <TableCell className="text-right">
-                    {item.orderedQuantity +
-                      item.adjustments.reduce(
-                        (acc, adjustment) =>
-                          adjustment.adjustmentType === "ADDITION"
-                            ? acc + adjustment.adjustedQuantity
-                            : acc - adjustment.adjustedQuantity,
-                        0,
-                      )}
+                    {item.orderedQuantity}
                   </TableCell>
                   <TableCell className="text-right">
-                    {item.receivedQuantity}
+                    <span
+                      className={
+                        item.receivedQuantity > item.orderedQuantity
+                          ? "font-medium text-amber-600 dark:text-amber-500"
+                          : undefined
+                      }
+                      // Receiving refuses to exceed the ordered quantity, but an
+                      // overage adjustment deliberately can — a vendor really
+                      // does ship more than the PO says. Flagged rather than
+                      // hidden.
+                      title={
+                        item.receivedQuantity > item.orderedQuantity
+                          ? `Over-received by ${item.receivedQuantity - item.orderedQuantity}`
+                          : undefined
+                      }
+                    >
+                      {item.receivedQuantity}
+                    </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    {item.adjustments.reduce(
-                      (acc, adjustment) =>
-                        adjustment.adjustmentType === "ADDITION"
-                          ? acc + adjustment.adjustedQuantity
-                          : acc - adjustment.adjustedQuantity,
-                      0,
-                    )}
+                    {netAdjustment(item.adjustments)}
                   </TableCell>
                   <TableCell className="text-right">
                     {item.rejectedQuantity}

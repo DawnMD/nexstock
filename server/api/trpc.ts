@@ -152,6 +152,42 @@ export const publicProcedure = t.procedure
   .use(serviceErrorMiddleware);
 
 /**
+ * Refuse anything that writes when the caller is a demo account.
+ *
+ * The public demo signs in as a real, verified user so every screen behaves
+ * exactly as it does for an operator — the read paths are not special-cased
+ * anywhere. Only this middleware differs, and it sits on the server rather than
+ * on a disabled button, so hiding the UI is not what is protecting the data.
+ *
+ * `isDemo` is read from the database rather than the session cookie: sessions
+ * are cached for five minutes (see `lib/auth.ts`), and revoking demo status
+ * should take effect immediately rather than whenever the cache happens to
+ * expire.
+ */
+const notDemoMiddleware = t.middleware(async ({ next, ctx }) => {
+  if (ctx.userId) {
+    const user = await ctx.db.user.findUnique({
+      where: { id: ctx.userId },
+      select: { isDemo: true },
+    });
+
+    if (user?.isDemo) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message:
+          "This is a read-only demo account — browse anything, but nothing can be changed.",
+      });
+    }
+  }
+
+  // `next()` with no argument, so the `userId: string` narrowing that
+  // `isAuthenticatedMiddleware` established survives. Passing `{ ctx }` here
+  // would widen it back to `string | null` and break every `createdBy:
+  // ctx.userId` downstream.
+  return next();
+});
+
+/**
  * Private (authenticated) procedure
  *
  * This is the base piece you use to build new queries and mutations on your tRPC API. It does not
@@ -159,3 +195,11 @@ export const publicProcedure = t.procedure
  * are logged in.
  */
 export const privateProcedure = publicProcedure.use(isAuthenticatedMiddleware);
+
+/**
+ * Authenticated procedure that also changes something.
+ *
+ * Every mutation should be built on this rather than on `privateProcedure`; the
+ * only cost over it is one indexed lookup per write.
+ */
+export const writeProcedure = privateProcedure.use(notDemoMiddleware);
