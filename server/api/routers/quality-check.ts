@@ -1,8 +1,4 @@
-import {
-  createTRPCRouter,
-  privateProcedure,
-  writeProcedure,
-} from "@/server/api/trpc";
+import { privateProcedure, writeProcedure } from "@/server/api/orpc";
 import {
   recordQualityCheck,
   resetQualityCheck,
@@ -10,8 +6,8 @@ import {
 import { OrderStatus } from "@/generated/prisma/client";
 import { z } from "zod";
 
-export const qualityCheckRouter = createTRPCRouter({
-  getAllOrderNumbers: privateProcedure.query(async ({ ctx }) => {
+export const qualityCheckRouter = {
+  getAllOrderNumbers: privateProcedure.handler(async ({ context: ctx }) => {
     const orderNumbers = await ctx.db.order.findMany({
       select: {
         orderNumber: true,
@@ -41,7 +37,7 @@ export const qualityCheckRouter = createTRPCRouter({
         orderNumber: z.string(),
       }),
     )
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const orderItems = await ctx.db.order.findUnique({
         where: {
           orderNumber: input.orderNumber,
@@ -79,7 +75,7 @@ export const qualityCheckRouter = createTRPCRouter({
     }),
   getQualityCheckItems: privateProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ ctx, input: { id } }) => {
+    .handler(async ({ context: ctx, input: { id } }) => {
       return await ctx.db.orderItem.findUnique({
         where: { id },
         include: {
@@ -114,9 +110,9 @@ export const qualityCheckRouter = createTRPCRouter({
           path: ["rejectedQuantity"],
         }),
     )
-    .mutation(
+    .handler(
       async ({
-        ctx,
+        context: ctx,
         input: { id, rejectedQuantity, inspectedQuantity, remarks },
       }) => {
         return await ctx.db.$transaction((tx) =>
@@ -132,7 +128,7 @@ export const qualityCheckRouter = createTRPCRouter({
     ),
   resetQualityCheck: writeProcedure
     .input(z.object({ id: z.number().int().positive() }))
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) =>
         resetQualityCheck(tx, {
           orderItemId: input.id,
@@ -140,4 +136,4 @@ export const qualityCheckRouter = createTRPCRouter({
         }),
       );
     }),
-});
+};

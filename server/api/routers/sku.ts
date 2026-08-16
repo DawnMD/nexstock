@@ -1,8 +1,4 @@
-import {
-  createTRPCRouter,
-  privateProcedure,
-  writeProcedure,
-} from "@/server/api/trpc";
+import { privateProcedure, writeProcedure } from "@/server/api/orpc";
 import { createSku, deleteSku, updateSku } from "@/server/services/skus";
 import { z } from "zod";
 
@@ -25,10 +21,10 @@ const skuFields = {
   isActive: z.boolean().default(true),
 };
 
-export const skuRouter = createTRPCRouter({
+export const skuRouter = {
   getSkus: privateProcedure
     .input(z.object({ search: z.string().nullish() }))
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const term = input.search?.trim();
 
       const skus = await ctx.db.sku.findMany({
@@ -70,7 +66,7 @@ export const skuRouter = createTRPCRouter({
         ...skuFields,
       }),
     )
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) =>
         createSku(tx, { ...input, createdBy: ctx.userId }),
       );
@@ -83,7 +79,7 @@ export const skuRouter = createTRPCRouter({
         ...skuFields,
       }),
     )
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) =>
         updateSku(tx, { ...input, updatedBy: ctx.userId }),
       );
@@ -91,7 +87,7 @@ export const skuRouter = createTRPCRouter({
 
   deleteSku: writeProcedure
     .input(z.object({ sku: z.string().min(1) }))
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) => deleteSku(tx, input.sku));
     }),
-});
+};

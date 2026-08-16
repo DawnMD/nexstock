@@ -1,4 +1,4 @@
-import { createTRPCRouter, privateProcedure } from "@/server/api/trpc";
+import { privateProcedure } from "@/server/api/orpc";
 import type { Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
 
@@ -26,9 +26,9 @@ const balanceSearchFilter = (
   };
 };
 
-export const inventoryRouter = createTRPCRouter({
+export const inventoryRouter = {
   /** Headline numbers for the top of the inventory screen. */
-  getSummary: privateProcedure.query(async ({ ctx }) => {
+  getSummary: privateProcedure.handler(async ({ context: ctx }) => {
     const [totals, skus, locations, movements] = await ctx.db.$transaction([
       ctx.db.inventoryBalance.aggregate({
         where: { quantity: { gt: 0 } },
@@ -58,7 +58,7 @@ export const inventoryRouter = createTRPCRouter({
   /** On-hand rolled up by SKU, with the SKU's description and unit of measure. */
   getBySku: privateProcedure
     .input(z.object({ search: z.string().nullish() }))
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const grouped = await ctx.db.inventoryBalance.groupBy({
         by: ["sku"],
         where: { quantity: { gt: 0 }, ...balanceSearchFilter(input.search) },
@@ -87,7 +87,7 @@ export const inventoryRouter = createTRPCRouter({
   /** On-hand rolled up by location, with the zone and aisle it sits in. */
   getByLocation: privateProcedure
     .input(z.object({ search: z.string().nullish() }))
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const grouped = await ctx.db.inventoryBalance.groupBy({
         by: ["location"],
         where: { quantity: { gt: 0 }, ...balanceSearchFilter(input.search) },
@@ -124,7 +124,7 @@ export const inventoryRouter = createTRPCRouter({
         location: z.string().nullish(),
       }),
     )
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.inventoryBalance.findMany({
         where: {
           quantity: { gt: 0 },
@@ -164,7 +164,7 @@ export const inventoryRouter = createTRPCRouter({
         lpn: z.string().nullish(),
       }),
     )
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.inventoryMovement.findMany({
         where: {
           ...(input.sku ? { sku: input.sku } : {}),
@@ -196,7 +196,7 @@ export const inventoryRouter = createTRPCRouter({
    * a `Location` attribute — so this is the one place the two have to be joined
    * and summed rather than grouped directly.
    */
-  getByZone: privateProcedure.query(async ({ ctx }) => {
+  getByZone: privateProcedure.handler(async ({ context: ctx }) => {
     return await ctx.db.$queryRaw<
       { zone: string; quantity: number; locationCount: number }[]
     >`
@@ -218,7 +218,7 @@ export const inventoryRouter = createTRPCRouter({
    * it rather than asking anyone to take it on trust. It should always return an
    * empty array.
    */
-  getDrift: privateProcedure.query(async ({ ctx }) => {
+  getDrift: privateProcedure.handler(async ({ context: ctx }) => {
     return await ctx.db.$queryRaw<
       {
         sku: string;
@@ -248,4 +248,4 @@ export const inventoryRouter = createTRPCRouter({
       WHERE COALESCE(m."ledger", 0) <> COALESCE(b."quantity", 0)
     `;
   }),
-});
+};

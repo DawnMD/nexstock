@@ -1,9 +1,5 @@
 import { calculateOrderStats } from "@/lib/order-utils";
-import {
-  createTRPCRouter,
-  privateProcedure,
-  writeProcedure,
-} from "@/server/api/trpc";
+import { privateProcedure, writeProcedure } from "@/server/api/orpc";
 import type { Prisma } from "@/generated/prisma/client";
 import { ActivityType } from "@/generated/prisma/client";
 import {
@@ -32,7 +28,7 @@ const dockBookingFields = {
   eta: z.date().optional(),
 };
 
-export const orderRouter = createTRPCRouter({
+export const orderRouter = {
   getPaginatedOrders: privateProcedure
     .input(
       z.object({
@@ -41,7 +37,7 @@ export const orderRouter = createTRPCRouter({
         search: z.string().nullish(),
       }),
     )
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const limit = input.limit;
       const { pageIndex, search } = input;
 
@@ -105,7 +101,7 @@ export const orderRouter = createTRPCRouter({
         orderNumber: z.string(),
       }),
     )
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const orderDetails = await ctx.db.order.findUnique({
         where: { orderNumber: input.orderNumber },
         include: {
@@ -154,7 +150,7 @@ export const orderRouter = createTRPCRouter({
         orderNumber: z.string(),
       }),
     )
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const dockBookings = await ctx.db.dockBooking.findMany({
         where: { orderId: input.orderNumber },
         include: {
@@ -182,7 +178,7 @@ export const orderRouter = createTRPCRouter({
       return dockBookings;
     }),
 
-  getAvailableDocks: privateProcedure.query(async ({ ctx }) => {
+  getAvailableDocks: privateProcedure.handler(async ({ context: ctx }) => {
     const docks = await ctx.db.dock.findMany({
       where: { status: true },
       select: {
@@ -194,7 +190,7 @@ export const orderRouter = createTRPCRouter({
     return docks;
   }),
 
-  getVehicleTypes: privateProcedure.query(async ({ ctx }) => {
+  getVehicleTypes: privateProcedure.handler(async ({ context: ctx }) => {
     const vehicleTypes = await ctx.db.vehicleType.findMany({
       select: {
         id: true,
@@ -209,7 +205,7 @@ export const orderRouter = createTRPCRouter({
 
   deleteDockBooking: writeProcedure
     .input(z.object({ id: z.number().int().positive() }))
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) => deleteDockBooking(tx, input.id));
     }),
 
@@ -220,7 +216,7 @@ export const orderRouter = createTRPCRouter({
         ...dockBookingFields,
       }),
     )
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) => createDockBooking(tx, input));
     }),
   getOrderStats: privateProcedure
@@ -229,7 +225,7 @@ export const orderRouter = createTRPCRouter({
         date: z.string().nullish(),
       }),
     )
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const selectedDate = input.date ? new Date(input.date) : new Date();
 
       const orderGroups = await ctx.db.order.groupBy({
@@ -258,7 +254,7 @@ export const orderRouter = createTRPCRouter({
         date: z.string().nullish(),
       }),
     )
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const selectedDate = input.date ? new Date(input.date) : new Date();
       const where: Prisma.DockBookingWhereInput = {
         ...(input.search && {
@@ -323,7 +319,7 @@ export const orderRouter = createTRPCRouter({
         orderNumber: z.string(),
       }),
     )
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const dockBooking = await ctx.db.dockBooking.findFirst({
         where: {
           vehicleNumber: input.vehicleNumber,
@@ -354,7 +350,7 @@ export const orderRouter = createTRPCRouter({
         orderNumber: z.string().min(1),
       }),
     )
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) =>
         recordDockActivity(tx, {
           orderNumber: input.orderNumber,
@@ -374,7 +370,7 @@ export const orderRouter = createTRPCRouter({
         ...dockBookingFields,
       }),
     )
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) => updateDockBooking(tx, input));
     }),
-});
+};

@@ -1,8 +1,4 @@
-import {
-  createTRPCRouter,
-  privateProcedure,
-  writeProcedure,
-} from "@/server/api/trpc";
+import { privateProcedure, writeProcedure } from "@/server/api/orpc";
 import {
   createLocation,
   deleteLocation,
@@ -24,10 +20,10 @@ const locationFields = {
   status: z.boolean().default(true),
 };
 
-export const locationRouter = createTRPCRouter({
+export const locationRouter = {
   getLocations: privateProcedure
     .input(z.object({ search: z.string().nullish() }))
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const term = input.search?.trim();
 
       const locations = await ctx.db.location.findMany({
@@ -72,7 +68,7 @@ export const locationRouter = createTRPCRouter({
         ...locationFields,
       }),
     )
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) =>
         createLocation(tx, { ...input, createdBy: ctx.userId }),
       );
@@ -85,7 +81,7 @@ export const locationRouter = createTRPCRouter({
         ...locationFields,
       }),
     )
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) =>
         updateLocation(tx, { ...input, updatedBy: ctx.userId }),
       );
@@ -93,9 +89,9 @@ export const locationRouter = createTRPCRouter({
 
   deleteLocation: writeProcedure
     .input(z.object({ location: z.string().min(1) }))
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) =>
         deleteLocation(tx, input.location),
       );
     }),
-});
+};

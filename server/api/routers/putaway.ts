@@ -1,11 +1,7 @@
-import {
-  createTRPCRouter,
-  privateProcedure,
-  writeProcedure,
-} from "@/server/api/trpc";
+import { privateProcedure, writeProcedure } from "@/server/api/orpc";
 import { balancesForLpn, getBalance } from "@/server/services/inventory";
 import { createPutaway } from "@/server/services/putaway";
-import { TRPCError } from "@trpc/server";
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
 const SEARCH_RESULT_LIMIT = 50;
@@ -27,8 +23,8 @@ interface WorklistRow {
   receivedAt: Date;
 }
 
-export const putawayRouter = createTRPCRouter({
-  getAllLPNs: privateProcedure.query(async ({ ctx }) => {
+export const putawayRouter = {
+  getAllLPNs: privateProcedure.handler(async ({ context: ctx }) => {
     // Raw SQL because the filter correlates two columns across tables
     // (a balance sitting at *its own receipt's* location), which Prisma's query
     // API can't express. Doing it here rather than in JS keeps the row count
@@ -60,7 +56,7 @@ export const putawayRouter = createTRPCRouter({
         search: z.string().optional(),
       }),
     )
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       // `contains: undefined` makes Prisma drop the filter entirely, which would
       // return every ReceiveItem ever created. Treat a blank search as no results.
       const search = input.search?.trim();
@@ -110,7 +106,7 @@ export const putawayRouter = createTRPCRouter({
       return lpns;
     }),
 
-  getLocations: privateProcedure.query(async ({ ctx }) => {
+  getLocations: privateProcedure.handler(async ({ context: ctx }) => {
     const locations = await ctx.db.location.findMany({
       where: {
         status: true, // Only active locations
@@ -169,7 +165,7 @@ export const putawayRouter = createTRPCRouter({
         notes: z.string().optional(),
       }),
     )
-    .mutation(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       return await ctx.db.$transaction((tx) =>
         createPutaway(tx, { ...input, putawayBy: ctx.userId }),
       );
@@ -177,7 +173,7 @@ export const putawayRouter = createTRPCRouter({
 
   getLPNDetails: privateProcedure
     .input(z.object({ lpn: z.string().min(1) }))
-    .query(async ({ ctx, input }) => {
+    .handler(async ({ context: ctx, input }) => {
       const lpnDetails = await ctx.db.receiveItem.findUnique({
         where: { lpn: input.lpn },
         select: {
@@ -207,8 +203,7 @@ export const putawayRouter = createTRPCRouter({
       });
 
       if (!lpnDetails) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
+        throw new ORPCError("NOT_FOUND", {
           message: "LPN not found",
         });
       }
@@ -244,4 +239,4 @@ export const putawayRouter = createTRPCRouter({
         currentLocations,
       };
     }),
-});
+};
