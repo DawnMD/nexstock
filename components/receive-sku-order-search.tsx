@@ -1,51 +1,38 @@
 "use client";
 
-import {
-  Command,
-  CommandItem,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandSeparator,
-} from "@/components/ui/command";
-import { orpc } from "@/orpc/client";
+import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { PackageIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+
+import { EntitySearch } from "@/components/entity-search";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { orpc } from "@/orpc/client";
 
 export function ReceiveSkuOrderSearch() {
-  const router = useRouter();
+  const [search, setSearch] = useState("");
+  const [term, isPending] = useDebouncedValue(search);
   const { data: orders } = useSuspenseQuery(
-    orpc.receive.getAllOrderNumbers.queryOptions(),
+    orpc.receive.getAllOrderNumbers.queryOptions({
+      // `|| null` rather than the empty string, so the first render asks for the
+      // same query key the page prefetched — `{ search: null }` — and the
+      // palette hydrates instead of going straight back to the server.
+      input: { search: term || null },
+    }),
   );
 
   return (
-    <Command>
-      <CommandInput placeholder="Search for orders..." />
-      <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
-        <CommandSeparator />
-        <CommandGroup heading="Order Numbers">
-          {orders.map((order) => (
-            <CommandItem
-              key={order.orderNumber}
-              value={order.orderNumber}
-              onSelect={() => {
-                router.push(`/receive/${order.orderNumber}`);
-              }}
-            >
-              <PackageIcon className="mr-2 h-4 w-4" />
-              <div className="flex flex-col">
-                <span className="font-mono">{order.orderNumber}</span>
-                <span className="text-muted-foreground text-xs">
-                  {order._count.items} items
-                </span>
-              </div>
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      </CommandList>
-    </Command>
+    <EntitySearch
+      search={search}
+      onSearchChange={setSearch}
+      isPending={isPending}
+      placeholder="Scan or search for an order..."
+      heading="Order Numbers"
+      emptyMessage="No orders found."
+      items={orders.map((order) => ({
+        key: order.orderNumber,
+        label: order.orderNumber,
+        href: `/receive/${order.orderNumber}`,
+        subtitle: `${order.vendor.name} • ${order._count.items} items`,
+      }))}
+    />
   );
 }

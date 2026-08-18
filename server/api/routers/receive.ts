@@ -2,25 +2,51 @@ import { privateProcedure, writeProcedure } from "@/server/api/orpc";
 import { receiveStock } from "@/server/services/receiving";
 import { z } from "zod";
 
+/**
+ * Search results are capped rather than paged: this feeds a scan-and-search
+ * palette, where an operator either scans an exact barcode or types enough of
+ * one to narrow it. Nobody scrolls to result 51.
+ */
+const SEARCH_RESULT_LIMIT = 50;
+
 export const receiveRouter = {
-  getAllOrderNumbers: privateProcedure.handler(async ({ context: ctx }) => {
-    const orderNumbers = await ctx.db.order.findMany({
-      select: {
-        orderNumber: true,
-        vendor: {
-          select: {
-            name: true,
+  getAllOrderNumbers: privateProcedure
+    .input(z.object({ search: z.string().nullish() }))
+    .handler(async ({ context: ctx, input }) => {
+      // This used to have no `where` and no `take`, so every order ever raised
+      // was serialised to the browser on each visit to /receive and filtered
+      // client-side. Filtering in Postgres also means a match on the vendor
+      // name works, which the client-side filter over order numbers could not
+      // do.
+      const term = input.search?.trim();
+
+      const orderNumbers = await ctx.db.order.findMany({
+        where: term
+          ? {
+              OR: [
+                { orderNumber: { contains: term, mode: "insensitive" } },
+                { vendor: { name: { contains: term, mode: "insensitive" } } },
+              ],
+            }
+          : undefined,
+        select: {
+          orderNumber: true,
+          vendor: {
+            select: {
+              name: true,
+            },
+          },
+          _count: {
+            select: {
+              items: true,
+            },
           },
         },
-        _count: {
-          select: {
-            items: true,
-          },
-        },
-      },
-    });
-    return orderNumbers;
-  }),
+        orderBy: { createdAt: "desc" },
+        take: SEARCH_RESULT_LIMIT,
+      });
+      return orderNumbers;
+    }),
   getOrderItems: privateProcedure
     .input(
       z.object({
