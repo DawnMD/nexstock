@@ -96,3 +96,20 @@ test("the locations master lists racks and their on-hand totals", async ({
   await expect(page.getByRole("heading", { name: "Locations" })).toBeVisible();
   await expect(page.getByRole("table")).toBeVisible();
 });
+
+test("the order palette searches on the server", async ({ page }) => {
+  await page.goto("/receive");
+
+  const options = page.getByRole("option");
+  await expect(options.first()).toBeVisible();
+
+  // The palette is capped server-side now, so the term has to reach Postgres.
+  // A term that matches nothing empties it; clearing the term brings the
+  // default page of orders back.
+  const input = page.getByPlaceholder("Scan or search for an order");
+  await input.fill("ZZZ-NOT-AN-ORDER");
+  await expect(page.getByText("No orders found.")).toBeVisible();
+
+  await input.fill("");
+  await expect(options.first()).toBeVisible();
+});
