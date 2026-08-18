@@ -46,7 +46,11 @@ export function SalesOrderList({ search }: { search?: string | null }) {
     return (
       <Card>
         <CardContent className="text-muted-foreground py-12 text-center text-sm">
-          No sales orders yet.
+          No sales orders yet.{" "}
+          <Link href="/sales-orders/new" className="underline">
+            Raise one
+          </Link>{" "}
+          to get something onto the board.
         </CardContent>
       </Card>
     );
