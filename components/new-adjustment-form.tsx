@@ -293,8 +293,17 @@ export function NewAdjustmentForm({
                 </Button>
               )}
 
-              <Button type="submit" className="w-full lg:w-fit">
-                Submit Adjustments
+              {/* Disabled while in flight, like every other form here. Without
+                  it a second tap posts the batch again and the order ends up
+                  with duplicate adjustments — nothing downstream dedupes them. */}
+              <Button
+                type="submit"
+                className="w-full lg:w-fit"
+                disabled={createAdjustment.isPending}
+              >
+                {createAdjustment.isPending
+                  ? "Submitting..."
+                  : "Submit Adjustments"}
               </Button>
             </div>
           </form>
