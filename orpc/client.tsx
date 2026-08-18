@@ -71,7 +71,12 @@ export function ORPCReactProvider(props: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       {props.children}
-      <ReactQueryDevtools />
+      {/* Guarded rather than always rendered: the panel used to ship to
+          production, where an operator on a handheld got a floating logo over
+          the screen. `process.env.NODE_ENV` is inlined at build time and the
+          package declares `sideEffects: false`, so the dead branch takes the
+          import out of the production bundle rather than merely hiding it. */}
+      {process.env.NODE_ENV === "development" && <ReactQueryDevtools />}
     </QueryClientProvider>
   );
 }

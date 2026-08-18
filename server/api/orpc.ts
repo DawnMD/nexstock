@@ -27,17 +27,26 @@ const base = os.$context<Context>();
  * network latency that would occur in production but not in local development.
  */
 const timingMiddleware = base.middleware(async ({ next, path }) => {
+  const isDevelopment = env.NODE_ENV === "development";
+
+  if (!isDevelopment) {
+    // Nothing to time and nothing to log, so don't pay for `Date.now()` twice
+    // on every call in production.
+    return await next();
+  }
+
   const start = Date.now();
 
-  if (env.NODE_ENV === "development") {
-    // artificial delay in dev
-    const waitMs = Math.floor(Math.random() * 400) + 100;
-    await new Promise((resolve) => setTimeout(resolve, waitMs));
-  }
+  // artificial delay in dev
+  const waitMs = Math.floor(Math.random() * 400) + 100;
+  await new Promise((resolve) => setTimeout(resolve, waitMs));
 
   const result = await next();
 
   const end = Date.now();
+  // Development only. This used to log on every production request too, which
+  // is one line of noise per procedure call in the server logs — including the
+  // batched ones, where a single page load is a dozen of them.
   console.log(`[oRPC] ${path.join(".")} took ${end - start}ms to execute`);
 
   return result;
