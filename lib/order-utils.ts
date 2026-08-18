@@ -45,7 +45,46 @@ export function getActivityType(activityType?: ActivityType) {
   }
 }
 
-export const getStatusVariant = (status: string) => {
+/**
+ * Badge variants and labels for the two status vocabularies in the app.
+ *
+ * These used to be one name, `getStatusVariant`, defined twice — once in
+ * `lib/utils.ts` over `OrderStatus` and once here over `OrderItemStatus` — with
+ * different variant sets, and nothing stopped a component importing the wrong
+ * one. The vocabularies do not overlap, so they stay two functions; what changed
+ * is that the name now says which one you asked for.
+ */
+export const getOrderStatusVariant = (status: string) => {
+  switch (status.toUpperCase()) {
+    case "NEW":
+      return "blue";
+    case "IN_PROGRESS":
+      return "yellow";
+    case "COMPLETED":
+      return "green";
+    case "CANCELLED":
+      return "red";
+    default:
+      return "secondary";
+  }
+};
+
+export const formatOrderStatus = (status: string) => {
+  switch (status.toUpperCase()) {
+    case "NEW":
+      return "New";
+    case "IN_PROGRESS":
+      return "In Progress";
+    case "COMPLETED":
+      return "Completed";
+    case "CANCELLED":
+      return "Cancelled";
+    default:
+      return status;
+  }
+};
+
+export const getItemStatusVariant = (status: string) => {
   switch (status.toUpperCase()) {
     case "NOT_RECEIVED":
       return "secondary";
@@ -60,7 +99,7 @@ export const getStatusVariant = (status: string) => {
   }
 };
 
-export const formatStatusDisplay = (status: string) => {
+export const formatItemStatus = (status: string) => {
   switch (status.toUpperCase()) {
     case "NOT_RECEIVED":
       return "Not Received";
