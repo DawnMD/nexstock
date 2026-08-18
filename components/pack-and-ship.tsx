@@ -18,6 +18,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
+import { ScanField } from "@/components/ui/scan-field";
 import { BoxIcon, TruckIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -112,6 +113,62 @@ export function PackAndShip({ orderNumber }: { orderNumber: string }) {
         : [...current, id],
     );
 
+  const [packScan, setPackScan] = useState("");
+  const [shipScan, setShipScan] = useState("");
+
+  /**
+   * Scanning a pallet adds every picked line off it to the carton.
+   *
+   * Not a toggle: a scan is the operator saying "this went in the box", and
+   * reading the same label twice is far more likely to be a double-trigger than
+   * a request to take it back out again. Unticking is what the checkbox is for.
+   */
+  const handlePackScan = (value: string) => {
+    const scanned = value.trim().toLowerCase();
+    setPackScan("");
+    if (!scanned) return;
+
+    const matches = packList.filter(
+      (task) => task.lpn.toLowerCase() === scanned,
+    );
+    if (matches.length === 0) {
+      toast.error(`${value} has nothing waiting to be packed on this order`);
+      return;
+    }
+
+    const ids = matches.map((task) => task.id);
+    const added = ids.filter((id) => !selectedTasks.includes(id));
+    setSelectedTasks((current) => [...new Set([...current, ...ids])]);
+
+    toast.success(
+      added.length === 0
+        ? `${matches[0]?.lpn} is already in this carton`
+        : `Added ${added.length} line(s) from ${matches[0]?.lpn}`,
+    );
+  };
+
+  /** Scanning a carton label puts it on the shipment. */
+  const handleShipScan = (value: string) => {
+    const scanned = value.trim().toLowerCase();
+    setShipScan("");
+    if (!scanned) return;
+
+    const carton = cartons.find(
+      (entry) => entry.cartonNumber.toLowerCase() === scanned,
+    );
+    if (!carton) {
+      toast.error(`${value} is not a carton waiting for a truck on this order`);
+      return;
+    }
+    if (selectedCartons.includes(carton.id)) {
+      toast.info(`${carton.cartonNumber} is already on this shipment`);
+      return;
+    }
+
+    setSelectedCartons((current) => [...current, carton.id]);
+    toast.success(`Added ${carton.cartonNumber}`);
+  };
+
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
       <Card>
@@ -131,11 +188,25 @@ export function PackAndShip({ orderNumber }: { orderNumber: string }) {
             </p>
           ) : (
             <>
+              <div className="grid gap-2">
+                <Label htmlFor="pack-scan">
+                  Scan a pallet to add it to the carton
+                </Label>
+                <ScanField
+                  id="pack-scan"
+                  value={packScan}
+                  onValueChange={setPackScan}
+                  onScan={handlePackScan}
+                  onEnter={handlePackScan}
+                  placeholder="Scan the pallet label"
+                />
+              </div>
+
               <ul className="divide-y rounded-lg border">
                 {packList.map((task) => (
                   <li
                     key={task.id}
-                    className="flex items-center gap-3 px-3 py-2"
+                    className="flex min-h-11 items-center gap-3 px-3 py-2"
                   >
                     <Checkbox
                       id={`task-${task.id}`}
@@ -161,11 +232,13 @@ export function PackAndShip({ orderNumber }: { orderNumber: string }) {
               <div className="grid gap-3 md:grid-cols-3">
                 <div className="space-y-2">
                   <Label htmlFor="cartonNumber">Carton number</Label>
-                  <Input
+                  {/* The empty carton has a label on it too. */}
+                  <ScanField
                     id="cartonNumber"
                     value={cartonNumber}
-                    onChange={(e) => setCartonNumber(e.target.value)}
+                    onValueChange={setCartonNumber}
                     placeholder="CTN-0001"
+                    autoFocus={false}
                   />
                 </div>
                 <div className="space-y-2">
@@ -174,6 +247,8 @@ export function PackAndShip({ orderNumber }: { orderNumber: string }) {
                     id="cartonWeight"
                     type="number"
                     min={0}
+                    inputMode="decimal"
+                    className="h-11 md:h-9"
                     value={cartonWeight}
                     onChange={(e) => setCartonWeight(e.target.value)}
                     placeholder="0"
@@ -181,7 +256,7 @@ export function PackAndShip({ orderNumber }: { orderNumber: string }) {
                 </div>
                 <div className="flex items-end">
                   <Button
-                    className="w-full"
+                    className="h-11 w-full md:h-9"
                     disabled={
                       packCarton.isPending ||
                       selectedTasks.length === 0 ||
@@ -227,11 +302,28 @@ export function PackAndShip({ orderNumber }: { orderNumber: string }) {
             </p>
           ) : (
             <>
+              <div className="grid gap-2">
+                <Label htmlFor="ship-scan">
+                  Scan a carton to put it on the shipment
+                </Label>
+                <ScanField
+                  id="ship-scan"
+                  value={shipScan}
+                  onValueChange={setShipScan}
+                  onScan={handleShipScan}
+                  onEnter={handleShipScan}
+                  placeholder="Scan the carton label"
+                  // Only the pack field above takes focus on mount; two fields
+                  // fighting over it means the scan lands in whichever won.
+                  autoFocus={false}
+                />
+              </div>
+
               <ul className="divide-y rounded-lg border">
                 {cartons.map((carton) => (
                   <li
                     key={carton.id}
-                    className="flex items-center gap-3 px-3 py-2"
+                    className="flex min-h-11 items-center gap-3 px-3 py-2"
                   >
                     <Checkbox
                       id={`carton-${carton.id}`}
@@ -262,17 +354,19 @@ export function PackAndShip({ orderNumber }: { orderNumber: string }) {
               <div className="grid gap-3 md:grid-cols-3">
                 <div className="space-y-2">
                   <Label htmlFor="shipmentNumber">Shipment number</Label>
-                  <Input
+                  <ScanField
                     id="shipmentNumber"
                     value={shipmentNumber}
-                    onChange={(e) => setShipmentNumber(e.target.value)}
+                    onValueChange={setShipmentNumber}
                     placeholder="SHP-0001"
+                    autoFocus={false}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="carrier">Carrier</Label>
                   <Input
                     id="carrier"
+                    className="h-11 md:h-9"
                     value={carrier}
                     onChange={(e) => setCarrier(e.target.value)}
                     placeholder="DHL"
@@ -280,15 +374,19 @@ export function PackAndShip({ orderNumber }: { orderNumber: string }) {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="trackingNumber">Tracking (optional)</Label>
-                  <Input
+                  {/* Carriers put the tracking number on the label as a
+                      barcode, so this is read far more often than typed. */}
+                  <ScanField
                     id="trackingNumber"
                     value={trackingNumber}
-                    onChange={(e) => setTrackingNumber(e.target.value)}
+                    onValueChange={setTrackingNumber}
+                    autoFocus={false}
                   />
                 </div>
               </div>
 
               <Button
+                className="h-11 md:h-9"
                 disabled={
                   confirmShipment.isPending ||
                   selectedCartons.length === 0 ||
