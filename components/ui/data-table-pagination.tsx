@@ -49,14 +49,31 @@ export function DataTablePagination<TData extends RowData>({
   const pageCount = Math.max(table.getPageCount(), 1);
 
   return (
-    <div className="flex items-center justify-between px-4">
-      <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
-        Showing {firstRow} to {lastRow} of {totalCount} row(s).
+    // Two stacked rows on a handheld, one on the desktop. Everything below used
+    // to be `hidden … lg:flex` except previous/next, so an operator on a scanner
+    // could page through a table without ever being told how big it was.
+    <div className="flex flex-col gap-2 px-4 py-2 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
+      <div className="text-muted-foreground flex flex-1 items-center justify-between gap-4 text-sm">
+        <span>
+          <span className="lg:hidden">
+            {firstRow}–{lastRow} of {totalCount}
+          </span>
+          <span className="hidden lg:inline">
+            Showing {firstRow} to {lastRow} of {totalCount} row(s).
+          </span>
+        </span>
+        <span className="font-medium lg:hidden">
+          Page {pageIndex + 1} of {pageCount}
+        </span>
       </div>
-      <div className="flex w-full items-center gap-8 py-2 lg:w-fit">
-        <div className="hidden items-center gap-2 lg:flex">
+      <div className="flex w-full items-center justify-between gap-4 lg:w-fit lg:justify-end lg:gap-8">
+        <div className="flex items-center gap-2">
+          {/* The text is dropped rather than the control on a narrow screen —
+              picking 10 rows instead of 50 is worth more on a handheld than on
+              a desktop, not less. */}
           <Label htmlFor="rows-per-page" className="text-sm font-medium">
-            Rows per page
+            <span className="hidden sm:inline">Rows per page</span>
+            <span className="sm:hidden">Rows</span>
           </Label>
           <Select
             value={`${pageSize}`}
@@ -64,7 +81,7 @@ export function DataTablePagination<TData extends RowData>({
               table.setPageSize(Number(value));
             }}
           >
-            <SelectTrigger className="w-20" id="rows-per-page">
+            <SelectTrigger className="h-11 w-20 lg:h-9" id="rows-per-page">
               <SelectValue placeholder={pageSize} />
             </SelectTrigger>
             <SelectContent side="top">
@@ -76,13 +93,15 @@ export function DataTablePagination<TData extends RowData>({
             </SelectContent>
           </Select>
         </div>
-        <div className="flex w-fit items-center justify-center text-sm font-medium">
+        <div className="hidden w-fit items-center justify-center text-sm font-medium lg:flex">
           Page {pageIndex + 1} of {pageCount}
         </div>
-        <div className="ml-auto flex items-center gap-2 lg:ml-0">
+        {/* 44px targets on touch, back to 32px where there is a mouse. */}
+        <div className="flex items-center gap-1 sm:gap-2">
           <Button
             variant="outline"
-            className="hidden h-8 w-8 p-0 lg:flex"
+            className="size-11 lg:size-8"
+            size="icon"
             onClick={() => table.setPageIndex(0)}
             disabled={!hasPreviousPage}
           >
@@ -91,7 +110,7 @@ export function DataTablePagination<TData extends RowData>({
           </Button>
           <Button
             variant="outline"
-            className="size-8"
+            className="size-11 lg:size-8"
             size="icon"
             onClick={() => table.previousPage()}
             disabled={!hasPreviousPage}
@@ -101,7 +120,7 @@ export function DataTablePagination<TData extends RowData>({
           </Button>
           <Button
             variant="outline"
-            className="size-8"
+            className="size-11 lg:size-8"
             size="icon"
             onClick={() => table.nextPage()}
             disabled={!hasNextPage}
@@ -111,7 +130,7 @@ export function DataTablePagination<TData extends RowData>({
           </Button>
           <Button
             variant="outline"
-            className="hidden size-8 lg:flex"
+            className="size-11 lg:size-8"
             size="icon"
             onClick={() => table.setPageIndex(pageCount - 1)}
             disabled={!hasNextPage}

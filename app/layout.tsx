@@ -59,7 +59,10 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
-            <Toaster richColors closeButton position="top-right" />
+            {/* Bottom-centre rather than top-right: on a handheld that is the
+                corner nearest the thumb, and it is out of the way of the
+                on-screen keyboard's autocomplete bar. */}
+            <Toaster richColors closeButton position="bottom-center" />
           </ThemeProvider>
         </ORPCReactProvider>
       </body>
