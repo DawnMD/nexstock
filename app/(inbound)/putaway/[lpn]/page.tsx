@@ -31,7 +31,9 @@ export default async function PutawayLPNPage({
   // Not awaited, like every other page: pending queries are dehydrated too, so
   // these stream into the boundary below rather than blocking the RSC render.
   prefetch(serverOrpc.putaway.getLPNDetails.queryOptions({ input: { lpn } }));
-  prefetch(serverOrpc.putaway.getLocations.queryOptions());
+  prefetch(
+    serverOrpc.putaway.getLocations.queryOptions({ input: { search: null } }),
+  );
 
   return (
     <>

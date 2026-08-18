@@ -24,12 +24,21 @@ interface WorklistRow {
 }
 
 export const putawayRouter = {
-  getAllLPNs: privateProcedure.handler(async ({ context: ctx }) => {
-    // Raw SQL because the filter correlates two columns across tables
-    // (a balance sitting at *its own receipt's* location), which Prisma's query
-    // API can't express. Doing it here rather than in JS keeps the row count
-    // bounded instead of loading every receipt ever made.
-    return await ctx.db.$queryRaw<WorklistRow[]>`
+  getAllLPNs: privateProcedure
+    .input(z.object({ search: z.string().nullish() }))
+    .handler(async ({ context: ctx, input }) => {
+      // The search runs in SQL rather than over the returned rows, because the
+      // rows are already capped at `WORKLIST_LIMIT` — filtering client-side
+      // could only ever search the most recent 200 pallets, and the one an
+      // operator is holding is exactly the one that fell off the end.
+      const term = input.search?.trim();
+      const pattern = term ? `%${term}%` : null;
+
+      // Raw SQL because the filter correlates two columns across tables
+      // (a balance sitting at *its own receipt's* location), which Prisma's query
+      // API can't express. Doing it here rather than in JS keeps the row count
+      // bounded instead of loading every receipt ever made.
+      return await ctx.db.$queryRaw<WorklistRow[]>`
       SELECT ri."lpn",
              ri."sku",
              s."description",
@@ -45,91 +54,64 @@ export const putawayRouter = {
        AND ib."location" = ri."location"
       JOIN "Sku" s ON s."sku" = ri."sku"
       WHERE ib."quantity" > 0
+        AND (
+          ${pattern}::text IS NULL
+          OR ri."lpn" ILIKE ${pattern}
+          OR ri."sku" ILIKE ${pattern}
+          OR s."description" ILIKE ${pattern}
+        )
       ORDER BY ri."receivedAt" DESC
       LIMIT ${WORKLIST_LIMIT}
     `;
-  }),
-
-  searchLPNs: privateProcedure
-    .input(
-      z.object({
-        search: z.string().optional(),
-      }),
-    )
-    .handler(async ({ context: ctx, input }) => {
-      // `contains: undefined` makes Prisma drop the filter entirely, which would
-      // return every ReceiveItem ever created. Treat a blank search as no results.
-      const search = input.search?.trim();
-      if (!search) {
-        return [];
-      }
-
-      const lpns = await ctx.db.receiveItem.findMany({
-        take: SEARCH_RESULT_LIMIT,
-        orderBy: {
-          receivedAt: "desc",
-        },
-        where: {
-          OR: [
-            {
-              lpn: {
-                contains: search,
-                mode: "insensitive",
-              },
-            },
-            {
-              sku: {
-                contains: search,
-                mode: "insensitive",
-              },
-            },
-          ],
-        },
-        select: {
-          lpn: true,
-          sku: true,
-          receivedQuantity: true,
-          location: true,
-          vehicleNumber: true,
-          receivedAt: true,
-          orderItem: {
-            select: {
-              Sku: {
-                select: {
-                  description: true,
-                },
-              },
-            },
-          },
-        },
-      });
-      return lpns;
     }),
 
-  getLocations: privateProcedure.handler(async ({ context: ctx }) => {
-    const locations = await ctx.db.location.findMany({
-      where: {
-        status: true, // Only active locations
-      },
-      select: {
-        location: true,
-        zone: true,
-        aisle: true,
-        description: true,
-        cbm: true,
-        weightCapacity: true,
-      },
-      orderBy: {
-        location: "asc",
-      },
-    });
+  /**
+   * The rack picker behind every "where does this go?" field.
+   *
+   * Searched and capped, modelled on `location.getLocations`. A warehouse has
+   * thousands of racks and this used to return all of them on every render of
+   * the putaway and receive screens; the operator scans or types the rack label
+   * they are standing at, so the whole list was never the useful answer.
+   */
+  getLocations: privateProcedure
+    .input(z.object({ search: z.string().nullish() }))
+    .handler(async ({ context: ctx, input }) => {
+      const term = input.search?.trim();
 
-    // Putaway enforces these ratings, so the picker has to show what is left in
-    // each rack — otherwise the operator picks blind and the move is refused
-    // only after they submit it.
-    const used = await ctx.db.$queryRaw<
-      { location: string; usedCbm: number; usedWeight: number }[]
-    >`
+      const locations = await ctx.db.location.findMany({
+        where: {
+          status: true, // Only active locations
+          ...(term
+            ? {
+                OR: [
+                  { location: { contains: term, mode: "insensitive" } },
+                  { zone: { contains: term, mode: "insensitive" } },
+                  { aisle: { contains: term, mode: "insensitive" } },
+                  { description: { contains: term, mode: "insensitive" } },
+                ],
+              }
+            : {}),
+        },
+        select: {
+          location: true,
+          zone: true,
+          aisle: true,
+          description: true,
+          cbm: true,
+          weightCapacity: true,
+        },
+        orderBy: {
+          location: "asc",
+        },
+        take: SEARCH_RESULT_LIMIT,
+      });
+
+      // Putaway enforces these ratings, so the picker has to show what is left in
+      // each rack — otherwise the operator picks blind and the move is refused
+      // only after they submit it.
+      const used = await ctx.db.$queryRaw<
+        { location: string; usedCbm: number; usedWeight: number }[]
+      >`
       SELECT b."location",
              COALESCE(SUM(b."quantity" * s."cbm"), 0)::float    AS "usedCbm",
              COALESCE(SUM(b."quantity" * s."weight"), 0)::float AS "usedWeight"
@@ -138,21 +120,23 @@ export const putawayRouter = {
       WHERE b."quantity" > 0
       GROUP BY b."location"
     `;
-    const byLocation = new Map(used.map((row) => [row.location, row]));
+      const byLocation = new Map(used.map((row) => [row.location, row]));
 
-    return locations.map((location) => {
-      const occupied = byLocation.get(location.location);
-      return {
-        ...location,
-        freeCbm:
-          location.cbm == null ? null : location.cbm - (occupied?.usedCbm ?? 0),
-        freeWeight:
-          location.weightCapacity == null
-            ? null
-            : location.weightCapacity - (occupied?.usedWeight ?? 0),
-      };
-    });
-  }),
+      return locations.map((location) => {
+        const occupied = byLocation.get(location.location);
+        return {
+          ...location,
+          freeCbm:
+            location.cbm == null
+              ? null
+              : location.cbm - (occupied?.usedCbm ?? 0),
+          freeWeight:
+            location.weightCapacity == null
+              ? null
+              : location.weightCapacity - (occupied?.usedWeight ?? 0),
+        };
+      });
+    }),
 
   createPutaway: writeProcedure
     .input(
