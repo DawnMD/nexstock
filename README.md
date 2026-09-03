@@ -1,5 +1,15 @@
 # NexStock
 
+**Live résumé demo:** [nexstock-neon.vercel.app](https://nexstock-neon.vercel.app)
+
+| Email                    | Password        |
+| ------------------------ | --------------- |
+| `demo@demo.nexstock.app` | `nexstock-demo` |
+
+This is one shared, writable warehouse. Changes are visible to other visitors
+and the synthetic dataset resets nightly. Please do not enter personal or
+confidential data.
+
 A warehouse management system (WMS) covering both directions. Inbound: a
 purchase order arrives, a vehicle books a dock, the goods are inspected and
 received against the order lines, and stock is put away into a storage location.
@@ -96,6 +106,11 @@ cp .env.example .env
 | `BETTER_AUTH_URL`       | Optional. Public origin, e.g. `https://wms.example.com`. Required when serving from anywhere other than `localhost:3000` or `*.vercel.app` — without it Better Auth rejects the request as an unknown host and sign-in 500s. |
 | `RESEND_API_KEY`        | [Resend](https://resend.com) API key. Sign-up is gated on a verification email, so this has to be a real key.                                                                                                                |
 | `EMAIL_FROM`            | `From` header on outbound mail. Defaults to `NexStock <onboarding@resend.dev>`, which only delivers to the Resend account owner.                                                                                             |
+| `DEMO_MODE`             | `off`, `read-only` (the local default), or `shared-writable`. Only the configured demo email bypasses the demo write guard in the last mode.                                                                                 |
+| `DEMO_ACCOUNT_EMAIL`    | Published shared account email. Defaults to `demo@demo.nexstock.app`.                                                                                                                                                        |
+| `DEMO_ACCOUNT_PASSWORD` | Published shared account password. Defaults to `nexstock-demo`; set it explicitly in production so provisioning and the sign-in card agree.                                                                                  |
+| `ALLOW_SIGN_UP`         | Set to `false` on the public deployment. Removes the sign-up link and page and makes Better Auth reject direct sign-up API calls.                                                                                            |
+| `CRON_SECRET`           | Random 16+ character secret protecting `GET /api/internal/demo-reset`. Vercel Cron sends it as `Authorization: Bearer <CRON_SECRET>`.                                                                                        |
 
 Both connection strings are on the Neon dashboard under **Connect** — toggle
 _Connection pooling_ to switch between them. Keep `?sslmode=require`; if a query
@@ -127,13 +142,14 @@ pnpm db:seed:as --user-id=<the id it printed>   # sample data attributed to you
 pnpm dev            # http://localhost:3000 → redirects to /sign-in
 ```
 
-The seed is destructive and re-runnable: it clears the 14 warehouse tables
+The seed is destructive and re-runnable: it clears all 21 warehouse tables
 before inserting, so you can run it as often as you like to get back to a known
 state. It deliberately leaves `User`, `Session` and `Account` alone, so
 re-seeding never destroys accounts or logs you out. It creates 50 vendors, 10
-SKUs, 20 locations, 10 docks, 50 orders (10 line items each), dock bookings with
-check-in/open activities for the first 20 orders, and receipts against the first
-12 — enough that every screen has data on first load.
+SKUs, 20 storage locations plus staging and dispatch, 10 docks, 50 orders (10
+line items each), dock bookings with check-in/open activities for the first 20
+orders, and receipts against the first 12 — enough that every screen has data on
+first load.
 
 Every audit column (`createdBy`, `receivedBy`, `putawayBy`, …) is a foreign key
 onto `User`, so the seed needs a real account to attribute its rows to. Bare
@@ -144,18 +160,24 @@ flag and is the only form that survives paths which cannot forward CLI args.
 
 ### Authentication
 
-Email and password only — no social providers. **Sign-up is self-serve** at
-`/sign-up` and gated on email verification: Better Auth mails a one-hour link
-through Resend and refuses to create a session until it is clicked, so an
-unverified account can do nothing. Clicking the link signs the user in and drops
-them on `/dashboard`; a dead or expired link lands on `/verify-email`, which can
-mail a fresh one. Signing in with an unverified address also re-sends the link.
+Email and password only — no social providers. When `ALLOW_SIGN_UP=true`,
+sign-up is self-serve at `/sign-up` and gated on email verification: Better
+Auth mails a one-hour link through Resend and refuses to create a session until
+it is clicked, so an unverified account can do nothing. Clicking the link signs
+the user in and drops them on `/dashboard`; a dead or expired link lands on
+`/verify-email`, which can mail a fresh one. Signing in with an unverified
+address also re-sends the link.
 
 Sign-up responses are deliberately uninformative — an address that already has
 an account gets the same "check your inbox" screen as a new one — so the form
 cannot be used to enumerate accounts.
 
-### Read-only demo accounts
+Set `ALLOW_SIGN_UP=false` for a closed deployment. The sign-up route then
+returns 404, the sign-in card omits its registration link, and Better Auth's
+server endpoint rejects direct sign-up requests. Out-of-band account commands
+continue to work.
+
+### Demo modes
 
 `pnpm user:create demo@example.com "Demo" "password" --demo` creates an account
 that can browse every screen and change nothing. It is a real, verified user, so
@@ -168,36 +190,85 @@ The flag is read from the database rather than the session, so revoking demo
 status takes effect on the next request instead of whenever the five-minute
 session cache expires.
 
-There is no allowlist, so anyone who controls a mailbox can register. If that is
-not acceptable for a deployment, put it behind a network boundary or set
-`emailAndPassword.disableSignUp: true` in `lib/auth.ts` and mint accounts with
-`pnpm user:create`, which still works and marks the address verified.
+`DEMO_MODE=shared-writable` grants a single exception: the demo user whose
+email exactly matches `DEMO_ACCOUNT_EMAIL` may use every warehouse mutation.
+Any other user with `isDemo=true` stays read-only. `DEMO_MODE=read-only` keeps
+the original behavior, and `off` removes published demo credentials from
+sign-in while preserving the server-side `isDemo` protection.
 
 Sign in at `/sign-in`; every page under `app/(inbound)/` calls
 `requireSession()` and every mutating oRPC procedure is a `writeProcedure`.
 
+### Public demo walkthrough
+
+The dashboard shows demo users three focused scenarios:
+
+1. **Inspect inventory integrity** at `/inventory`: compare balances, movement
+   history, and ledger reconciliation.
+2. **Complete an inbound task** at `/putaway/LPN000002`: move the seeded pallet
+   from staging into a valid rack.
+3. **Run an outbound workflow** at `/sales-orders/SO-00001`: allocate the
+   unreserved order, then pick, pack, and ship it.
+
+### Vercel + Neon deployment
+
+Use [Neon's pooled connection guidance](https://neon.com/docs/connect/connection-pooling)
+for `DATABASE_URL` at runtime and its direct connection string for
+`DATABASE_URL_UNPOOLED`. Migrations and demo resets are long administrative
+transactions and must use the direct connection.
+Add every variable from `.env.example` to the Vercel Production environment,
+with `DEMO_MODE=shared-writable` and `ALLOW_SIGN_UP=false`.
+
+After the first production deployment, run these one-time commands:
+
+```bash
+vercel env run -e production -- pnpm db:migrate
+vercel env run -e production -- pnpm demo:provision
+```
+
+`demo:provision` is idempotent: it creates or updates the verified credential
+account, replaces its password, marks it as a demo user, and performs the
+initial reset. `vercel.json` invokes `GET /api/internal/demo-reset` at
+`30 20 * * *`, approximately 02:00 IST.
+[Vercel Hobby cron](https://vercel.com/docs/cron-jobs/manage-cron-jobs) can run
+at any point within the scheduled hour.
+
+The reset clears and reseeds every warehouse table in one transaction while
+preserving `User`, `Account`, and `Session`. It uses a transaction-scoped
+PostgreSQL advisory lock, so overlapping cron/manual runs return `409` instead
+of interleaving. Invalid Bearer tokens return `401`; successful requests
+return the reset timestamp and seed counts. An owner can trigger the same path
+with `pnpm demo:reset` or:
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" \
+  https://nexstock-neon.vercel.app/api/internal/demo-reset
+```
+
 ## Scripts
 
-| Script              | Description                                                                      |
-| ------------------- | -------------------------------------------------------------------------------- |
-| `pnpm dev`          | Dev server with Turbopack.                                                       |
-| `pnpm build`        | Production build (typechecks and lints).                                         |
-| `pnpm start`        | Serve the production build.                                                      |
-| `pnpm typecheck`    | `tsc --noEmit`.                                                                  |
-| `pnpm lint`         | ESLint via `next lint`.                                                          |
-| `pnpm test`         | Service-layer tests (Vitest) against a real Postgres. See [Testing](#testing).   |
-| `pnpm test:watch`   | The same suite in watch mode.                                                    |
-| `pnpm test:e2e`     | Playwright end-to-end tests against a built app. See [Testing](#testing).        |
-| `pnpm format:check` | Prettier check.                                                                  |
-| `pnpm format:write` | Prettier write.                                                                  |
-| `pnpm db:push`      | Push schema without a migration (dev), then regenerate the client.               |
-| `pnpm db:generate`  | Create and apply a migration (`prisma migrate dev`), then regenerate the client. |
-| `pnpm db:migrate`   | Apply migrations (`prisma migrate deploy`).                                      |
-| `pnpm db:seed`      | Reset and seed the warehouse tables (as the synthetic `SYSTEM` user).            |
-| `pnpm db:seed:as`   | Same, but forwards `--user-id=<id>` so the data is attributed to a real account. |
-| `pnpm db:reset`     | Drop the database and replay every migration. **Destroys all data.**             |
-| `pnpm user:create`  | Create an account: `pnpm user:create <email> "<name>" "<password>" [--demo]`.    |
-| `pnpm db:studio`    | Prisma Studio.                                                                   |
+| Script                | Description                                                                       |
+| --------------------- | --------------------------------------------------------------------------------- |
+| `pnpm dev`            | Dev server with Turbopack.                                                        |
+| `pnpm build`          | Production build (typechecks and lints).                                          |
+| `pnpm start`          | Serve the production build.                                                       |
+| `pnpm typecheck`      | `tsc --noEmit`.                                                                   |
+| `pnpm lint`           | ESLint via `next lint`.                                                           |
+| `pnpm test`           | Service-layer tests (Vitest) against a real Postgres. See [Testing](#testing).    |
+| `pnpm test:watch`     | The same suite in watch mode.                                                     |
+| `pnpm test:e2e`       | Playwright end-to-end tests against a built app. See [Testing](#testing).         |
+| `pnpm format:check`   | Prettier check.                                                                   |
+| `pnpm format:write`   | Prettier write.                                                                   |
+| `pnpm db:push`        | Push schema without a migration (dev), then regenerate the client.                |
+| `pnpm db:generate`    | Create and apply a migration (`prisma migrate dev`), then regenerate the client.  |
+| `pnpm db:migrate`     | Apply migrations (`prisma migrate deploy`).                                       |
+| `pnpm db:seed`        | Reset and seed the warehouse tables (as the synthetic `SYSTEM` user).             |
+| `pnpm db:seed:as`     | Same, but forwards `--user-id=<id>` so the data is attributed to a real account.  |
+| `pnpm demo:provision` | Create/update the published verified demo account and perform its initial seed.   |
+| `pnpm demo:reset`     | Restore the demo warehouse through the direct administrative database connection. |
+| `pnpm db:reset`       | Drop the database and replay every migration. **Destroys all data.**              |
+| `pnpm user:create`    | Create an account: `pnpm user:create <email> "<name>" "<password>" [--demo]`.     |
+| `pnpm db:studio`      | Prisma Studio.                                                                    |
 
 CI (`.github/workflows/ci.yaml`) runs lint, Prettier, typecheck, unit tests,
 build and end-to-end tests on every pull request.
