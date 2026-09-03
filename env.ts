@@ -34,6 +34,18 @@ export const env = createEnv({
      * address that owns the Resend account, which is enough for local work.
      */
     EMAIL_FROM: z.string().min(1).default("NexStock <onboarding@resend.dev>"),
+    /** Controls demo affordances and whether the published account may mutate. */
+    DEMO_MODE: z
+      .enum(["off", "read-only", "shared-writable"])
+      .default("read-only"),
+    DEMO_ACCOUNT_EMAIL: z.email().default("demo@demo.nexstock.app"),
+    DEMO_ACCOUNT_PASSWORD: z.string().min(8).default("nexstock-demo"),
+    ALLOW_SIGN_UP: z
+      .enum(["true", "false"])
+      .default("true")
+      .transform((value) => value === "true"),
+    /** Vercel sends this as a Bearer token to the demo reset route. */
+    CRON_SECRET: z.string().min(16).optional(),
     /** Public origin of this deployment. Optional locally; required in production. */
   },
 
@@ -58,6 +70,11 @@ export const env = createEnv({
     BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM,
+    DEMO_MODE: process.env.DEMO_MODE,
+    DEMO_ACCOUNT_EMAIL: process.env.DEMO_ACCOUNT_EMAIL,
+    DEMO_ACCOUNT_PASSWORD: process.env.DEMO_ACCOUNT_PASSWORD,
+    ALLOW_SIGN_UP: process.env.ALLOW_SIGN_UP,
+    CRON_SECRET: process.env.CRON_SECRET,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**

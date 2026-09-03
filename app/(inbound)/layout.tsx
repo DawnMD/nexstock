@@ -5,6 +5,7 @@ import { db } from "@/server/db";
 import { requireSession } from "@/lib/session";
 import { SIDEBAR_COOKIE_NAME } from "@/lib/sidebar-cookie";
 import { cookies } from "next/headers";
+import { env } from "@/env";
 
 export default async function MainAppLayout({
   children,
@@ -27,8 +28,11 @@ export default async function MainAppLayout({
   // reflect the account's current state.
   const account = await db.user.findUnique({
     where: { id: session.user.id },
-    select: { isDemo: true },
+    select: { email: true, isDemo: true },
   });
+  const isWritableSharedDemo =
+    env.DEMO_MODE === "shared-writable" &&
+    account?.email.toLowerCase() === env.DEMO_ACCOUNT_EMAIL.toLowerCase();
 
   // Better Auth's `name` is a required column but can be an empty string, so fall
   // back through the email local part before giving up.
@@ -51,7 +55,9 @@ export default async function MainAppLayout({
     >
       <AppSidebar variant="inset" user={userData} />
       <SidebarInset>
-        {account?.isDemo && <DemoBanner />}
+        {account?.isDemo && (
+          <DemoBanner sharedWritable={isWritableSharedDemo} />
+        )}
         {children}
       </SidebarInset>
     </SidebarProvider>

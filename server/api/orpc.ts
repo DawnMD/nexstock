@@ -102,12 +102,12 @@ export const publicProcedure = base
   .use(serviceErrorMiddleware);
 
 /**
- * Refuse anything that writes when the caller is a demo account.
+ * Refuse demo writes except for the explicitly configured shared account.
  *
  * The public demo signs in as a real, verified user so every screen behaves
- * exactly as it does for an operator — the read paths are not special-cased
- * anywhere. Only this middleware differs, and it sits on the server rather than
- * on a disabled button, so hiding the UI is not what is protecting the data.
+ * exactly as it does for an operator — the read paths are not special-cased.
+ * In shared-writable mode one published email is allowed through; all other
+ * demo users retain the original read-only behavior.
  *
  * `isDemo` is read from the database rather than the session cookie: sessions
  * are cached for five minutes (see `lib/auth.ts`), and revoking demo status
@@ -118,10 +118,14 @@ const notDemoMiddleware = base.middleware(async ({ next, context }) => {
   if (context.userId) {
     const user = await context.db.user.findUnique({
       where: { id: context.userId },
-      select: { isDemo: true },
+      select: { email: true, isDemo: true },
     });
 
-    if (user?.isDemo) {
+    const isWritableSharedDemo =
+      env.DEMO_MODE === "shared-writable" &&
+      user?.email.toLowerCase() === env.DEMO_ACCOUNT_EMAIL.toLowerCase();
+
+    if (user?.isDemo && !isWritableSharedDemo) {
       throw new ORPCError("FORBIDDEN", {
         message:
           "This is a read-only demo account — browse anything, but nothing can be changed.",

@@ -31,7 +31,16 @@ const signInSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-export function SignInForm() {
+interface SignInFormProps {
+  allowSignUp: boolean;
+  demoCredentials?: {
+    email: string;
+    password: string;
+    writable: boolean;
+  };
+}
+
+export function SignInForm({ allowSignUp, demoCredentials }: SignInFormProps) {
   const router = useRouter();
 
   const form = useForm<z.infer<typeof signInSchema>>({
@@ -81,6 +90,26 @@ export function SignInForm() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {demoCredentials && (
+              <div className="bg-muted/60 space-y-3 rounded-lg border px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium">Try the live demo</p>
+                  <p className="text-muted-foreground text-xs">
+                    {demoCredentials.writable
+                      ? "Shared warehouse access — your changes are visible to other visitors."
+                      : "Browse the warehouse with the published read-only account."}
+                  </p>
+                </div>
+                <dl className="grid grid-cols-[4.5rem_1fr] gap-x-3 gap-y-1 font-mono text-xs">
+                  <dt className="text-muted-foreground">Email</dt>
+                  <dd className="break-all select-all">
+                    {demoCredentials.email}
+                  </dd>
+                  <dt className="text-muted-foreground">Password</dt>
+                  <dd className="select-all">{demoCredentials.password}</dd>
+                </dl>
+              </div>
+            )}
             <FormField
               control={form.control}
               name="email"
@@ -128,12 +157,14 @@ export function SignInForm() {
               {form.formState.isSubmitting ? "Signing in..." : "Sign in"}
             </Button>
 
-            <p className="text-muted-foreground text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <Link className="underline underline-offset-4" href="/sign-up">
-                Create one
-              </Link>
-            </p>
+            {allowSignUp && (
+              <p className="text-muted-foreground text-center text-sm">
+                Don&apos;t have an account?{" "}
+                <Link className="underline underline-offset-4" href="/sign-up">
+                  Create one
+                </Link>
+              </p>
+            )}
           </CardContent>
         </Card>
       </form>

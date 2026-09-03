@@ -25,10 +25,10 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
-    // Self-serve sign-up at /sign-up. The only gate is the verification email
-    // below — anyone who controls a mailbox can create an account, so put this
-    // deployment behind a network boundary if that is not acceptable.
-    disableSignUp: false,
+    // Local development defaults to self-serve sign-up. The public résumé
+    // deployment disables both this endpoint and the /sign-up page with the
+    // same ALLOW_SIGN_UP switch.
+    disableSignUp: !env.ALLOW_SIGN_UP,
     minPasswordLength: 8,
     // No session until the address is confirmed. This also makes Better Auth
     // return a generic success for a sign-up against an existing email, so the
