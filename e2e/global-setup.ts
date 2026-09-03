@@ -12,6 +12,21 @@ import { createAdapter } from "@/lib/prisma-adapter";
 
 const run = promisify(execFile);
 
+/**
+ * Run this project's package manager without relying on a platform-specific
+ * shell shim. `execFile("pnpm")` works on Linux CI, but Windows installs pnpm
+ * as `pnpm.cmd`, which Node cannot spawn through the extensionless name here.
+ * pnpm exposes the JavaScript CLI that launched Playwright via `npm_execpath`,
+ * so invoking that with the current Node binary works on both platforms.
+ */
+async function runPnpm(args: string[]) {
+  const cli = process.env.npm_execpath;
+  if (!cli) {
+    throw new Error("pnpm did not expose npm_execpath to Playwright");
+  }
+  await run(process.execPath, [cli, ...args]);
+}
+
 export const OPERATOR = {
   email: "e2e-operator@nexstock.test",
   name: "E2E Operator",
@@ -60,7 +75,7 @@ async function ensureAccounts() {
   }
 
   if (needsOperator) {
-    await run("pnpm", [
+    await runPnpm([
       "user:create",
       OPERATOR.email,
       OPERATOR.name,
@@ -69,7 +84,7 @@ async function ensureAccounts() {
   }
 
   if (needsDemo) {
-    await run("pnpm", [
+    await runPnpm([
       "user:create",
       DEMO.email,
       DEMO.name,

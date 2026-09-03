@@ -51,6 +51,31 @@ export const qualityCheckRouter = {
         orderBy: { createdAt: "desc" },
         take: SEARCH_RESULT_LIMIT,
       });
+
+      // Preserve an exact scanned order even when the 50-row partial-match cap
+      // is full of newer order numbers containing the same text.
+      if (
+        term &&
+        orderNumbers.length === SEARCH_RESULT_LIMIT &&
+        !orderNumbers.some(
+          (order) => order.orderNumber.toLowerCase() === term.toLowerCase(),
+        )
+      ) {
+        const exact = await ctx.db.order.findFirst({
+          where: {
+            orderNumber: { equals: term, mode: "insensitive" },
+            status: { in: [OrderStatus.NEW, OrderStatus.IN_PROGRESS] },
+          },
+          select: {
+            orderNumber: true,
+            vendor: { select: { name: true } },
+            businessUnit: true,
+            _count: { select: { items: true } },
+          },
+        });
+        if (exact) return [exact, ...orderNumbers.slice(0, -1)];
+      }
+
       return orderNumbers;
     }),
   getOrderItems: privateProcedure

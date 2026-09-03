@@ -123,6 +123,10 @@ export function EntitySearch({
           value={search}
           onValueChange={onSearchChange}
           onKeyDown={scanner.onKeyDown}
+          // Keyboard-wedge scanners send keys to whichever element owns focus.
+          // The palette is the page's primary task, so make it ready without a
+          // tap when an operator arrives holding a pallet or purchase order.
+          autoFocus
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"

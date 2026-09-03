@@ -113,3 +113,29 @@ test("the order palette searches on the server", async ({ page }) => {
   await input.fill("");
   await expect(options.first()).toBeVisible();
 });
+
+test("a keyboard-wedge scan opens its exact order without a tap", async ({
+  page,
+}) => {
+  await page.goto("/receive");
+
+  const input = page.getByPlaceholder("Scan or search for an order");
+  await expect(input).toBeFocused();
+
+  const firstOrder = page.getByRole("option").first();
+  await expect(firstOrder).toBeVisible();
+  const orderNumber = (
+    await firstOrder.locator("span").first().textContent()
+  )?.trim();
+  if (!orderNumber) throw new Error("The receive palette has no order number");
+
+  // Hardware wedges typically emit at 5–20ms per character and terminate with
+  // Enter. The hook's threshold is 30ms, so this exercises the scanner path
+  // rather than cmdk's ordinary highlighted-row selection.
+  await page.keyboard.type(orderNumber, { delay: 10 });
+  await page.keyboard.press("Enter");
+
+  await expect(page).toHaveURL(
+    new RegExp(`/receive/${encodeURIComponent(orderNumber)}$`),
+  );
+});

@@ -45,6 +45,29 @@ export const receiveRouter = {
         orderBy: { createdAt: "desc" },
         take: SEARCH_RESULT_LIMIT,
       });
+
+      // A capped `contains` search can still omit the exact barcode when 50
+      // newer order numbers contain the same text. That is rare for typing but
+      // unsafe for scanning: EntitySearch may only navigate to an exact row.
+      // Only pay for the second lookup when the cap could have hidden it.
+      if (
+        term &&
+        orderNumbers.length === SEARCH_RESULT_LIMIT &&
+        !orderNumbers.some(
+          (order) => order.orderNumber.toLowerCase() === term.toLowerCase(),
+        )
+      ) {
+        const exact = await ctx.db.order.findFirst({
+          where: { orderNumber: { equals: term, mode: "insensitive" } },
+          select: {
+            orderNumber: true,
+            vendor: { select: { name: true } },
+            _count: { select: { items: true } },
+          },
+        });
+        if (exact) return [exact, ...orderNumbers.slice(0, -1)];
+      }
+
       return orderNumbers;
     }),
   getOrderItems: privateProcedure
