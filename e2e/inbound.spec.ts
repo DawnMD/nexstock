@@ -96,3 +96,46 @@ test("the locations master lists racks and their on-hand totals", async ({
   await expect(page.getByRole("heading", { name: "Locations" })).toBeVisible();
   await expect(page.getByRole("table")).toBeVisible();
 });
+
+test("the order palette searches on the server", async ({ page }) => {
+  await page.goto("/receive");
+
+  const options = page.getByRole("option");
+  await expect(options.first()).toBeVisible();
+
+  // The palette is capped server-side now, so the term has to reach Postgres.
+  // A term that matches nothing empties it; clearing the term brings the
+  // default page of orders back.
+  const input = page.getByPlaceholder("Scan or search for an order");
+  await input.fill("ZZZ-NOT-AN-ORDER");
+  await expect(page.getByText("No orders found.")).toBeVisible();
+
+  await input.fill("");
+  await expect(options.first()).toBeVisible();
+});
+
+test("a keyboard-wedge scan opens its exact order without a tap", async ({
+  page,
+}) => {
+  await page.goto("/receive");
+
+  const input = page.getByPlaceholder("Scan or search for an order");
+  await expect(input).toBeFocused();
+
+  const firstOrder = page.getByRole("option").first();
+  await expect(firstOrder).toBeVisible();
+  const orderNumber = (
+    await firstOrder.locator("span").first().textContent()
+  )?.trim();
+  if (!orderNumber) throw new Error("The receive palette has no order number");
+
+  // Hardware wedges typically emit at 5–20ms per character and terminate with
+  // Enter. The hook's threshold is 30ms, so this exercises the scanner path
+  // rather than cmdk's ordinary highlighted-row selection.
+  await page.keyboard.type(orderNumber, { delay: 10 });
+  await page.keyboard.press("Enter");
+
+  await expect(page).toHaveURL(
+    new RegExp(`/receive/${encodeURIComponent(orderNumber)}$`),
+  );
+});

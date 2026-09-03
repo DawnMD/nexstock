@@ -10,8 +10,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { getStatusVariant } from "@/lib/order-utils";
-import { formatStatusDisplay } from "@/lib/order-utils";
+import { getItemStatusVariant } from "@/lib/order-utils";
+import { formatItemStatus } from "@/lib/order-utils";
 import { Badge } from "@/components/ui/badge";
 import { serverClient } from "@/orpc/server";
 import { PackageIcon } from "lucide-react";
@@ -103,8 +103,8 @@ export default async function OrderItemPage({
                 <Label className="text-muted-foreground text-sm font-medium">
                   Receive Status
                 </Label>
-                <Badge variant={getStatusVariant(orderItem.status)}>
-                  {formatStatusDisplay(orderItem.status)}
+                <Badge variant={getItemStatusVariant(orderItem.status)}>
+                  {formatItemStatus(orderItem.status)}
                 </Badge>
               </div>
             </div>

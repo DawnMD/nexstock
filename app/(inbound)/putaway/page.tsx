@@ -17,7 +17,9 @@ export const metadata: Metadata = {
 export default async function PutawayPage() {
   await requireSession();
 
-  prefetch(serverOrpc.putaway.getAllLPNs.queryOptions());
+  prefetch(
+    serverOrpc.putaway.getAllLPNs.queryOptions({ input: { search: null } }),
+  );
 
   return (
     <>

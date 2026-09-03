@@ -6,31 +6,78 @@ import {
 import { OrderStatus } from "@/generated/prisma/client";
 import { z } from "zod";
 
+/**
+ * Capped like the other search palettes. The status filter alone is not a bound:
+ * every order is NEW or IN_PROGRESS until someone finishes it, so on a busy site
+ * the "filtered" list is very nearly the whole table.
+ */
+const SEARCH_RESULT_LIMIT = 50;
+
 export const qualityCheckRouter = {
-  getAllOrderNumbers: privateProcedure.handler(async ({ context: ctx }) => {
-    const orderNumbers = await ctx.db.order.findMany({
-      select: {
-        orderNumber: true,
-        vendor: {
-          select: {
-            name: true,
+  getAllOrderNumbers: privateProcedure
+    .input(z.object({ search: z.string().nullish() }))
+    .handler(async ({ context: ctx, input }) => {
+      const term = input.search?.trim();
+
+      const orderNumbers = await ctx.db.order.findMany({
+        select: {
+          orderNumber: true,
+          vendor: {
+            select: {
+              name: true,
+            },
+          },
+          businessUnit: true,
+          _count: {
+            select: {
+              items: true,
+            },
           },
         },
-        businessUnit: true,
-        _count: {
-          select: {
-            items: true,
+        where: {
+          status: {
+            in: [OrderStatus.NEW, OrderStatus.IN_PROGRESS],
           },
+          ...(term
+            ? {
+                OR: [
+                  { orderNumber: { contains: term, mode: "insensitive" } },
+                  { vendor: { name: { contains: term, mode: "insensitive" } } },
+                  { businessUnit: { contains: term, mode: "insensitive" } },
+                ],
+              }
+            : {}),
         },
-      },
-      where: {
-        status: {
-          in: [OrderStatus.NEW, OrderStatus.IN_PROGRESS],
-        },
-      },
-    });
-    return orderNumbers;
-  }),
+        orderBy: { createdAt: "desc" },
+        take: SEARCH_RESULT_LIMIT,
+      });
+
+      // Preserve an exact scanned order even when the 50-row partial-match cap
+      // is full of newer order numbers containing the same text.
+      if (
+        term &&
+        orderNumbers.length === SEARCH_RESULT_LIMIT &&
+        !orderNumbers.some(
+          (order) => order.orderNumber.toLowerCase() === term.toLowerCase(),
+        )
+      ) {
+        const exact = await ctx.db.order.findFirst({
+          where: {
+            orderNumber: { equals: term, mode: "insensitive" },
+            status: { in: [OrderStatus.NEW, OrderStatus.IN_PROGRESS] },
+          },
+          select: {
+            orderNumber: true,
+            vendor: { select: { name: true } },
+            businessUnit: true,
+            _count: { select: { items: true } },
+          },
+        });
+        if (exact) return [exact, ...orderNumbers.slice(0, -1)];
+      }
+
+      return orderNumbers;
+    }),
   getOrderItems: privateProcedure
     .input(
       z.object({

@@ -91,3 +91,46 @@ test("the ledger still reconciles after stock has shipped", async ({
   await expect(page.getByRole("heading", { name: "Inventory" })).toBeVisible();
   await expect(page.getByText(/drift|discrepanc/i)).toHaveCount(0);
 });
+
+test("a sales order can be raised from the screen and then allocated", async ({
+  page,
+}) => {
+  // `createSalesOrder` and `allocateSalesOrder` are covered exhaustively in
+  // `tests/outbound.test.ts`. What was missing until now was any way to reach
+  // them without an API client — the seed was the only thing that put orders on
+  // the board. This drives the two screens that closed that gap.
+  const orderNumber = `E2E-SO-${Date.now()}`;
+
+  await page.goto("/sales-orders");
+  // A `<Button render={<Link>} nativeButton={false}>` is an anchor that Base UI
+  // gives `role="button"`, so it is located the same way `inbound.spec.ts`
+  // locates "View order details".
+  await page.getByRole("button", { name: /New sales order/i }).click();
+  await expect(page).toHaveURL(/\/sales-orders\/new/);
+
+  await page.getByLabel("Order Number").fill(orderNumber);
+
+  // Customers are a closed set that changes rarely, so this one is still a
+  // dropdown rather than a scan field.
+  await page.getByLabel("Customer").click();
+  await page.getByRole("option", { name: /Northwind Retail/ }).click();
+
+  // The SKU field is scannable, with the known codes offered underneath it.
+  await page.getByLabel("SKU").fill("FG-");
+  const suggestion = page.getByRole("option").first();
+  await expect(suggestion).toBeVisible();
+  await suggestion.click();
+
+  await page.getByLabel("Quantity").fill("1");
+  await page.getByRole("button", { name: "Create Sales Order" }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/sales-orders/${orderNumber}`));
+  await expect(page.getByText("Lines")).toBeVisible();
+
+  // Allocation is a separate, explicit step, and this is the control that
+  // dispatches a picker without going near the API.
+  await page.getByRole("button", { name: /Allocate stock/ }).click();
+  await expect(
+    page.getByText(/Allocated \d+ units|Nothing left to allocate/),
+  ).toBeVisible();
+});

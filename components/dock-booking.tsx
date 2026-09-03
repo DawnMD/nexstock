@@ -109,6 +109,50 @@ const formSchema = z.object({
   driverPhone: z.string().optional(),
   eta: z.date().optional(),
 });
+/**
+ * Edit/delete for one booking. Extracted because the desktop table and the
+ * handheld card list below both need it, and a nine-column table is not
+ * something anyone can use at the gate on a scanner.
+ */
+function BookingActions({
+  onEdit,
+  onDelete,
+}: {
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-11 cursor-pointer md:size-8"
+          />
+        }
+      >
+        <MoreVerticalIcon className="h-4 w-4" />
+        <span className="sr-only">Open menu</span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-40">
+        <DropdownMenuItem className="cursor-pointer" onClick={onEdit}>
+          <EditIcon className="mr-2 h-4 w-4 text-blue-500" />
+          Edit
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          className="cursor-pointer text-red-600"
+          onClick={onDelete}
+        >
+          <TrashIcon className="mr-2 h-4 w-4 text-red-500" />
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function DockBooking({ orderNumber }: { orderNumber: string }) {
   const queryClient = useQueryClient();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -589,7 +633,76 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
       </CardHeader>
       {dockBookings.length > 0 ? (
         <CardContent>
-          <div className="overflow-x-auto">
+          {/* Nine columns will not fit a handheld, and the gate is exactly
+              where this screen gets used. Same bookings, stacked. */}
+          <div className="space-y-3 md:hidden">
+            {dockBookings.map((booking) => (
+              <div key={booking.id} className="rounded-lg border p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline" className="font-mono">
+                        {booking.dock.name}
+                      </Badge>
+                      <Badge
+                        variant={booking.queue <= 2 ? "default" : "secondary"}
+                      >
+                        Queue {booking.queue}
+                      </Badge>
+                    </div>
+                    <p className="font-mono text-sm font-medium">
+                      {booking.vehicleType.type}
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      No. {booking.vehicleNumber}
+                    </p>
+                  </div>
+                  <BookingActions
+                    onEdit={() => handleEdit(booking)}
+                    onDelete={() => setPendingDelete(booking)}
+                  />
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                      Driver
+                    </p>
+                    <p className="text-sm font-medium">{booking.driverName}</p>
+                    {booking.driverPhone && (
+                      <p className="text-muted-foreground font-mono text-xs">
+                        {booking.driverPhone}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                      ETA
+                    </p>
+                    <p className="text-sm font-medium">
+                      {booking.eta ? format(booking.eta, "dd MMM yyyy") : "-"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                      Weight (kg)
+                    </p>
+                    <p className="text-sm font-medium">{booking.weight}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                      CBM
+                    </p>
+                    <p className="font-mono text-sm font-medium">
+                      {booking.cbm}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
@@ -668,37 +781,10 @@ export function DockBooking({ orderNumber }: { orderNumber: string }) {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          render={
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 cursor-pointer"
-                            />
-                          }
-                        >
-                          <MoreVerticalIcon className="h-4 w-4" />
-                          <span className="sr-only">Open menu</span>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem
-                            className="cursor-pointer"
-                            onClick={() => handleEdit(booking)}
-                          >
-                            <EditIcon className="mr-2 h-4 w-4 text-blue-500" />
-                            Edit
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            className="cursor-pointer text-red-600"
-                            onClick={() => setPendingDelete(booking)}
-                          >
-                            <TrashIcon className="mr-2 h-4 w-4 text-red-500" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <BookingActions
+                        onEdit={() => handleEdit(booking)}
+                        onDelete={() => setPendingDelete(booking)}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

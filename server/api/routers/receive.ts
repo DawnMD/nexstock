@@ -2,25 +2,74 @@ import { privateProcedure, writeProcedure } from "@/server/api/orpc";
 import { receiveStock } from "@/server/services/receiving";
 import { z } from "zod";
 
+/**
+ * Search results are capped rather than paged: this feeds a scan-and-search
+ * palette, where an operator either scans an exact barcode or types enough of
+ * one to narrow it. Nobody scrolls to result 51.
+ */
+const SEARCH_RESULT_LIMIT = 50;
+
 export const receiveRouter = {
-  getAllOrderNumbers: privateProcedure.handler(async ({ context: ctx }) => {
-    const orderNumbers = await ctx.db.order.findMany({
-      select: {
-        orderNumber: true,
-        vendor: {
-          select: {
-            name: true,
+  getAllOrderNumbers: privateProcedure
+    .input(z.object({ search: z.string().nullish() }))
+    .handler(async ({ context: ctx, input }) => {
+      // This used to have no `where` and no `take`, so every order ever raised
+      // was serialised to the browser on each visit to /receive and filtered
+      // client-side. Filtering in Postgres also means a match on the vendor
+      // name works, which the client-side filter over order numbers could not
+      // do.
+      const term = input.search?.trim();
+
+      const orderNumbers = await ctx.db.order.findMany({
+        where: term
+          ? {
+              OR: [
+                { orderNumber: { contains: term, mode: "insensitive" } },
+                { vendor: { name: { contains: term, mode: "insensitive" } } },
+              ],
+            }
+          : undefined,
+        select: {
+          orderNumber: true,
+          vendor: {
+            select: {
+              name: true,
+            },
+          },
+          _count: {
+            select: {
+              items: true,
+            },
           },
         },
-        _count: {
+        orderBy: { createdAt: "desc" },
+        take: SEARCH_RESULT_LIMIT,
+      });
+
+      // A capped `contains` search can still omit the exact barcode when 50
+      // newer order numbers contain the same text. That is rare for typing but
+      // unsafe for scanning: EntitySearch may only navigate to an exact row.
+      // Only pay for the second lookup when the cap could have hidden it.
+      if (
+        term &&
+        orderNumbers.length === SEARCH_RESULT_LIMIT &&
+        !orderNumbers.some(
+          (order) => order.orderNumber.toLowerCase() === term.toLowerCase(),
+        )
+      ) {
+        const exact = await ctx.db.order.findFirst({
+          where: { orderNumber: { equals: term, mode: "insensitive" } },
           select: {
-            items: true,
+            orderNumber: true,
+            vendor: { select: { name: true } },
+            _count: { select: { items: true } },
           },
-        },
-      },
-    });
-    return orderNumbers;
-  }),
+        });
+        if (exact) return [exact, ...orderNumbers.slice(0, -1)];
+      }
+
+      return orderNumbers;
+    }),
   getOrderItems: privateProcedure
     .input(
       z.object({

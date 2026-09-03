@@ -18,7 +18,15 @@ loadEnv({ path: [".env.local", ".env"], quiet: true });
 // copy `.env.example`. `generate` doesn't need a database; the commands that do
 // (`migrate`, `db push`, `studio`) still fail loudly, just with Prisma's own
 // "no datasource" message instead of a stack trace during install.
-const directUrl = process.env.DATABASE_URL_UNPOOLED;
+const runtimeUrl = process.env.DATABASE_URL;
+const runtimeHost = runtimeUrl ? new URL(runtimeUrl).hostname : undefined;
+const isLocalPostgres =
+  runtimeHost === "localhost" ||
+  runtimeHost === "127.0.0.1" ||
+  runtimeHost === "::1";
+const directUrl =
+  process.env.DATABASE_URL_UNPOOLED ??
+  (isLocalPostgres ? runtimeUrl : undefined);
 
 export default defineConfig({
   schema: "prisma/schema.prisma",

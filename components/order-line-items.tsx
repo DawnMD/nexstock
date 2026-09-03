@@ -15,8 +15,9 @@ import {
   TruckIcon,
   XCircleIcon,
 } from "lucide-react";
-import { getStatusVariant, formatStatusDisplay } from "@/lib/order-utils";
+import { getItemStatusVariant, formatItemStatus } from "@/lib/order-utils";
 import type { AdjustmentType } from "@/generated/prisma/enums";
+import { cn } from "@/lib/utils";
 
 interface LineItem {
   id: number;
@@ -75,7 +76,84 @@ export function OrderLineItems({ lineItems }: OrderLineItemsProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="overflow-hidden rounded-lg border">
+        {/* Nine columns of quantities do not survive a 360px screen, and this is
+            the screen a supervisor opens standing next to the pallet. */}
+        <div className="space-y-3 md:hidden">
+          {lineItems.map((item) => (
+            <div key={item.id} className="rounded-lg border p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-mono text-sm font-medium">{item.sku}</p>
+                  <p className="text-muted-foreground text-xs">
+                    {item.description}
+                  </p>
+                </div>
+                <Badge
+                  variant={getItemStatusVariant(item.status)}
+                  className="flex shrink-0 gap-1 text-xs [&_svg]:h-3 [&_svg]:w-3"
+                >
+                  {getStatusIcon(item.status)}
+                  {formatItemStatus(item.status)}
+                </Badge>
+              </div>
+
+              <div className="mt-3 grid grid-cols-4 gap-2 text-center">
+                <div>
+                  <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                    Ordered
+                  </p>
+                  <p className="text-sm font-medium tabular-nums">
+                    {item.orderedQuantity}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                    Received
+                  </p>
+                  <p
+                    className={cn(
+                      "text-sm font-medium tabular-nums",
+                      item.receivedQuantity > item.orderedQuantity &&
+                        "text-amber-600 dark:text-amber-500",
+                    )}
+                  >
+                    {item.receivedQuantity}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                    Adjusted
+                  </p>
+                  <p className="text-sm font-medium tabular-nums">
+                    {netAdjustment(item.adjustments)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                    Rejected
+                  </p>
+                  <p className="text-sm font-medium tabular-nums">
+                    {item.rejectedQuantity}
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-muted-foreground mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                <span>{item.department}</span>
+                <span>
+                  Quality check:{" "}
+                  {item.qualityCheck === undefined
+                    ? "N/A"
+                    : item.qualityCheck
+                      ? "Passed"
+                      : "Failed"}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden overflow-hidden rounded-lg border md:block">
           <Table>
             <TableHeader>
               <TableRow>
@@ -101,11 +179,11 @@ export function OrderLineItems({ lineItems }: OrderLineItemsProps) {
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant={getStatusVariant(item.status)}
+                      variant={getItemStatusVariant(item.status)}
                       className="flex w-fit gap-1 text-xs [&_svg]:h-3 [&_svg]:w-3"
                     >
                       {getStatusIcon(item.status)}
-                      {formatStatusDisplay(item.status)}
+                      {formatItemStatus(item.status)}
                     </Badge>
                   </TableCell>
                   {/* What the purchase order asked for, unmodified. This used to

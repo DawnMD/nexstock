@@ -17,7 +17,11 @@ export const metadata: Metadata = {
 export default async function QualityCheckPage() {
   await requireSession();
 
-  prefetch(serverOrpc.qualityCheck.getAllOrderNumbers.queryOptions());
+  prefetch(
+    serverOrpc.qualityCheck.getAllOrderNumbers.queryOptions({
+      input: { search: null },
+    }),
+  );
 
   return (
     <>

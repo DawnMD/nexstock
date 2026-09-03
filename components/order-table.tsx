@@ -12,7 +12,7 @@ import {
 import { DataTable } from "@/components/ui/data-table";
 import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { tableFeatureSet, type AppTableFeatures } from "@/lib/table-features";
-import { getStatusVariant } from "@/lib/utils";
+import { getOrderStatusVariant, formatOrderStatus } from "@/lib/order-utils";
 import { orpc, type RouterOutputs } from "@/orpc/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { OrderStatus } from "@/generated/prisma/enums";
@@ -55,21 +55,6 @@ const getStatusIcon = (status: OrderStatus) => {
       return <XCircleIcon className="size-3 text-red-500 dark:text-red-400" />;
     default:
       return <ClockIcon className="size-3 text-gray-500 dark:text-gray-400" />;
-  }
-};
-
-const formatStatusDisplay = (status: OrderStatus) => {
-  switch (status) {
-    case OrderStatus.NEW:
-      return "New";
-    case OrderStatus.IN_PROGRESS:
-      return "In Progress";
-    case OrderStatus.COMPLETED:
-      return "Completed";
-    case OrderStatus.CANCELLED:
-      return "Cancelled";
-    default:
-      return status;
   }
 };
 
@@ -131,11 +116,11 @@ const columns: ColumnDef<
     header: "Status",
     cell: ({ row }) => (
       <Badge
-        variant={getStatusVariant(row.original.status)}
+        variant={getOrderStatusVariant(row.original.status)}
         className="flex w-fit gap-1 px-2 py-1 text-xs [&_svg]:size-3"
       >
         {getStatusIcon(row.original.status)}
-        {formatStatusDisplay(row.original.status)}
+        {formatOrderStatus(row.original.status)}
       </Badge>
     ),
   },

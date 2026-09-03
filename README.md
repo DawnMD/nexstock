@@ -109,7 +109,9 @@ bypass that (useful for Docker builds).
 Prisma 7 no longer loads `.env` implicitly, so `prisma.config.ts` does it
 explicitly, reading `.env.local` first and then `.env` (Next.js' precedence).
 `pnpm install` works without either — `prisma generate` needs no database — but
-`pnpm db:migrate` and the `prisma/` scripts need `DATABASE_URL_UNPOOLED`.
+`pnpm db:migrate` and the `prisma/` scripts need `DATABASE_URL_UNPOOLED` when
+using Neon. For local PostgreSQL, `prisma.config.ts` uses `DATABASE_URL`
+directly, so one connection string is enough.
 
 ### Setup
 

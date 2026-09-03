@@ -16,6 +16,9 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { PackageIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
+
+import { useScanner } from "@/hooks/use-scanner";
 
 export function SkuSearch({ orderNumber }: { orderNumber: string }) {
   const [open, setOpen] = useState(false);
@@ -27,6 +30,26 @@ export function SkuSearch({ orderNumber }: { orderNumber: string }) {
     }),
   );
   const router = useRouter();
+
+  // Unlike the order palettes, this list is the order's own lines — a handful
+  // of rows, already on the client — so a scan resolves without a round trip.
+  const scanner = useScanner({
+    onScan: (value) => {
+      const match = orderItems?.items.find(
+        (item) => item.Sku.sku.toLowerCase() === value.trim().toLowerCase(),
+      );
+      if (!match) {
+        toast.error(`${value} is not a line on this order`);
+        return;
+      }
+      if (match.qualityCheck?.qualityCheckStatus) {
+        toast.info(`${match.Sku.sku} has already been inspected`);
+        return;
+      }
+      setOpen(false);
+      router.push(`/quality-check/${orderNumber}/${match.id}`);
+    },
+  });
 
   if (!orderItems?.items.length) {
     return <Input placeholder="Search for SKUs..." disabled />;
@@ -50,7 +73,15 @@ export function SkuSearch({ orderNumber }: { orderNumber: string }) {
         }}
       />
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Search for SKUs..." />
+        <CommandInput
+          placeholder="Scan or search for a SKU..."
+          onKeyDown={scanner.onKeyDown}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          className="h-11 md:h-10"
+        />
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandSeparator />

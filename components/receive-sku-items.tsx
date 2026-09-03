@@ -13,7 +13,7 @@ import { orpc } from "@/orpc/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ClipboardCheckIcon, PackageIcon } from "lucide-react";
 import Link from "next/link";
-import { formatStatusDisplay } from "@/lib/order-utils";
+import { formatItemStatus } from "@/lib/order-utils";
 
 export function ReceiveSkuItems({ orderNumber }: { orderNumber: string }) {
   const { data: orderItems } = useSuspenseQuery(
@@ -79,7 +79,7 @@ export function ReceiveSkuItems({ orderNumber }: { orderNumber: string }) {
                   }
                   className="text-xs"
                 >
-                  {formatStatusDisplay(sku.status)}
+                  {formatItemStatus(sku.status)}
                 </Badge>
               </div>
             </div>

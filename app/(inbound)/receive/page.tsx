@@ -16,7 +16,11 @@ export const metadata: Metadata = {
 export default async function ReceivePage() {
   await requireSession();
 
-  prefetch(serverOrpc.receive.getAllOrderNumbers.queryOptions());
+  prefetch(
+    serverOrpc.receive.getAllOrderNumbers.queryOptions({
+      input: { search: null },
+    }),
+  );
 
   return (
     <>

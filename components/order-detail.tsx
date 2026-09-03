@@ -11,7 +11,7 @@ import { orpc } from "@/orpc/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon, PackageIcon, TruckIcon } from "lucide-react";
 import { notFound, useRouter } from "next/navigation";
-import { getStatusVariant } from "@/lib/utils";
+import { getOrderStatusVariant } from "@/lib/order-utils";
 
 export function OrderDetail({ orderNumber }: { orderNumber: string }) {
   const { data: orderDetails } = useSuspenseQuery(
@@ -42,7 +42,7 @@ export function OrderDetail({ orderNumber }: { orderNumber: string }) {
               <h1 className="text-2xl font-semibold">
                 {orderDetails.orderNumber}
               </h1>
-              <Badge variant={getStatusVariant(orderDetails.status)}>
+              <Badge variant={getOrderStatusVariant(orderDetails.status)}>
                 {orderDetails.status}
               </Badge>
             </div>

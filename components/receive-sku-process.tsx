@@ -10,6 +10,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { ScanField } from "@/components/ui/scan-field";
+import {
+  isKnownOption,
+  ScanCombobox,
+  type ScanComboboxOption,
+} from "@/components/ui/scan-combobox";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -31,8 +37,9 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { CalendarIcon } from "lucide-react";
@@ -83,10 +90,6 @@ export function ReceiveSkuProcess({
       },
     }),
   );
-  const { data: locations } = useSuspenseQuery(
-    orpc.putaway.getLocations.queryOptions(),
-  );
-
   const form = useForm<ReceiveSkuFormValues>({
     resolver: zodResolver(ReceiveSkuFormSchema),
     defaultValues: {
@@ -102,6 +105,22 @@ export function ReceiveSkuProcess({
       vehicleNumber: "",
     },
   });
+
+  // The receiving bay is a rack like any other and carries the same barcode, so
+  // the field searches Postgres rather than rendering every location in the
+  // building into a `<Select>`.
+  const location = useWatch({ control: form.control, name: "location" });
+  const [locationTerm, locationsPending] = useDebouncedValue(location);
+  const { data: locations } = useSuspenseQuery(
+    orpc.putaway.getLocations.queryOptions({
+      input: { search: locationTerm || null },
+    }),
+  );
+  const locationOptions: ScanComboboxOption[] = locations.map((entry) => ({
+    value: entry.location,
+    hint: `${entry.zone} - ${entry.aisle}`,
+  }));
+  const locationIsKnown = isKnownOption(location, locationOptions);
 
   const { mutate: updateReceiveStatus, isPending } = useMutation(
     orpc.receive.updateReceiveStatus.mutationOptions({
@@ -209,34 +228,22 @@ export function ReceiveSkuProcess({
               <FormItem>
                 <FormLabel>Location</FormLabel>
                 {/* `ReceiveItem.location` is a foreign key and `receiveStock`
-                    rejects anything that isn't an active location, so this is a
-                    picker rather than the free-text box it used to be — a typo
-                    became a server error the operator couldn't act on. */}
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a location" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {locations.map((location) => (
-                      <SelectItem
-                        key={location.location}
-                        value={location.location}
-                      >
-                        <div className="flex w-full items-center justify-between space-x-4">
-                          <span className="font-mono">{location.location}</span>
-                          <span className="text-muted-foreground text-xs">
-                            {location.zone} - {location.aisle}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                    rejects anything that isn't an active location, so the field
+                    still offers the real ones — but as suggestions under a field
+                    the bay's own barcode can be scanned into, rather than as a
+                    dropdown of every rack in the warehouse. */}
+                <FormControl>
+                  <ScanCombobox
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    onBlur={field.onBlur}
+                    options={locationOptions}
+                    isPending={locationsPending}
+                    placeholder="Scan the bay label"
+                    emptyMessage="No active location matches that."
+                    autoFocus={false}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -248,8 +255,16 @@ export function ReceiveSkuProcess({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>LPN</FormLabel>
+                {/* The pallet label is the one thing on this screen that is
+                    always scanned and never typed, so it takes focus on mount
+                    and confirms the read back. */}
                 <FormControl>
-                  <Input placeholder="Enter License Plate Number" {...field} />
+                  <ScanField
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    onBlur={field.onBlur}
+                    placeholder="Scan the pallet label"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -377,7 +392,15 @@ export function ReceiveSkuProcess({
           )}
         />
 
-        <Button type="submit" disabled={isPending}>
+        {/* `receiveStock` refuses a location that is not active, and the field
+            above is free text now that it can be scanned. Gating here keeps the
+            guarantee the old `<Select>` gave for free, rather than letting a
+            typo become a server error at the end of a long form. */}
+        <Button
+          type="submit"
+          className="h-11 md:h-9"
+          disabled={isPending || !locationIsKnown}
+        >
           {isPending ? "Receiving..." : "Receive SKU"}
         </Button>
       </form>
