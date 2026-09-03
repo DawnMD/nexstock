@@ -24,6 +24,11 @@ export default defineConfig({
         "postgresql://postgres@localhost:5433/nexstock_test",
       BETTER_AUTH_SECRET: "test-secret-0123456789012345678901234567890123",
       RESEND_API_KEY: "re_test_placeholder",
+      DEMO_MODE: "shared-writable",
+      DEMO_ACCOUNT_EMAIL: "shared-demo@nexstock.test",
+      DEMO_ACCOUNT_PASSWORD: "nexstock-demo",
+      ALLOW_SIGN_UP: "false",
+      CRON_SECRET: "test-cron-secret-0123456789",
     },
   },
   resolve: {

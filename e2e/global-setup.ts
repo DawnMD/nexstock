@@ -33,21 +33,21 @@ export const OPERATOR = {
   password: "e2e-password-1234",
 };
 
-/** The read-only account `demo-account.spec.ts` signs in as. */
+/** The shared account `demo-account.spec.ts` signs in as. */
 export const DEMO = {
   email: "demo@demo.nexstock.app",
   name: "Demo Visitor",
-  password: "demo-password-1234",
+  password: "nexstock-demo",
 };
 
 const STORAGE_STATE = "e2e/.auth/operator.json";
 
 /**
- * The account is created with `pnpm user:create` rather than through `/sign-up`,
- * because sign-up is gated on a verification email and these tests should not
- * need a working Resend key. Shelling out to the script rather than importing
- * Better Auth directly is deliberate too: `lib/auth.ts` pulls in `server-only`,
- * which throws outside a React server environment.
+ * Accounts are provisioned out of band rather than through `/sign-up`, because
+ * the résumé deployment disables registration and these tests should not need a
+ * working Resend key. Shelling out rather than importing Better Auth directly
+ * is deliberate too: `lib/auth.ts` pulls in `server-only`, which throws
+ * outside a React server environment.
  */
 async function ensureAccounts() {
   const connectionString =
@@ -61,15 +61,13 @@ async function ensureAccounts() {
   const db = new PrismaClient({ adapter: createAdapter(connectionString) });
 
   let needsOperator = true;
-  let needsDemo = true;
   try {
     const existing = await db.user.findMany({
-      where: { email: { in: [OPERATOR.email, DEMO.email] } },
+      where: { email: OPERATOR.email },
       select: { email: true },
     });
     const emails = new Set(existing.map((user) => user.email));
     needsOperator = !emails.has(OPERATOR.email);
-    needsDemo = !emails.has(DEMO.email);
   } finally {
     await db.$disconnect();
   }
@@ -83,15 +81,9 @@ async function ensureAccounts() {
     ]);
   }
 
-  if (needsDemo) {
-    await runPnpm([
-      "user:create",
-      DEMO.email,
-      DEMO.name,
-      DEMO.password,
-      "--demo",
-    ]);
-  }
+  // Idempotently replaces the published password, applies the demo flag and
+  // restores the exact walkthrough baseline before the browser starts.
+  await runPnpm(["demo:provision"]);
 }
 
 export default async function globalSetup(config: FullConfig) {

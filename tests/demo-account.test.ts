@@ -24,6 +24,7 @@ import {
 } from "./helpers/fixtures";
 
 const DEMO_USER_ID = "test-demo-actor";
+const SHARED_DEMO_USER_ID = "test-shared-demo-actor";
 
 const callerFor = (userId: string) =>
   createRouterClient(router, {
@@ -36,6 +37,7 @@ const callerFor = (userId: string) =>
   });
 
 const demo = callerFor(DEMO_USER_ID);
+const sharedDemo = callerFor(SHARED_DEMO_USER_ID);
 const operator = callerFor(TEST_USER_ID);
 
 beforeEach(async () => {
@@ -45,6 +47,17 @@ beforeEach(async () => {
       id: DEMO_USER_ID,
       name: "Demo Visitor",
       email: "demo-visitor@nexstock.test",
+      emailVerified: true,
+      isDemo: true,
+    },
+    update: { isDemo: true },
+  });
+  await db.user.upsert({
+    where: { id: SHARED_DEMO_USER_ID },
+    create: {
+      id: SHARED_DEMO_USER_ID,
+      name: "Shared Demo Visitor",
+      email: "shared-demo@nexstock.test",
       emailVerified: true,
       isDemo: true,
     },
@@ -191,6 +204,17 @@ describe("an ordinary account", () => {
     await createSku("SKU-1");
 
     await expect(operator.sku.deleteSku({ sku: "SKU-1" })).resolves.toEqual({
+      deleted: true,
+      deactivated: false,
+    });
+  });
+});
+
+describe("the configured shared demo account", () => {
+  it("can write when shared-writable mode is enabled", async () => {
+    await createSku("SKU-1");
+
+    await expect(sharedDemo.sku.deleteSku({ sku: "SKU-1" })).resolves.toEqual({
       deleted: true,
       deactivated: false,
     });

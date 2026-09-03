@@ -8,6 +8,14 @@ import { defineConfig, devices } from "@playwright/test";
 // wins over `.env`.
 loadEnv({ path: [".env.local", ".env"], quiet: true });
 
+// The browser suite exercises the public résumé deployment contract regardless
+// of the developer's local defaults.
+process.env.DEMO_MODE = "shared-writable";
+process.env.DEMO_ACCOUNT_EMAIL = "demo@demo.nexstock.app";
+process.env.DEMO_ACCOUNT_PASSWORD = "nexstock-demo";
+process.env.ALLOW_SIGN_UP = "false";
+process.env.CRON_SECRET = "e2e-demo-reset-secret-0123456789";
+
 /**
  * End-to-end tests drive the real app: a Next production build, a real Postgres
  * behind it, and a real Better Auth session. They cover what the Vitest suite
