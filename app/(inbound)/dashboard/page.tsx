@@ -6,6 +6,8 @@ import { PageMain } from "@/components/page-main";
 import { SiteHeader } from "@/components/site-header";
 import { HydrateClient, prefetch, serverOrpc } from "@/orpc/server";
 import { requireSession } from "@/lib/session";
+import { DemoGuide } from "@/components/demo-guide";
+import { db } from "@/server/db";
 
 interface PageProps {
   searchParams: Promise<{ date?: string | null }>;
@@ -18,7 +20,11 @@ export const metadata: Metadata = {
 };
 
 export default async function Page({ searchParams }: PageProps) {
-  await requireSession();
+  const session = await requireSession();
+  const account = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { isDemo: true },
+  });
 
   const { date } = await searchParams;
 
@@ -34,6 +40,7 @@ export default async function Page({ searchParams }: PageProps) {
     <>
       <SiteHeader title="Dashboard" />
       <PageMain className="p-4">
+        {account?.isDemo && <DemoGuide />}
         <HydrateClient>
           <Suspense fallback={<StatCardsSkeleton />}>
             <DashboardStats initialDate={date} />
